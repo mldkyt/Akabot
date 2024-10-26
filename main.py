@@ -8,19 +8,33 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from features import welcoming, leveling, antiraid, chat_streaks, chat_revive, chat_summary, reaction_roles, \
     logging_mod, admin_cmds, giveaways, feedback_cmd, moderation, verification, velky_stompies, \
     roles_on_join, heartbeat, automod_actions, power_outage_announcement, per_user_settings, server_settings, \
-    bot_help, announcement_channels, tickets, debug_commands, birthday_announcements, send_server_count, \
-    suggestions, temporary_vc, rp
+    bot_help, announcement_channels, tickets, debug_commands, birthday_announcements, \
+    send_server_count, suggestions, temporary_vc, rp
 from utils.config import get_key
 from utils.db_converter import update
 from utils.languages import get_translation_for_key_localized as trl
 
+
+log_level = get_key("Log_Level", "info")
+if log_level == "debug":
+    log_level = logging.DEBUG
+elif log_level == "info":
+    log_level = logging.INFO
+elif log_level == "warning":
+    log_level = logging.WARNING
+elif log_level == "error":
+    log_level = logging.ERROR
+else:
+    log_level = logging.INFO
+    print('Invalid log mode, defaulting to info')
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logging.captureWarnings(True)
 
-BOT_VERSION = get_key("Bot_Version", "3.2")
+BOT_VERSION = get_key("Bot_Version", "3.5")
 
 if get_key("Sentry_Enabled", "false") == "true":
     sentry_sdk.init(get_key("Sentry_DSN"),
