@@ -1,6 +1,7 @@
 import aiohttp
 import discord
 from discord.ext import commands as cmds_ext
+from discord.ui import View
 from discord.ui.input_text import InputText
 
 from utils.analytics import analytics
@@ -163,6 +164,13 @@ class ConfirmSubmitFeatureRequest(discord.ui.View):
             trl(self.user_id, 0, "feedback_feature_direct", append_tip=True),
             ephemeral=True)
 
+class DiscordJoinView(View):
+    def __init__(self):
+        super().__init__(timeout=180)
+
+        join_btn = discord.ui.Button(label="Join the server", style=discord.ButtonStyle.link, url="https://discord.gg/YFksXpXnn6")
+        self.add_item(join_btn)
+
 
 class SupportCmd(discord.Cog):
     def __init__(self, bot: discord.Bot):
@@ -195,6 +203,18 @@ class SupportCmd(discord.Cog):
     @analytics("donate")
     async def donate(self, ctx: discord.ApplicationContext):
         await ctx.respond(trl(ctx.user.id, ctx.guild.id, "feedback_donate", append_tip=True), ephemeral=True)
+
+    @discord.slash_command(name='support_discord', description='Support Discord server link')
+    async def support_discord(self, ctx: discord.ApplicationContext):
+        await ctx.respond("""
+# Support Discord Server
+
+__You'll need to verify yourself on the server to post an introduction and get access to the rest of the server.__
+This is due to recent raids and attacks on the server due to the developer leaving another modding community because of constant harassment.
+**It takes maximum 10 minutes to write an introduction about yourself, and you'll get access to the rest of the server.**
+
+### With this noted, click the button below to join the server:
+        """, view=DiscordJoinView(), ephemeral=True)
 
     @discord.slash_command(name="changelog", description="Get the bot's changelog")
     @discord.option(name="version", description="The version to get the changelog for", choices=["3.3", "3.2", "3.1"])
