@@ -14,12 +14,22 @@ from utils.config import get_key
 from utils.db_converter import update
 from utils.languages import get_translation_for_key_localized as trl
 
-level = logging.INFO
-if get_key("Debug", "false") == "true":
-    level = logging.DEBUG
+
+log_level = get_key("Log_Level", "info")
+if log_level == "debug":
+    log_level = logging.DEBUG
+elif log_level == "info":
+    log_level = logging.INFO
+elif log_level == "warning":
+    log_level = logging.WARNING
+elif log_level == "error":
+    log_level = logging.ERROR
+else:
+    log_level = logging.INFO
+    print('Invalid log mode, defaulting to info')
 
 logging.basicConfig(
-    level=level,
+    level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logging.captureWarnings(True)
