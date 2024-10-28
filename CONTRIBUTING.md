@@ -21,7 +21,7 @@ Recommended to develop on the newer branch of the bot. The branch that's default
 
 ### Financial contributions
 
-If you want to contribute to server costs and support Akatsuki2555 in her development, you can donate to her on [Ko-fi](https://ko-fi.com/akatsuki2555). This is not required but it's appreciated.
+If you want to contribute to server costs and support mldchan in her development, you can donate to her on [Ko-fi](https://ko-fi.com/mldchan). This is not required but it's appreciated.
 
 ## Versioning
 
