@@ -1,4 +1,5 @@
 import discord
+import sentry_sdk
 
 from utils.settings import get_setting, set_setting
 from utils.logging_util import log_into_logs
@@ -8,11 +9,15 @@ from discord.ext import commands
 class VelkyStompies(discord.Cog):
     @discord.slash_command(name="stompies", description="Velky's stompies command")
     async def velky_stompies(self, ctx: discord.ApplicationContext):
-        if get_setting(ctx.guild.id, "stompies_enabled", "True") == "False":
-            await ctx.respond("The command is disabled", ephemeral=True)
-            return
+        try:
+            if get_setting(ctx.guild.id, "stompies_enabled", "True") == "False":
+                await ctx.respond("The command is disabled", ephemeral=True)
+                return
 
-        await ctx.respond("https://tenor.com/view/stompies-velky-cute-angwy-gif-13012534518393437613")
+            await ctx.respond("https://tenor.com/view/stompies-velky-cute-angwy-gif-13012534518393437613")
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond("Something went wrong", ephemeral=True)
 
     stompies_settings_group = discord.SlashCommandGroup("stompies_settings", "Stompies commands")
 
@@ -21,17 +26,21 @@ class VelkyStompies(discord.Cog):
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def stompies_enable(self, ctx: discord.ApplicationContext, enabled: bool):
-        old_value = get_setting(ctx.guild.id, "stompies_enabled", str(enabled)) == "True"
+        try:
+            old_value = get_setting(ctx.guild.id, "stompies_enabled", str(enabled)) == "True"
 
-        if old_value != enabled:
-            logging_embed = discord.Embed(title="Stompies enabled changed")
-            logging_embed.add_field(name="User", value=f"{ctx.user.mention}")
-            logging_embed.add_field(name="Value",
-                                    value=f'{"Enabled" if old_value else "Disabled"} -> {"Enabled" if enabled else "Disabled"}')
+            if old_value != enabled:
+                logging_embed = discord.Embed(title="Stompies enabled changed")
+                logging_embed.add_field(name="User", value=f"{ctx.user.mention}")
+                logging_embed.add_field(name="Value",
+                                        value=f'{"Enabled" if old_value else "Disabled"} -> {"Enabled" if enabled else "Disabled"}')
 
-            await log_into_logs(ctx.guild, logging_embed)
+                await log_into_logs(ctx.guild, logging_embed)
 
-        set_setting(ctx.guild.id, 'stompies_enabled', str(enabled))
+            set_setting(ctx.guild.id, 'stompies_enabled', str(enabled))
 
-        await ctx.respond(f'Succcessfully turned on stompies' if enabled else 'Successfully turned off stompies',
-                          ephemeral=True)
+            await ctx.respond(f'Succcessfully turned on stompies' if enabled else 'Successfully turned off stompies',
+                              ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond("Something went wrong", ephemeral=True)

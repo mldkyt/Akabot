@@ -1,6 +1,5 @@
-from cProfile import label
-
 import discord
+import sentry_sdk
 from discord import Color
 from discord.ext import commands
 from discord.ui import View
@@ -25,9 +24,11 @@ class V2SuggestionView(View):
             await interaction.response.send_message('You have already voted on this suggestion', ephemeral=True)
             return
 
-        client['SuggestionMessagesV2'].update_one({'MessageID': str(interaction.message.id)}, {'$push': {'Upvotes': interaction.user.id}})
+        client['SuggestionMessagesV2'].update_one({'MessageID': str(interaction.message.id)},
+                                                  {'$push': {'Upvotes': interaction.user.id}})
 
-        new_emb = discord.Embed(title='Suggestion', color=Color.blue(), description=generate_message_content(str(interaction.message.id)))
+        new_emb = discord.Embed(title='Suggestion', color=Color.blue(),
+                                description=generate_message_content(str(interaction.message.id)))
         await interaction.response.edit_message(embed=new_emb)
 
     @discord.ui.button(label='👎', style=discord.ButtonStyle.primary, custom_id='downvote')
@@ -41,7 +42,8 @@ class V2SuggestionView(View):
             await interaction.response.send_message('You have already voted on this suggestion', ephemeral=True)
             return
 
-        client['SuggestionMessagesV2'].update_one({'MessageID': str(interaction.message.id)}, {'$push': {'Downvotes': interaction.user.id}})
+        client['SuggestionMessagesV2'].update_one({'MessageID': str(interaction.message.id)},
+                                                  {'$push': {'Downvotes': interaction.user.id}})
 
         new_emb = discord.Embed(title='Suggestion', color=Color.blue(),
                                 description=generate_message_content(str(interaction.message.id)))
@@ -101,40 +103,45 @@ class Suggestions(discord.Cog):
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
+        try:
+            if message.author.bot:
+                return
 
-        if client['SuggestionChannels'].count_documents({'ChannelID': str(message.channel.id)}) > 0:
-            if message.channel.permissions_for(message.guild.me).manage_messages:
-                # Version 2
+            if client['SuggestionChannels'].count_documents({'ChannelID': str(message.channel.id)}) > 0:
+                if message.channel.permissions_for(message.guild.me).manage_messages:
+                    # Version 2
 
-                client['SuggestionMessagesV2'].insert_one({
-                    'MessageID': str(message.id),
-                    'Suggestion': message.content,
-                    'Upvotes': [],
-                    'Downvotes': [],
-                    'AuthorID': str(message.author.id)
-                })
+                    client['SuggestionMessagesV2'].insert_one({
+                        'MessageID': str(message.id),
+                        'Suggestion': message.content,
+                        'Upvotes': [],
+                        'Downvotes': [],
+                        'AuthorID': str(message.author.id)
+                    })
 
-                emb = discord.Embed(title='Suggestion', color=Color.blue(), description=generate_message_content(str(message.id)))
-                new_msg = await message.channel.send(embed=emb, view=V2SuggestionView())
+                    emb = discord.Embed(title='Suggestion', color=Color.blue(),
+                                        description=generate_message_content(str(message.id)))
+                    new_msg = await message.channel.send(embed=emb, view=V2SuggestionView())
 
-                client['SuggestionMessagesV2'].update_one({'MessageID': str(message.id)}, {'$set': {'MessageID': str(new_msg.id)}})
-                await message.delete()
-            else:
-                # Version 1
-                emojis = get_setting(message.guild.id, 'suggestion_emoji', '👍👎')
-                if emojis == '👍👎':
-                    await message.add_reaction('👍')
-                    await message.add_reaction('👎')
-                elif emojis == '✅❌':
-                    await message.add_reaction('✅')
-                    await message.add_reaction('❌')
+                    client['SuggestionMessagesV2'].update_one({'MessageID': str(message.id)},
+                                                              {'$set': {'MessageID': str(new_msg.id)}})
+                    await message.delete()
+                else:
+                    # Version 1
+                    emojis = get_setting(message.guild.id, 'suggestion_emoji', '👍👎')
+                    if emojis == '👍👎':
+                        await message.add_reaction('👍')
+                        await message.add_reaction('👎')
+                    elif emojis == '✅❌':
+                        await message.add_reaction('✅')
+                        await message.add_reaction('❌')
 
-                if get_setting(message.guild.id, "suggestion_reminder_enabled", "false") == "true":
-                    to_send = get_setting(message.guild.id, "suggestion_reminder_message", "")
-                    sent = await message.reply(to_send)
-                    await sent.delete(delay=5)
+                    if get_setting(message.guild.id, "suggestion_reminder_enabled", "false") == "true":
+                        to_send = get_setting(message.guild.id, "suggestion_reminder_message", "")
+                        sent = await message.reply(to_send)
+                        await sent.delete(delay=5)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     suggestions_group = discord.SlashCommandGroup(name='suggestions', description='Suggestion commands')
 
@@ -143,22 +150,32 @@ class Suggestions(discord.Cog):
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def cmd_add_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        if client['SuggestionChannels'].count_documents({'ChannelID': str(ctx.guild.id)}) == 0:
-            client['SuggestionChannels'].insert_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(channel.id)})
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'suggestions_channel_added', append_tip=True).format(channel=channel.mention), ephemeral=True)
-        else:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'suggestions_channel_already_exists'), ephemeral=True)
+        try:
+            if client['SuggestionChannels'].count_documents({'ChannelID': str(ctx.guild.id)}) == 0:
+                client['SuggestionChannels'].insert_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(channel.id)})
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'suggestions_channel_added', append_tip=True).format(
+                    channel=channel.mention), ephemeral=True)
+            else:
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'suggestions_channel_already_exists'), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @suggestions_group.command(name='remove_channel', description='Remove a suggestion channel')
     @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def cmd_remove_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        if client['SuggestionChannels'].count_documents({'ChannelID': str(ctx.guild.id)}) == 0:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "suggestions_channel_not_found"), ephemeral=True)
-        else:
-            client['SuggestionChannels'].delete_one({'ChannelID': str(ctx.guild.id)})
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "suggestions_channel_removed", append_tip=True).format(channel=channel.mention), ephemeral=True)
+        try:
+            if client['SuggestionChannels'].count_documents({'ChannelID': str(ctx.guild.id)}) == 0:
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "suggestions_channel_not_found"), ephemeral=True)
+            else:
+                client['SuggestionChannels'].delete_one({'ChannelID': str(ctx.guild.id)})
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "suggestions_channel_removed", append_tip=True).format(
+                    channel=channel.mention), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @suggestions_group.command(name='emoji', description='Choose emoji')
     @discord.default_permissions(manage_guild=True)
@@ -166,18 +183,28 @@ class Suggestions(discord.Cog):
     @commands.has_permissions(manage_guild=True)
     @discord.option(name='emoji', description='The emoji to use', choices=['👎👍', '✅❌'])
     async def cmd_choose_emoji(self, ctx: discord.ApplicationContext, emoji: str):
-        set_setting(ctx.guild.id, 'suggestion_emoji', emoji)
-        await ctx.respond(trl(ctx.user.id, ctx.guild.id, "suggestions_emoji_set").format(emoji=emoji), ephemeral=True)
+        try:
+            set_setting(ctx.guild.id, 'suggestion_emoji', emoji)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "suggestions_emoji_set").format(emoji=emoji),
+                              ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @suggestions_group.command(name='message_reminder', description="Message reminder for people posting suggestions")
     @discord.default_permissions(manage_guild=True)
     @commands.guild_only()
     @commands.has_permissions(manage_guild=True)
     async def cmd_message_reminder(self, ctx: discord.ApplicationContext, enabled: bool, message: str):
-        if len(message) < 1:
-            await ctx.respond("Invalid message input.", ephemeral=True)
-        set_setting(ctx.guild.id, 'suggestion_reminder_enabled', str(enabled).lower())
-        set_setting(ctx.guild.id, 'suggestion_reminder_message', message)
-        await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, 'suggestions_message_reminder_set', append_tip=True).format(enabled=enabled, message=message),
-            ephemeral=True)
+        try:
+            if len(message) < 1:
+                await ctx.respond("Invalid message input.", ephemeral=True)
+            set_setting(ctx.guild.id, 'suggestion_reminder_enabled', str(enabled).lower())
+            set_setting(ctx.guild.id, 'suggestion_reminder_message', message)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, 'suggestions_message_reminder_set', append_tip=True).format(
+                    enabled=enabled, message=message),
+                ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)

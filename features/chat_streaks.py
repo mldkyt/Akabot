@@ -1,6 +1,7 @@
 import datetime
 
 import discord
+import sentry_sdk
 from discord.ext import commands as commands_ext
 
 from database import client
@@ -95,29 +96,32 @@ class ChatStreaks(discord.Cog):
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
-
-        (state, old_streak, new_streak) = self.streak_storage.set_streak(
-            message.guild.id, message.author.id)
-
-        print('[Chat Streaks] Info', state, old_streak, new_streak)
-
-        if state == "expired":
-            if old_streak == 0:
+        try:
+            if message.author.bot:
                 return
-            if get_per_user_setting(message.author.id, 'chat_streaks_alerts', 'on') == 'off':
-                return
-            msg = await message.reply(
-                trl(message.author.id, message.guild.id, "chat_streaks_expired").format(streak=old_streak))
-            await msg.delete(delay=3)
 
-        if state == "updated":
-            if get_per_user_setting(message.author.id, 'chat_streaks_alerts', 'on') != 'on':
-                return  # Only trigger if the user has the setting on
-            msg = await message.reply(
-                trl(message.author.id, message.guild.id, "chat_streaks_updated").format(streak=new_streak))
-            await msg.delete(delay=3)
+            (state, old_streak, new_streak) = self.streak_storage.set_streak(
+                message.guild.id, message.author.id)
+
+            print('[Chat Streaks] Info', state, old_streak, new_streak)
+
+            if state == "expired":
+                if old_streak == 0:
+                    return
+                if get_per_user_setting(message.author.id, 'chat_streaks_alerts', 'on') == 'off':
+                    return
+                msg = await message.reply(
+                    trl(message.author.id, message.guild.id, "chat_streaks_expired").format(streak=old_streak))
+                await msg.delete(delay=3)
+
+            if state == "updated":
+                if get_per_user_setting(message.author.id, 'chat_streaks_alerts', 'on') != 'on':
+                    return  # Only trigger if the user has the setting on
+                msg = await message.reply(
+                    trl(message.author.id, message.guild.id, "chat_streaks_updated").format(streak=new_streak))
+                await msg.delete(delay=3)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     streaks_subcommand = discord.SlashCommandGroup(
         name='streaks', description='Manage the chat streaks')
@@ -129,23 +133,27 @@ class ChatStreaks(discord.Cog):
     @discord.option(name='user', description='The user to reset the streak for', type=discord.Member)
     @analytics("streaks reset")
     async def reset_streak_command(self, ctx: discord.ApplicationContext, user: discord.Member):
-        # Reset streak
-        self.streak_storage.reset_streak(ctx.guild.id, user.id)
+        try:
+            # Reset streak
+            self.streak_storage.reset_streak(ctx.guild.id, user.id)
 
-        # Create a embed for logs
-        logging_embed = discord.Embed(title=trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_log_title"))
-        logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_log_admin"),
-                                value=f'{ctx.user.mention}')
-        logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_user"),
-                                value=f'{user.mention}')
+            # Create a embed for logs
+            logging_embed = discord.Embed(title=trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_log_title"))
+            logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_log_admin"),
+                                    value=f'{ctx.user.mention}')
+            logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_user"),
+                                    value=f'{user.mention}')
 
-        # Send to log
-        await log_into_logs(ctx.guild, logging_embed)
+            # Send to log
+            await log_into_logs(ctx.guild, logging_embed)
 
-        # Respond
-        await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_success", append_tip=True).format(user=user.mention),
-            ephemeral=True)
+            # Respond
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_success", append_tip=True).format(user=user.mention),
+                ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @streaks_subcommand.command(name="streak", description="Get someone's streak, to get yours, /streak.")
     @commands_ext.guild_only()
@@ -154,18 +162,27 @@ class ChatStreaks(discord.Cog):
     @discord.option(name='user', description='The user to get the streak for', type=discord.Member)
     @analytics("streaks streak")
     async def get_user_streak(self, ctx: discord.ApplicationContext, user: discord.Member):
-        (_, streak, _) = self.streak_storage.set_streak(ctx.guild.id, user.id)
-        await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, "chat_streaks_streak_admin", append_tip=True).format(user=user.mention,
-                                                                                                streak=str(streak)),
-            ephemeral=True)
+        try:
+            (_, streak, _) = self.streak_storage.set_streak(ctx.guild.id, user.id)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "chat_streaks_streak_admin", append_tip=True).format(user=user.mention,
+                                                                                                    streak=str(streak)),
+                ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @discord.slash_command(name='streak', description='Get your current streak')
     @analytics("streak")
     async def get_streak_command(self, ctx: discord.ApplicationContext):
-        (_, streak, _) = self.streak_storage.set_streak(ctx.guild.id, ctx.user.id)
-        await ctx.respond(trl(ctx.user.id, ctx.guild.id, "chat_streaks_streak", append_tip=True).format(streak=streak),
-                          ephemeral=True)
+        try:
+            (_, streak, _) = self.streak_storage.set_streak(ctx.guild.id, ctx.user.id)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "chat_streaks_streak", append_tip=True).format(streak=streak),
+                ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     # Leaderboard
 
@@ -173,37 +190,41 @@ class ChatStreaks(discord.Cog):
     @commands_ext.guild_only()
     @analytics("streaks leaderboard")
     async def streaks_lb(self, ctx: discord.ApplicationContext):
-        rows = client['ChatStreaks'].aggregate([
-            {
-                "$match": {"GuildID": str(ctx.guild.id)}
-            },
-            {
-                "$addFields": {
-                    "MaxStreak": {"$max": {'$divide': [{"$subtract": ["$LastMessage", "$StartTime"]}, 86400000]}}
+        try:
+            rows = client['ChatStreaks'].aggregate([
+                {
+                    "$match": {"GuildID": str(ctx.guild.id)}
+                },
+                {
+                    "$addFields": {
+                        "MaxStreak": {"$max": {'$divide': [{"$subtract": ["$LastMessage", "$StartTime"]}, 86400000]}}
+                    }
+                },
+                {
+                    "$sort": {"max_streak": -1}
+                },
+                {
+                    "$limit": 10
                 }
-            },
-            {
-                "$sort": {"max_streak": -1}
-            },
-            {
-                "$limit": 10
-            }
-        ]).to_list()
+            ]).to_list()
 
-        message = trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_title")
+            message = trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_title")
 
-        for i, row in enumerate(rows):
-            member = ctx.guild.get_member(int(row['MemberID']))
-            if member is None:
-                continue
+            for i, row in enumerate(rows):
+                member = ctx.guild.get_member(int(row['MemberID']))
+                if member is None:
+                    continue
 
-            days = int(row['MaxStreak'])
+                days = int(row['MaxStreak'])
 
-            message += trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_line").format(position=i + 1,
-                                                                                             user=member.mention,
-                                                                                             days=str(days))
+                message += trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_line").format(position=i + 1,
+                                                                                                 user=member.mention,
+                                                                                                 days=str(days))
 
-        if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
-            language = get_language(ctx.guild.id, ctx.user.id)
-            message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
-        await ctx.respond(message, ephemeral=True)
+            if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                language = get_language(ctx.guild.id, ctx.user.id)
+                message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
+            await ctx.respond(message, ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
