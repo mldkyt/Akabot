@@ -1,6 +1,7 @@
 import os
 
 import discord
+import sentry_sdk
 
 from utils.announcement_channels import db_get_all_announcement_channels
 from utils.config import get_key
@@ -22,69 +23,80 @@ class AdminCommands(discord.Cog):
 
     @admin_subcommand.command(name="server_count", description="How many servers is the bot in?")
     async def admin_servercount(self, ctx: discord.ApplicationContext):
-        servers = len(self.bot.guilds)
-        channels = len([channel for channel in self.bot.get_all_channels()])
-        members = len(set([member for member in self.bot.get_all_members()]))
+        try:
+            servers = len(self.bot.guilds)
+            channels = len([channel for channel in self.bot.get_all_channels()])
+            members = len(set([member for member in self.bot.get_all_members()]))
 
-        await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, "bot_status_message").format(servers=str(servers), channels=str(channels),
-                                                                        users=str(members)), ephemeral=True)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "bot_status_message").format(servers=str(servers),
+                                                                            channels=str(channels),
+                                                                            users=str(members)), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic").format(e), ephemeral=True)
 
     @admin_subcommand.command(name="create_announcement", description="List all announcement channels")
     async def create_announcement(self, ctx: discord.ApplicationContext, announcement_file: discord.Attachment,
                                   extra_attachment: discord.Attachment = None):
-        await ctx.defer()
+        try:
+            await ctx.defer()
 
-        if ANNOUNCEMENT_CHANNEL == 0:
-            await ctx.respond(content=trl(ctx.user.id, ctx.guild.id, "announcement_not_set"), ephemeral=True)
-            return
+            if ANNOUNCEMENT_CHANNEL == 0:
+                await ctx.respond(content=trl(ctx.user.id, ctx.guild.id, "announcement_not_set"), ephemeral=True)
+                return
 
-        if not announcement_file.filename.endswith(".md"):
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "announcement_file_not_md"), ephemeral=True)
-            return
+            if not announcement_file.filename.endswith(".md"):
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "announcement_file_not_md"), ephemeral=True)
+                return
 
-        await announcement_file.save("temp.md")
-        await extra_attachment.save(extra_attachment.filename)
+            await announcement_file.save("temp.md")
+            await extra_attachment.save(extra_attachment.filename)
 
-        with open("temp.md", "r") as f:
-            announcement = f.read()
+            with open("temp.md", "r") as f:
+                announcement = f.read()
 
-        if len(announcement) > 2000:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "announcement_too_long"), ephemeral=True)
-            return
+            if len(announcement) > 2000:
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "announcement_too_long"), ephemeral=True)
+                return
 
-        msg: discord.Message | None = await ctx.followup.send(content="Creating announcement...")
-        if not msg:
-            return
+            msg: discord.Message | None = await ctx.followup.send(content="Creating announcement...")
+            if not msg:
+                return
 
-        first_channel = self.bot.get_channel(ANNOUNCEMENT_CHANNEL)
-        if not first_channel:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "announcement_channel_not_found"), ephemeral=True)
-            return
+            first_channel = self.bot.get_channel(ANNOUNCEMENT_CHANNEL)
+            if not first_channel:
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "announcement_channel_not_found"), ephemeral=True)
+                return
 
-        await first_channel.send(announcement, file=discord.File(extra_attachment.filename))
+            await first_channel.send(announcement, file=discord.File(extra_attachment.filename))
 
-        await msg.edit(content=trl(ctx.user.id, ctx.guild.id, "announcement_sent_sending_to_subscribed"))
-        channels = db_get_all_announcement_channels()
-        i = 0
-        for channel in channels:
-            i += 1
+            await msg.edit(content=trl(ctx.user.id, ctx.guild.id, "announcement_sent_sending_to_subscribed"))
+            channels = db_get_all_announcement_channels()
+            i = 0
+            for channel in channels:
+                i += 1
 
-            if i % 10 == 0:
-                await msg.edit(
-                    content=trl(ctx.user.id, ctx.guild.id, "announcement_sent_sending_to_subscribed_progress").format(
-                        progress=str(i), count=str(len(channels))))
+                if i % 10 == 0:
+                    await msg.edit(
+                        content=trl(ctx.user.id, ctx.guild.id,
+                                    "announcement_sent_sending_to_subscribed_progress").format(
+                            progress=str(i), count=str(len(channels))))
 
-            try:
-                channel = self.bot.get_channel(channel[1])
-                if not channel:
+                try:
+                    channel = self.bot.get_channel(channel[1])
+                    if not channel:
+                        continue
+
+                    await channel.send(announcement, file=discord.File(extra_attachment.filename))
+                except discord.Forbidden:
                     continue
 
-                await channel.send(announcement, file=discord.File(extra_attachment.filename))
-            except discord.Forbidden:
-                continue
+            await msg.edit(content=trl(ctx.user.id, ctx.guild.id, "announcement_sent"))
 
-        await msg.edit(content=trl(ctx.user.id, ctx.guild.id, "announcement_sent"))
-
-        os.remove("temp.md")
-        os.remove(extra_attachment.filename)
+            os.remove("temp.md")
+            os.remove(extra_attachment.filename)
+            os.remove(announcement_file.filename)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic").format(e), ephemeral=True)

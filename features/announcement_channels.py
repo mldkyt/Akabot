@@ -1,4 +1,5 @@
 import discord
+import sentry_sdk
 
 from utils.announcement_channels import db_get_announcement_channels, db_remove_announcement_channel, \
     db_add_announcement_channel, db_is_subscribed_to_announcements
@@ -17,42 +18,59 @@ class AnnouncementChannels(discord.Cog):
     @announcement_channels_group.command(name="subscribe",
                                          description="Subscribe a channel to Akabot announcements")
     async def announcement_channels_subscribe(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        if not channel.permissions_for(ctx.guild.me).send_messages:
-            await ctx.respond(trl(ctx.author.id, ctx.guild.id, "announcement_no_send_messages_permission"),
-                              ephemeral=True)
-            return
+        try:
+            if not channel.permissions_for(ctx.guild.me).send_messages:
+                await ctx.respond(trl(ctx.author.id, ctx.guild.id, "announcement_no_send_messages_permission"),
+                                  ephemeral=True)
+                return
 
-        db_add_announcement_channel(ctx.guild.id, channel.id)
-        await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, "announcement_subscribed", append_tip=True).format(channel=channel.mention),
-            ephemeral=True)
+            db_add_announcement_channel(ctx.guild.id, channel.id)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "announcement_subscribed", append_tip=True).format(
+                    channel=channel.mention),
+                ephemeral=True)
+            return
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.author.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
+
 
     @announcement_channels_group.command(name="unsubscribe",
                                          description="Unsubscribe a channel from Akabot announcements")
     async def announcement_channels_unsubscribe(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        if not db_is_subscribed_to_announcements(ctx.guild.id, channel.id):
-            await ctx.respond(
-                trl(ctx.author.id, ctx.guild.id, "announcement_not_subscribed").format(channel=channel.mention),
+        try:
+            if not db_is_subscribed_to_announcements(ctx.guild.id, channel.id):
+                await ctx.respond(
+                    trl(ctx.author.id, ctx.guild.id, "announcement_not_subscribed").format(channel=channel.mention),
+                    ephemeral=True)
+                return
+
+            db_remove_announcement_channel(ctx.guild.id, channel.id)
+            await ctx.respond(trl(ctx.author.id, ctx.guild.id, "announcement_unsubscribed", append_tip=True).format(
+                channel=channel.mention),
                 ephemeral=True)
             return
-
-        db_remove_announcement_channel(ctx.guild.id, channel.id)
-        await ctx.respond(trl(ctx.author.id, ctx.guild.id, "announcement_unsubscribed", append_tip=True).format(
-            channel=channel.mention),
-            ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.author.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @announcement_channels_group.command(name="list",
                                          description="List all channels subscribed to Akabot announcements")
     async def announcement_channels_list(self, ctx: discord.ApplicationContext):
-        channels = db_get_announcement_channels(ctx.guild.id)
-        if not channels:
-            await ctx.respond(trl(ctx.author.id, ctx.guild.id, "announcement_none_subscribed"),
-                              ephemeral=True)
-            return
+        try:
+            channels = db_get_announcement_channels(ctx.guild.id)
+            if not channels:
+                await ctx.respond(trl(ctx.author.id, ctx.guild.id, "announcement_none_subscribed"),
+                                  ephemeral=True)
+                return
 
-        channel_mentions = [f"<#{channel[1]}>" for channel in channels]
-        message = "\n".join(channel_mentions)
-        if get_per_user_setting(ctx.user.id, "tips_enabled", "true") == "true":
-            language = get_language(ctx.guild.id, ctx.user.id)
-            message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
-        await ctx.respond(message, ephemeral=True)
+            channel_mentions = [f"<#{channel[1]}>" for channel in channels]
+            message = "\n".join(channel_mentions)
+            if get_per_user_setting(ctx.user.id, "tips_enabled", "true") == "true":
+                language = get_language(ctx.guild.id, ctx.user.id)
+                message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
+            await ctx.respond(message, ephemeral=True)
+            return
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.author.id, ctx.guild.id, "command_error_generic"), ephemeral=True)

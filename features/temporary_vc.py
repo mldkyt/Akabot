@@ -254,46 +254,62 @@ class TemporaryVC(discord.Cog):
     @discord.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState,
                                     after: discord.VoiceState):
-        # First let's check joining for temporary voice channel creation
-        if after.channel and not before.channel:
-            await h_join_channel(member, after)
+        try:
+            # First let's check joining for temporary voice channel creation
+            if after.channel and not before.channel:
+                await h_join_channel(member, after)
 
-        # Now let's check leaving for temporary voice channel deletion
-        if before.channel and not after.channel:
-            await h_leave_channel(member, before)
+            # Now let's check leaving for temporary voice channel deletion
+            if before.channel and not after.channel:
+                await h_leave_channel(member, before)
 
-        # Handle moving between channels, it's pretty much leaving the previous and joining the new one
-        if before.channel and after.channel and before.channel != after.channel:
-            await h_leave_channel(member, before)
-            await h_join_channel(member, after)
+            # Handle moving between channels, it's pretty much leaving the previous and joining the new one
+            if before.channel and after.channel and before.channel != after.channel:
+                await h_leave_channel(member, before)
+                await h_join_channel(member, after)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @temporary_vc_commands.command(name='add_creator_channel',
                                    description='Add a channel to create temporary voice channels')
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def add_creator_channel(self, ctx: discord.ApplicationContext, channel: discord.VoiceChannel):
-        client['TemporaryVCCreators'].insert_one({'ChannelID': str(channel.id), 'GuildID': str(channel.guild.id)})
-        await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, 'temporary_vc_creator_channel_add').format(channel=channel.mention),
-            ephemeral=True)
+        try:
+            client['TemporaryVCCreators'].insert_one({'ChannelID': str(channel.id), 'GuildID': str(channel.guild.id)})
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, 'temporary_vc_creator_channel_add').format(channel=channel.mention),
+                ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @temporary_vc_commands.command(name='remove_creator_channel',
                                    description='Remove a channel to create temporary voice channels')
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def remove_creator_channel(self, ctx: discord.ApplicationContext, channel: discord.VoiceChannel):
-        if client['TemporaryVCCreators'].delete_one(
-                {'ChannelID': str(channel.id), 'GuildID': str(channel.guild.id)}).deleted_count > 0:
-            await ctx.respond(
-                trl(ctx.user.id, ctx.guild.id, 'temporary_vc_creator_channel_remove').format(channel=channel.mention),
-                ephemeral=True)
-        else:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'temporary_vc_error_channel_not_in_creator').format(
-                channel=channel.mention), ephemeral=True)
+        try:
+            if client['TemporaryVCCreators'].delete_one(
+                    {'ChannelID': str(channel.id), 'GuildID': str(channel.guild.id)}).deleted_count > 0:
+                await ctx.respond(
+                    trl(ctx.user.id, ctx.guild.id, 'temporary_vc_creator_channel_remove').format(
+                        channel=channel.mention),
+                    ephemeral=True)
+            else:
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'temporary_vc_error_channel_not_in_creator').format(
+                    channel=channel.mention), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @temporary_vc_commands.command(name='change_default_name',
                                    description='Default name syntax. {name}, {username}, {guild}, {id} are available')
     async def change_default_name(self, ctx: discord.ApplicationContext, name: str):
-        set_setting(ctx.guild.id, 'temporary_vc_name', name)
-        await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'temporary_vc_name_format_change').format(name=name),
-                          ephemeral=True)
+        try:
+            set_setting(ctx.guild.id, 'temporary_vc_name', name)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, 'temporary_vc_name_format_change').format(name=name),
+                              ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)

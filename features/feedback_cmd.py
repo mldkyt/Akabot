@@ -1,5 +1,6 @@
 import aiohttp
 import discord
+import sentry_sdk
 from discord.ext import commands as cmds_ext
 from discord.ui import View
 from discord.ui.input_text import InputText
@@ -22,8 +23,8 @@ class PrivacyPolicyView(discord.ui.View):
     def __init__(self):
         super().__init__()
 
-        button1 = discord.ui.Button(label="akatsuki2555.is-a.dev",
-                                    url="https://akatsuki2555.is-a.dev/project/akabot/privacy/")
+        button1 = discord.ui.Button(label="mldchan.dev",
+                                    url="https://mldchan.dev/project/akabot/privacy/")
 
         self.add_item(button1)
 
@@ -44,32 +45,39 @@ class BugReportModal(discord.ui.Modal):
         self.add_item(self.description_input)
 
     async def callback(self, interaction: discord.Interaction):
-        issue_body = ("- This bug report was created by {display} ({user} {id}) on Discord\n\n"
-                      "---\n\n"
-                      "### The issue was described by the user as follows:\n\n"
-                      "{desc}".format(display=interaction.user.display_name,
-                                      user=interaction.user.name,
-                                      id=interaction.user.id,
-                                      desc=self.description_input.value))
+        try:
+            issue_body = ("- This bug report was created by {display} ({user} {id}) on Discord\n\n"
+                          "---\n\n"
+                          "### The issue was described by the user as follows:\n\n"
+                          "{desc}".format(display=interaction.user.display_name,
+                                          user=interaction.user.name,
+                                          id=interaction.user.id,
+                                          desc=self.description_input.value))
 
-        git_user = get_key("GitHub_User")
-        git_repo = get_key("GitHub_Repo")
-        token = get_key("GitHub_Token")
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-        data = {
-            "title": "Bug Report: {bug}".format(bug=self.title_input.value),
-            "body": issue_body,
-            "labels": ["bug", "in-bot"]
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers, json=data) as response:
-                if response.status != 201:
-                    await interaction.response.send_message(f"Failed to submit bug report: {await response.text()}", ephemeral=True)
-                    return
-        await interaction.response.send_message(trl(self.user_id, 0, "feedback_bug_report_submitted", append_tip=True), ephemeral=True)
+            git_user = get_key("GitHub_User")
+            git_repo = get_key("GitHub_Repo")
+            token = get_key("GitHub_Token")
+            headers = {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            data = {
+                "title": "Bug Report: {bug}".format(bug=self.title_input.value),
+                "body": issue_body,
+                "labels": ["bug", "in-bot"]
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers,
+                                        json=data) as response:
+                    if response.status != 201:
+                        await interaction.response.send_message(f"Failed to submit bug report: {await response.text()}",
+                                                                ephemeral=True)
+                        return
+            await interaction.response.send_message(
+                trl(self.user_id, 0, "feedback_bug_report_submitted", append_tip=True), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await interaction.response.send_message(trl(self.user_id, 0, "command_error_generic"), ephemeral=True)
 
 
 class FeatureModal(discord.ui.Modal):
@@ -88,32 +96,39 @@ class FeatureModal(discord.ui.Modal):
         self.add_item(self.description_input)
 
     async def callback(self, interaction: discord.Interaction):
-        issue_body = ("- This feature request was created by {display} ({user} {id}) on Discord\n\n"
-                      "---\n\n"
-                      "### The issue was described by the user as follows:\n\n"
-                      "{desc}".format(display=interaction.user.display_name,
-                                      user=interaction.user.name,
-                                      id=interaction.user.id,
-                                      desc=self.description_input.value))
+        try:
+            issue_body = ("- This feature request was created by {display} ({user} {id}) on Discord\n\n"
+                          "---\n\n"
+                          "### The issue was described by the user as follows:\n\n"
+                          "{desc}".format(display=interaction.user.display_name,
+                                          user=interaction.user.name,
+                                          id=interaction.user.id,
+                                          desc=self.description_input.value))
 
-        git_user = get_key("GitHub_User")
-        git_repo = get_key("GitHub_Repo")
-        token = get_key("GitHub_Token")
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-        data = {
-            "title": "Feature request: {title}".format(title=self.title_input.value),
-            "body": issue_body,
-            "labels": ["enhancement", "in-bot"]
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers, json=data) as response:
-                if response.status != 201:
-                    await interaction.response.send_message(f"Failed to submit feature request: {await response.text()}", ephemeral=True)
-                    return
-        await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True), ephemeral=True)
+            git_user = get_key("GitHub_User")
+            git_repo = get_key("GitHub_Repo")
+            token = get_key("GitHub_Token")
+            headers = {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            data = {
+                "title": "Feature request: {title}".format(title=self.title_input.value),
+                "body": issue_body,
+                "labels": ["enhancement", "in-bot"]
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers,
+                                        json=data) as response:
+                    if response.status != 201:
+                        await interaction.response.send_message(
+                            f"Failed to submit feature request: {await response.text()}", ephemeral=True)
+                        return
+            await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
+                                                    ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await interaction.response.send_message(trl(self.user_id, 0, "command_error_generic"), ephemeral=True)
 
 
 class ConfirmSubmitBugReport(discord.ui.View):
@@ -220,28 +235,37 @@ This is due to recent raids and attacks on the server due to the developer leavi
     @discord.option(name="version", description="The version to get the changelog for", choices=["3.3", "3.2", "3.1"])
     @analytics("changelog")
     async def changelog(self, ctx: discord.ApplicationContext, version: str = get_key("Bot_Version", "3.3")):
-        if version == "3.4":
-            with open("LATEST.md", "r") as f:
-                changelog = f.read()
+        try:
+            if version == "4.0":
+                with open("LATEST.md", "r") as f:
+                    changelog = f.read()
 
-            await ctx.respond(changelog, ephemeral=True)
-        elif version == "3.3":
-            with open("LATEST_3.3.md", "r") as f:
-                changelog = f.read()
+                await ctx.respond(changelog, ephemeral=True)
+            elif version == "3.4":
+                with open("LATEST_3.4.md", "r") as f:
+                    changelog = f.read()
 
-            await ctx.respond(changelog, ephemeral=True)
-        elif version == "3.2":
-            with open("LATEST_3.2.md", "r") as f:
-                changelog = f.read()
+                await ctx.respond(changelog, ephemeral=True)
+            elif version == "3.3":
+                with open("LATEST_3.3.md", "r") as f:
+                    changelog = f.read()
 
-            await ctx.respond(changelog, ephemeral=True)
-        elif version == "3.1":
-            with open("LATEST_3.1.md", "r") as f:
-                changelog = f.read()
+                await ctx.respond(changelog, ephemeral=True)
+            elif version == "3.2":
+                with open("LATEST_3.2.md", "r") as f:
+                    changelog = f.read()
 
-            await ctx.respond(changelog, ephemeral=True)
-        else:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "feedback_changelog_invalid_version"), ephemeral=True)
+                await ctx.respond(changelog, ephemeral=True)
+            elif version == "3.1":
+                with open("LATEST_3.1.md", "r") as f:
+                    changelog = f.read()
+
+                await ctx.respond(changelog, ephemeral=True)
+            else:
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "feedback_changelog_invalid_version"), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     feedback_subcommand = discord.SlashCommandGroup(name="feedback", description="Give feedback for the bot")
 

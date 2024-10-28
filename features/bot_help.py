@@ -10,7 +10,7 @@ async def respond_to_help(ctx: discord.ApplicationContext, help_file: str):
     file_info = os.stat(f"docs/{help_file}.md")
     if file_info.st_size > 2000:
         await ctx.respond(
-            f"You can read about this feature [in the documentation](<https://github.com/Akatsuki2555/Akabot/wiki/{help_file}>), as it's too large to send on Discord.",
+            f"You can read about this feature [in the documentation](<https://github.com/mldchan/Akabot/wiki/{help_file}>), as it's too large to send on Discord.",
             ephemeral=True)
     else:
         with open(f"docs/{help_file}.md", "r") as f:

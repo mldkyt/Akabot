@@ -1,12 +1,14 @@
 import datetime
 
 import discord
+import sentry_sdk
 from discord.ext import commands, tasks
 
 from database import client
 from utils.settings import set_setting, get_setting
 from utils.tzutil import get_now_for_server
 from utils.logging_util import log_into_logs
+from utils.languages import  get_translation_for_key_localized as trl
 
 
 def db_add_ticket_channel(guild_id: int, ticket_category: int, user_id: int):
@@ -189,69 +191,84 @@ class Tickets(discord.Cog):
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
+        try:
 
-        if not db_is_ticket_channel(message.guild.id, message.channel.id):
-            return
+            if message.author.bot:
+                return
 
-        if db_is_archived(message.guild.id, message.channel.id):
-            return
+            if not db_is_ticket_channel(message.guild.id, message.channel.id):
+                return
 
-        db_update_mtime(message.guild.id, message.channel.id)
+            if db_is_archived(message.guild.id, message.channel.id):
+                return
+
+            db_update_mtime(message.guild.id, message.channel.id)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @discord.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        if after.author.bot:
-            return
+        try:
+            if after.author.bot:
+                return
 
-        if not db_is_ticket_channel(after.guild.id, after.channel.id):
-            return
+            if not db_is_ticket_channel(after.guild.id, after.channel.id):
+                return
 
-        db_update_mtime(after.guild.id, after.channel.id)
+            db_update_mtime(after.guild.id, after.channel.id)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @discord.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User):
-        if user.bot:
-            return
+        try:
+            if user.bot:
+                return
 
-        if not db_is_ticket_channel(reaction.message.guild.id, reaction.message.channel.id):
-            return
+            if not db_is_ticket_channel(reaction.message.guild.id, reaction.message.channel.id):
+                return
 
-        if db_is_archived(reaction.message.guild.id, reaction.message.channel.id):
-            return
+            if db_is_archived(reaction.message.guild.id, reaction.message.channel.id):
+                return
 
-        db_update_mtime(reaction.message.guild.id, reaction.message.channel.id)
+            db_update_mtime(reaction.message.guild.id, reaction.message.channel.id)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @tickets_commands.command(name="send_message", description="Send a message that allows users to create a ticket")
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def send_message(self, ctx: discord.ApplicationContext, message: str, button_label: str):
-        if get_setting(ctx.guild.id, "ticket_category", "0") == "0":
-            await ctx.respond("Please set a ticket category first!", ephemeral=True)
-            return
+        try:
+            if get_setting(ctx.guild.id, "ticket_category", "0") == "0":
+                await ctx.respond("Please set a ticket category first!", ephemeral=True)
+                return
 
-        if not ctx.guild.get_channel(int(get_setting(ctx.guild.id, "ticket_category", "0"))):
-            await ctx.respond("The ticket category has been deleted. Please set a new one.", ephemeral=True)
-            return
+            if not ctx.guild.get_channel(int(get_setting(ctx.guild.id, "ticket_category", "0"))):
+                await ctx.respond("The ticket category has been deleted. Please set a new one.", ephemeral=True)
+                return
 
-        if not ctx.guild.me.guild_permissions.manage_channels or not ctx.guild.me.guild_permissions.manage_roles:
-            await ctx.respond(
-                "I need the Manage Channels (to create channels) and Manage Roles (to set permissions on ticket "
-                "channels) permissions to create tickets.",
-                ephemeral=True)
-            return
+            if not ctx.guild.me.guild_permissions.manage_channels or not ctx.guild.me.guild_permissions.manage_roles:
+                await ctx.respond(
+                    "I need the Manage Channels (to create channels) and Manage Roles (to set permissions on ticket "
+                    "channels) permissions to create tickets.",
+                    ephemeral=True)
+                return
 
-        await ctx.channel.send(message, view=TicketCreateView(button_label))
-        await ctx.respond("Message sent!", ephemeral=True)
+            await ctx.channel.send(message, view=TicketCreateView(button_label))
+            await ctx.respond("Message sent!", ephemeral=True)
 
-        log_embed = discord.Embed(title="Ticket Message Sent", description=f"Ticket message sent by {ctx.user.mention} in {ctx.channel.mention}")
-        log_embed.add_field(name="Ticket Message", value=message)
-        log_embed.add_field(name="Ticket Message Button Label", value=button_label)
-        log_embed.add_field(name="Ticket Message Channel", value=ctx.channel.mention)
-        log_embed.add_field(name="Ticket Message Time", value=get_now_for_server(ctx.guild.id).isoformat())
+            log_embed = discord.Embed(title="Ticket Message Sent",
+                                      description=f"Ticket message sent by {ctx.user.mention} in {ctx.channel.mention}")
+            log_embed.add_field(name="Ticket Message", value=message)
+            log_embed.add_field(name="Ticket Message Button Label", value=button_label)
+            log_embed.add_field(name="Ticket Message Channel", value=ctx.channel.mention)
+            log_embed.add_field(name="Ticket Message Time", value=get_now_for_server(ctx.guild.id).isoformat())
 
-        await log_into_logs(ctx.guild, log_embed)
+            await log_into_logs(ctx.guild, log_embed)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @tickets_commands.command(name="set_category",
                               description="Set the category where tickets will be created. Permissions will be copied "
@@ -259,15 +276,20 @@ class Tickets(discord.Cog):
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def set_category(self, ctx: discord.ApplicationContext, category: discord.CategoryChannel):
-        set_setting(ctx.guild.id, "ticket_category", str(category.id))
-        await ctx.respond("Category set!", ephemeral=True)
+        try:
+            set_setting(ctx.guild.id, "ticket_category", str(category.id))
+            await ctx.respond("Category set!", ephemeral=True)
 
-        log_embed = discord.Embed(title="Ticket Category Set", description=f"Ticket category set by {ctx.user.mention} to {category.name}")
-        log_embed.add_field(name="Ticket Category", value=category.name)
-        log_embed.add_field(name="Ticket Category ID", value=category.id)
-        log_embed.add_field(name="Ticket Category Time", value=get_now_for_server(ctx.guild.id).isoformat())
+            log_embed = discord.Embed(title="Ticket Category Set",
+                                      description=f"Ticket category set by {ctx.user.mention} to {category.name}")
+            log_embed.add_field(name="Ticket Category", value=category.name)
+            log_embed.add_field(name="Ticket Category ID", value=category.id)
+            log_embed.add_field(name="Ticket Category Time", value=get_now_for_server(ctx.guild.id).isoformat())
 
-        await log_into_logs(ctx.guild, log_embed)
+            await log_into_logs(ctx.guild, log_embed)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @tickets_commands.command(name="set_hide_time",
                               description="Set the time that the ticket will be available for the creator after it's "
@@ -275,81 +297,99 @@ class Tickets(discord.Cog):
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def set_hide_time(self, ctx: discord.ApplicationContext, hours: int):
-        set_setting(ctx.guild.id, "ticket_hide_time", str(hours))
-        await ctx.respond("Hide time set!", ephemeral=True)
+        try:
+            set_setting(ctx.guild.id, "ticket_hide_time", str(hours))
+            await ctx.respond("Hide time set!", ephemeral=True)
 
-        log_embed = discord.Embed(title="Ticket Hide Time Set", description=f"Ticket hide time set by {ctx.user.mention} to {hours} hours")
-        log_embed.add_field(name="Ticket Hide Time", value=hours)
-        log_embed.add_field(name="Ticket Hide Time Time", value=get_now_for_server(ctx.guild.id).isoformat())
+            log_embed = discord.Embed(title="Ticket Hide Time Set",
+                                      description=f"Ticket hide time set by {ctx.user.mention} to {hours} hours")
+            log_embed.add_field(name="Ticket Hide Time", value=hours)
+            log_embed.add_field(name="Ticket Hide Time Time", value=get_now_for_server(ctx.guild.id).isoformat())
 
-        await log_into_logs(ctx.guild, log_embed)
+            await log_into_logs(ctx.guild, log_embed)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @tickets_commands.command(name="set_archive_time",
                               description="Set the time that the ticket will be archived after no activity.")
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     async def set_auto_archive_time(self, ctx: discord.ApplicationContext, hours: int):
-        set_setting(ctx.guild.id, "ticket_archive_time", str(hours))
-        await ctx.respond("Auto archive time set!", ephemeral=True)
+        try:
+            set_setting(ctx.guild.id, "ticket_archive_time", str(hours))
+            await ctx.respond("Auto archive time set!", ephemeral=True)
 
-        log_embed = discord.Embed(title="Ticket Archive Time Set", description=f"Ticket archive time set by {ctx.user.mention} to {hours} hours")
-        log_embed.add_field(name="Ticket Archive Time", value=hours)
-        log_embed.add_field(name="Ticket Archive Time Time", value=get_now_for_server(ctx.guild.id).isoformat())
+            log_embed = discord.Embed(title="Ticket Archive Time Set",
+                                      description=f"Ticket archive time set by {ctx.user.mention} to {hours} hours")
+            log_embed.add_field(name="Ticket Archive Time", value=hours)
+            log_embed.add_field(name="Ticket Archive Time Time", value=get_now_for_server(ctx.guild.id).isoformat())
 
-        await log_into_logs(ctx.guild, log_embed)
+            await log_into_logs(ctx.guild, log_embed)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
     @tasks.loop(seconds=60)
     async def handle_hiding(self):
-        for i in db_list_archived_tickets():
-            guild = self.bot.get_guild(int(i['GuildID']))
-            channel = guild.get_channel(int(i['TicketChannelID']))
-
-            if guild is None or channel is None:
-                return  # Skip if the guild or channel is not found
-
-            if check_ticket_hide_time(i['GuildID'], i['TicketChannelID']):
-                member = guild.get_member(db_get_ticket_creator(i['GuildID'], i['TicketChannelID']))
-                await channel.set_permissions(member, read_messages=False, send_messages=False)
-                db_remove_ticket_channel(i['GuildID'], i['TicketChannelID'])
-
-                log_embed = discord.Embed(title="Ticket Hidden", description=f"Ticket hidden by the system in {channel.mention} because the hide time is up.")
-                log_embed.add_field(name="Ticket Hidden Time", value=get_now_for_server(guild.id).isoformat())
-                log_embed.add_field(name="Ticket Hidden Message", value=channel.jump_url)
-
-                await log_into_logs(guild, log_embed)
-
-    @tasks.loop(seconds=60)
-    async def handle_auto_archive(self):
-        # Ticket archiving after certain time of no changes
-        for i in db_list_not_archived_tickets():
-            if check_ticket_archive_time(i['GuildID'], i['TicketChannelID']):
-                db_archive_ticket(i['GuildID'], i['TicketChannelID'])
-
+        try:
+            for i in db_list_archived_tickets():
                 guild = self.bot.get_guild(int(i['GuildID']))
                 channel = guild.get_channel(int(i['TicketChannelID']))
 
-                # Remove permissions from the ticket creator appropriately
-                atime = get_setting(guild.id, "ticket_hide_time", "0")
-                if int(atime) > 0:
-                    member = guild.get_member(
-                        db_get_ticket_creator(guild.id, channel.id))
-                    await channel.set_permissions(member, view_channel=True, read_messages=True,
-                                                  send_messages=False)
-                    db_archive_ticket(guild.id, channel.id)
-                else:
-                    member = guild.get_member(
-                        db_get_ticket_creator(guild.id, channel.id))
-                    await channel.set_permissions(member, view_channel=False, read_messages=False,
-                                                  send_messages=False)
-                    db_remove_ticket_channel(guild.id, channel.id)
+                if guild is None or channel is None:
+                    return  # Skip if the guild or channel is not found
 
-                # Send closed message
-                await channel.send(
-                    "Ticket closed automatically because there was no activity for a certain amount of time.")
+                if check_ticket_hide_time(i['GuildID'], i['TicketChannelID']):
+                    member = guild.get_member(db_get_ticket_creator(i['GuildID'], i['TicketChannelID']))
+                    await channel.set_permissions(member, read_messages=False, send_messages=False)
+                    db_remove_ticket_channel(i['GuildID'], i['TicketChannelID'])
 
-                log_embed = discord.Embed(title="Ticket Closed Automatically",
-                                          description=f"Ticket closed automatically by the system in {channel.mention} because there was no activity for a certain amount of time.")
-                log_embed.add_field(name="Ticket Closed Automatically Time", value=get_now_for_server(guild.id).isoformat())
-                log_embed.add_field(name="Ticket Closed Automatically Message", value=channel.jump_url)
+                    log_embed = discord.Embed(title="Ticket Hidden",
+                                              description=f"Ticket hidden by the system in {channel.mention} because the hide time is up.")
+                    log_embed.add_field(name="Ticket Hidden Time", value=get_now_for_server(guild.id).isoformat())
+                    log_embed.add_field(name="Ticket Hidden Message", value=channel.jump_url)
 
-                await log_into_logs(guild, log_embed)
+                    await log_into_logs(guild, log_embed)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+
+    @tasks.loop(seconds=60)
+    async def handle_auto_archive(self):
+        try:
+            # Ticket archiving after certain time of no changes
+            for i in db_list_not_archived_tickets():
+                if check_ticket_archive_time(i['GuildID'], i['TicketChannelID']):
+                    db_archive_ticket(i['GuildID'], i['TicketChannelID'])
+
+                    guild = self.bot.get_guild(int(i['GuildID']))
+                    channel = guild.get_channel(int(i['TicketChannelID']))
+
+                    # Remove permissions from the ticket creator appropriately
+                    atime = get_setting(guild.id, "ticket_hide_time", "0")
+                    if int(atime) > 0:
+                        member = guild.get_member(
+                            db_get_ticket_creator(guild.id, channel.id))
+                        await channel.set_permissions(member, view_channel=True, read_messages=True,
+                                                      send_messages=False)
+                        db_archive_ticket(guild.id, channel.id)
+                    else:
+                        member = guild.get_member(
+                            db_get_ticket_creator(guild.id, channel.id))
+                        await channel.set_permissions(member, view_channel=False, read_messages=False,
+                                                      send_messages=False)
+                        db_remove_ticket_channel(guild.id, channel.id)
+
+                    # Send closed message
+                    await channel.send(
+                        "Ticket closed automatically because there was no activity for a certain amount of time.")
+
+                    log_embed = discord.Embed(title="Ticket Closed Automatically",
+                                              description=f"Ticket closed automatically by the system in {channel.mention} because there was no activity for a certain amount of time.")
+                    log_embed.add_field(name="Ticket Closed Automatically Time",
+                                        value=get_now_for_server(guild.id).isoformat())
+                    log_embed.add_field(name="Ticket Closed Automatically Message", value=channel.jump_url)
+
+                    await log_into_logs(guild, log_embed)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
