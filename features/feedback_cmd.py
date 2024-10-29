@@ -232,7 +232,7 @@ This is due to recent raids and attacks on the server due to the developer leavi
         """, view=DiscordJoinView(), ephemeral=True)
 
     @discord.slash_command(name="changelog", description="Get the bot's changelog")
-    @discord.option(name="version", description="The version to get the changelog for", choices=["3.3", "3.2", "3.1"])
+    @discord.option(name="version", description="The version to get the changelog for", choices=["4.0", "3.4", "3.3", "3.2", "3.1"])
     @analytics("changelog")
     async def changelog(self, ctx: discord.ApplicationContext, version: str = get_key("Bot_Version", "3.3")):
         try:
