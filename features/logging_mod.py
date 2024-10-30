@@ -129,10 +129,10 @@ class Logging(discord.Cog):
                         triggering_user = action.user
 
                 embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_edited"), color=discord.Color.blue())
-                if before.name != after.name:
+                if before.name and after.name and before.name != after.name:
                     embed.add_field(name=trl(0, guild.id, "logging_name"), value=f'{before.name} -> {after.name}')
 
-                if before.description != after.description:
+                if before.description and after.description and before.description != after.description:
                     embed.add_field(name=trl(0, guild.id, "description"),
                                     value=f'{before.description} -> {after.description}')
 
