@@ -1,7 +1,8 @@
 import logging
 
-import aiohttp
 import discord
+import requests
+import sentry_sdk
 from discord.ext import tasks
 
 from utils.config import get_key
@@ -9,7 +10,7 @@ from utils.config import get_key
 
 class Heartbeat(discord.Cog):
     def __init__(self) -> None:
-        self.interval_cnt = 0
+        self.interval_cnt = int(get_key("Heartbeat_Interval", '60'))
         super().__init__()
 
         if get_key("Heartbeat_Enabled", "false") == "true":
@@ -20,17 +21,20 @@ class Heartbeat(discord.Cog):
 
     @tasks.loop(seconds=1)
     async def heartbeat_task(self):
-        self.interval_cnt += 1
-        if self.interval_cnt >= int(get_key("Heartbeat_Interval", '60')):
-            self.interval_cnt = 0
-            # Send heartbeat
-            async with aiohttp.ClientSession() as session:
+        try:
+            self.interval_cnt += 1
+            if self.interval_cnt >= int(get_key("Heartbeat_Interval", '60')):
+                self.interval_cnt = 0
+                # Send heartbeat
                 method = get_key("Heartbeat_HTTPMethod", 'post').lower()
+                url = get_key('Heartbeat_URL', 'https://example.com')
                 if method == "get":
-                    await session.get(get_key("Heartbeat_URL", 'https://example.com'))
+                    requests.get(url)
                 elif method == "post":
-                    await session.post(get_key("Heartbeat_URL", 'https://example.com'))
+                    requests.post(url)
                 elif method == "put":
-                    await session.put(get_key("Heartbeat_URL", 'https://example.com'))
+                    requests.put(url)
                 elif method == "delete":
-                    await session.delete(get_key("Heartbeat_URL", 'https://example.com'))
+                    requests.delete(url)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
