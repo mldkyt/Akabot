@@ -1,15 +1,16 @@
+import logging
+import os
+
+
 def get_key(key: str, default: str = ""):
-    with open("config.conf", "r") as f:
-        data = f.read()
+    key = key.upper()
+    value = os.getenv(key)
+    if not value:
+        logging.warning("Using default %s for %s", default, key)
 
-    for line in data.split("\n"):
-        if line.startswith(key):
-            return line.split("=")[1].strip()
+        if len(default.strip()) == 0:
+            raise ValueError("The default for the value %s is by default None. This value is required" % key)
 
-    # add key with default
-    with open("config.conf", "a") as f:
-        if not data.endswith("\n"):
-            f.write("\n")
-        f.write(f"{key}={default}\n")
+        return default
 
-    return default
+    return value

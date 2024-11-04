@@ -4,6 +4,9 @@ import discord
 import sentry_sdk
 from discord.ext import commands as discord_commands_ext
 from sentry_sdk.integrations.logging import LoggingIntegration
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from features import welcoming, leveling, antiraid, chat_streaks, chat_revive, chat_summary, reaction_roles, \
     logging_mod, admin_cmds, giveaways, feedback_cmd, moderation, verification, velky_stompies, \

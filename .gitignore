@@ -9,3 +9,4 @@
 *.orig
 /config.conf
 /data
+.env
