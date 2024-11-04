@@ -1,0 +1,11 @@
+default:
+    image: docker:24.0.5
+
+stages:          # List of stages for jobs, and their order of execution
+  - build
+
+build-job:       # This job runs in the build stage, which runs first.
+  stage: build
+  script:
+    - docker build -t localhost:5000/akabot:latest .
+    - docker image push localhost:5000/akabot:latest
