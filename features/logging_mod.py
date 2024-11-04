@@ -24,124 +24,170 @@ def format_overwrite(guild_id: int, val: bool | None) -> str:
     return trl(0, guild_id, "logging_overwrite_allowed") if val else trl(0, guild_id, "logging_overwrite_denied")
 
 
+async def handle_sticker(guild: discord.Guild, before: discord.Sticker | None, after: discord.Sticker | None):
+    if before is None and after is not None:
+        triggering_user = None
+        if guild.me.guild_permissions.view_audit_log:
+            async for action in guild.audit_logs(action=discord.AuditLogAction.sticker_create, limit=1):
+                triggering_user = action.user
+
+        embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_added_title"),
+                              color=discord.Color.green())
+        embed.description = trl(0, guild.id, "logging_sticker_added").format(name=after.name)
+
+        embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
+                        value=triggering_user.mention if triggering_user else trl(0, guild.id,
+                                                                                  'logging_unknown_member'),
+                        inline=False)
+        await log_into_logs(guild, embed)
+
+    if before is not None and after is None:
+        triggering_user = None
+        if guild.me.guild_permissions.view_audit_log:
+            async for action in guild.audit_logs(action=discord.AuditLogAction.sticker_delete, limit=1):
+                triggering_user = action.user
+
+        embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_removed_title"),
+                              color=discord.Color.red())
+        embed.description = trl(0, guild.id, "logging_sticker_removed").format(name=before.name)
+
+        embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
+                        value=triggering_user.mention if triggering_user else trl(0, guild.id,
+                                                                                  'logging_unknown_member'),
+                        inline=False)
+        await log_into_logs(guild, embed)
+
+    if before is not None and after is not None:
+        triggering_user = None
+        if guild.me.guild_permissions.view_audit_log:
+            async for action in guild.audit_logs(action=discord.AuditLogAction.sticker_update, limit=1):
+                triggering_user = action.user
+
+        embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_edited"), color=discord.Color.blue())
+        if before.name and after.name and before.name != after.name:
+            embed.add_field(name=trl(0, guild.id, "logging_name"), value=f'{before.name} -> {after.name}')
+
+        if before.description and after.description and before.description != after.description:
+            embed.add_field(name=trl(0, guild.id, "description"),
+                            value=f'{before.description} -> {after.description}')
+
+        if len(embed.fields) > 0:
+            embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
+                            value=triggering_user.mention if triggering_user else trl(0, guild.id,
+                                                                                      'logging_unknown_member'),
+                            inline=False)
+        await log_into_logs(guild, embed)
+
+
+async def handle_emoji(guild: discord.Guild, before: discord.Emoji | None, after: discord.Emoji | None):
+    if before is None and after is not None:
+        triggering_user = None
+        if guild.me.guild_permissions.view_audit_log:
+            async for action in guild.audit_logs(action=discord.AuditLogAction.emoji_create, limit=1):
+                triggering_user = action.user
+
+        embed = discord.Embed(title=trl(0, guild.id, "logging_emoji_added_title"), color=discord.Color.green())
+
+        if after.animated:
+            embed.description = trl(0, guild.id, "logging_animated_emoji_added").format(name=after.name)
+        else:
+            embed.description = trl(0, guild.id, "logging_emoji_added").format(name=after.name)
+
+        embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
+                        value=triggering_user.mention if triggering_user else trl(0, guild.id,
+                                                                                  'logging_unknown_member'),
+                        inline=False)
+        await log_into_logs(guild, embed)
+
+    if before is not None and after is None:
+        triggering_user = None
+        if guild.me.guild_permissions.view_audit_log:
+            async for action in guild.audit_logs(action=discord.AuditLogAction.emoji_delete, limit=1):
+                triggering_user = action.user
+
+        embed = discord.Embed(title=trl(0, guild.id, "logging_emoji_removed"), color=discord.Color.red())
+        if before.animated:
+            embed.description = trl(0, guild.id, "logging_animated_emoji_removed").format(name=before.name)
+        else:
+            embed.description = trl(0, guild.id, "logging_emoji_removed").format(name=before.name)
+
+        embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
+                        value=triggering_user.mention if triggering_user else trl(0, guild.id,
+                                                                                  'logging_unknown_member'),
+                        inline=False)
+        await log_into_logs(guild, embed)
+
+    if before is not None and after is not None:
+        triggering_user = None
+        if guild.me.guild_permissions.view_audit_log:
+            async for action in guild.audit_logs(action=discord.AuditLogAction.emoji_update, limit=1):
+                triggering_user = action.user
+
+        embed = discord.Embed(title=trl(0, guild.id, "logging_emoji_renamed_title"), color=discord.Color.blue())
+        if before.name != after.name:
+            embed.add_field(name=trl(0, guild.id, "logging_name"), value=f'{before.name} -> {after.name}')
+
+        if len(embed.fields) > 0:
+            embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
+                            value=triggering_user.mention if triggering_user else trl(0, guild.id,
+                                                                                      'logging_unknown_member'),
+                            inline=False)
+            await log_into_logs(guild, embed)
+
+
 class Logging(discord.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         super().__init__()
 
     @discord.Cog.listener()
-    async def on_guild_emojis_update(self, guild: discord.Guild, before: discord.Emoji | None, after: discord.Emoji | None):
+    async def on_guild_emojis_update(self, guild: discord.Guild, before: tuple[discord.Emoji], after: tuple[discord.Emoji]):
         try:
-            if before is None and after is not None:
-                triggering_user = None
-                if guild.me.guild_permissions.view_audit_log:
-                    async for action in guild.audit_logs(action=discord.AuditLogAction.emoji_create, limit=1):
-                        triggering_user = action.user
+            if len(before) > len(after):  # Sticker deleted
+                for i in before:
+                    if i not in after:
+                        await handle_emoji(guild, i, None)
 
-                embed = discord.Embed(title=trl(0, guild.id, "logging_emoji_added_title"), color=discord.Color.green())
+            elif len(after) > len(before):  # Sticker created
+                for i in after:
+                    if i not in before:
+                        await handle_emoji(guild, None, i)
 
-                if after.animated:
-                    embed.description = trl(0, guild.id, "logging_animated_emoji_added").format(name=after.name)
-                else:
-                    embed.description = trl(0, guild.id, "logging_emoji_added").format(name=after.name)
+            else:
+                for b, a in zip(before, after):
+                    if b is None or a is None:
+                        continue
+                    if b.name == a.name:
+                        continue
 
-                embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
-                                value=triggering_user.mention if triggering_user else trl(0, guild.id,
-                                                                                          'logging_unknown_member'),
-                                inline=False)
-                await log_into_logs(guild, embed)
+                    await handle_emoji(guild, b, a)
 
-            if before is not None and after is None:
-                triggering_user = None
-                if guild.me.guild_permissions.view_audit_log:
-                    async for action in guild.audit_logs(action=discord.AuditLogAction.emoji_delete, limit=1):
-                        triggering_user = action.user
-
-                embed = discord.Embed(title=trl(0, guild.id, "logging_emoji_removed"), color=discord.Color.red())
-                if before.animated:
-                    embed.description = trl(0, guild.id, "logging_animated_emoji_removed").format(name=before.name)
-                else:
-                    embed.description = trl(0, guild.id, "logging_emoji_removed").format(name=before.name)
-
-                embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
-                                value=triggering_user.mention if triggering_user else trl(0, guild.id,
-                                                                                          'logging_unknown_member'),
-                                inline=False)
-                await log_into_logs(guild, embed)
-
-            if before is not None and after is not None:
-                triggering_user = None
-                if guild.me.guild_permissions.view_audit_log:
-                    async for action in guild.audit_logs(action=discord.AuditLogAction.emoji_update, limit=1):
-                        triggering_user = action.user
-
-                embed = discord.Embed(title=trl(0, guild.id, "logging_emoji_renamed_title"), color=discord.Color.blue())
-                if before.name != after.name:
-                    embed.add_field(name=trl(0, guild.id, "logging_name"), value=f'{before.name} -> {after.name}')
-
-                if len(embed.fields) > 0:
-                    embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
-                                    value=triggering_user.mention if triggering_user else trl(0, guild.id,
-                                                                                              'logging_unknown_member'),
-                                    inline=False)
-                await log_into_logs(guild, embed)
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
     @discord.Cog.listener()
-    async def on_guild_stickers_update(self, guild: discord.Guild, before: discord.Sticker | None, after: discord.Sticker | None):
+    async def on_guild_stickers_update(self, guild: discord.Guild, before: tuple[discord.Sticker],
+                                       after: tuple[discord.Sticker]):
         try:
-            if before is None and after is not None:
-                triggering_user = None
-                if guild.me.guild_permissions.view_audit_log:
-                    async for action in guild.audit_logs(action=discord.AuditLogAction.sticker_create, limit=1):
-                        triggering_user = action.user
+            if len(before) > len(after):  # Sticker deleted
+                for i in before:
+                    if i not in after:
+                        await handle_sticker(guild, i, None)
 
-                embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_added_title"),
-                                      color=discord.Color.green())
-                embed.description = trl(0, guild.id, "logging_sticker_added").format(name=after.name)
+            elif len(after) > len(before):  # Sticker created
+                for i in after:
+                    if i not in before:
+                        await handle_sticker(guild, None, i)
 
-                embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
-                                value=triggering_user.mention if triggering_user else trl(0, guild.id,
-                                                                                          'logging_unknown_member'),
-                                inline=False)
-                await log_into_logs(guild, embed)
+            else:
+                for b, a in zip(before, after):
+                    if b is None or a is None:
+                        continue
+                    if b.name == a.name:
+                        continue
 
-            if before is not None and after is None:
-                if guild.me.guild_permissions.view_audit_log:
-                    async for action in guild.audit_logs(action=discord.AuditLogAction.sticker_delete, limit=1):
-                        triggering_user = action.user
+                    await handle_sticker(guild, b, a)
 
-                embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_removed_title"),
-                                      color=discord.Color.red())
-                embed.description = trl(0, guild.id, "logging_sticker_removed").format(name=before.name)
-
-                embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
-                                value=triggering_user.mention if triggering_user else trl(0, guild.id,
-                                                                                          'logging_unknown_member'),
-                                inline=False)
-                await log_into_logs(guild, embed)
-
-            if before is not None and after is not None:
-                triggering_user = None
-                if guild.me.guild_permissions.view_audit_log:
-                    async for action in guild.audit_logs(action=discord.AuditLogAction.sticker_update, limit=1):
-                        triggering_user = action.user
-
-                embed = discord.Embed(title=trl(0, guild.id, "logging_sticker_edited"), color=discord.Color.blue())
-                if before.name and after.name and before.name != after.name:
-                    embed.add_field(name=trl(0, guild.id, "logging_name"), value=f'{before.name} -> {after.name}')
-
-                if before.description and after.description and before.description != after.description:
-                    embed.add_field(name=trl(0, guild.id, "description"),
-                                    value=f'{before.description} -> {after.description}')
-
-                if len(embed.fields) > 0:
-                    embed.add_field(name=trl(0, guild.id, 'logging_moderator'),
-                                    value=triggering_user.mention if triggering_user else trl(0, guild.id,
-                                                                                              'logging_unknown_member'),
-                                    inline=False)
-                await log_into_logs(guild, embed)
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
@@ -477,8 +523,7 @@ class Logging(discord.Cog):
 
             embed = discord.Embed(title=trl(0, role.guild.id, "logging_role_created_title"),
                                   description=trl(0, role.guild.id, "logging_role_created_description").format(
-                                      name=role.name),
-                                  color=discord.Color.green())
+                                      name=role.name), color=discord.Color.green())
 
             embed.add_field(name=trl(0, role.guild.id, "logging_moderator"),
                             value=moderator.mention if moderator else trl(0, role.guild.id, "logging_unknown_member"))
@@ -498,8 +543,7 @@ class Logging(discord.Cog):
 
             embed = discord.Embed(title=trl(0, role.guild.id, "logging_role_deleted_title"),
                                   description=trl(0, role.guild.id, "logging_role_deleted_description").format(
-                                      name=role.name),
-                                  color=discord.Color.red())
+                                      name=role.name), color=discord.Color.red())
 
             embed.add_field(name=trl(0, role.guild.id, "logging_moderator"),
                             value=moderator.mention if moderator else trl(0, role.guild.id, "logging_unknown_member"))
@@ -603,8 +647,7 @@ class Logging(discord.Cog):
         try:
             embed = discord.Embed(title=trl(0, member.guild.id, "logging_member_join_title"),
                                   description=trl(0, member.guild.id, "logging_member_join_description").format(
-                                      mention=member.mention),
-                                  color=discord.Color.green())
+                                      mention=member.mention), color=discord.Color.green())
             embed.add_field(name=trl(0, member.guild.id, "logging_user"), value=member.mention)
             await log_into_logs(member.guild, embed)
         except Exception as e:
@@ -615,8 +658,7 @@ class Logging(discord.Cog):
         try:
             embed = discord.Embed(title=trl(0, member.guild.id, "logging_member_leave_title"),
                                   description=trl(0, member.guild.id, "logging_member_leave_description").format(
-                                      mention=member.mention),
-                                  color=discord.Color.red())
+                                      mention=member.mention), color=discord.Color.red())
             embed.add_field(name=trl(0, member.guild.id, "logging_user"), value=member.mention)
             await log_into_logs(member.guild, embed)
         except Exception as e:
@@ -655,7 +697,8 @@ class Logging(discord.Cog):
             sentry_sdk.capture_exception(e)
 
     @discord.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState,
+                                    after: discord.VoiceState):
         try:
             if before.channel is None and after.channel is not None:
                 # joined a channel
@@ -679,8 +722,7 @@ class Logging(discord.Cog):
                     embed = discord.Embed(title=trl(0, member.guild.id, "logging_vc_move"),
                                           description=trl(0, member.guild.id, "logging_vc_move_description").format(
                                               mention=member.mention, previous=before.channel.mention,
-                                              current=after.channel.mention),
-                                          color=discord.Color.blue())
+                                              current=after.channel.mention), color=discord.Color.blue())
                     await log_into_logs(member.guild, embed)
                     return
 
@@ -877,8 +919,7 @@ class Logging(discord.Cog):
 
             embed = discord.Embed(title=trl(0, thread.guild.id, "logging_thread_create"),
                                   description=trl(0, thread.guild.id, "logging_thread_create_description").format(
-                                      name=thread.name),
-                                  color=discord.Color.green())
+                                      name=thread.name), color=discord.Color.green())
             embed.add_field(name=trl(0, thread.guild.id, "logging_jump_to_thread"),
                             value=f"[jump](<{thread.jump_url}>)")
             embed.add_field(name=trl(0, thread.guild.id, "logging_name"), value=thread.name)
@@ -899,8 +940,7 @@ class Logging(discord.Cog):
 
             embed = discord.Embed(title=trl(0, thread.guild.id, "logging_thread_delete"),
                                   description=trl(0, thread.guild.id, "logging_thread_delete_description").format(
-                                      name=thread.name),
-                                  color=discord.Color.red())
+                                      name=thread.name), color=discord.Color.red())
             embed.add_field(name=trl(0, thread.guild.id, "logging_name"), value=thread.name)
             embed.add_field(name=trl(0, thread.guild.id, "logging_moderator"),
                             value=moderator.mention if moderator else trl(0, thread.guild.id, "logging_unknown_member"))
@@ -911,6 +951,7 @@ class Logging(discord.Cog):
     @discord.Cog.listener()
     async def on_thread_update(self, before: discord.Thread, after: discord.Thread):
         try:
+            moderator = None
             if before.guild.me.guild_permissions.view_audit_log:
                 async for entry in before.guild.audit_logs(limit=1, action=discord.AuditLogAction.thread_update):
                     if entry.target.id == after.id:
@@ -978,13 +1019,16 @@ class Logging(discord.Cog):
             logging_embed = discord.Embed(title=trl(ctx.user.id, ctx.guild.id, "logging_set_channel_log_title"))
             logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_user"), value=f"{ctx.user.mention}")
             if old_channel is not None:
-                logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_set_channel_previous"), value=f"{old_channel.mention}")
+                logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_set_channel_previous"),
+                                        value=f"{old_channel.mention}")
 
             # Send into logs
             await log_into_logs(ctx.guild, logging_embed)
 
             # Respond
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "logging_set_channel_success").format(channel=channel.mention), ephemeral=True)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "logging_set_channel_success").format(channel=channel.mention),
+                ephemeral=True)
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
