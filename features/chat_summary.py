@@ -164,27 +164,27 @@ class ChatSummary(discord.Cog):
                     if j >= int(get_setting(guild.id, "chatsummary_top_count", 5)):
                         break
 
-                    # Keywords
+                # Keywords
 
-                    kwd_cnt = i.get('KeywordsCounting', {})
-                    logging.debug('Getting keywords')
-                    kwd_cnt = {k: v for k, v in sorted(kwd_cnt.items(), key=lambda item: item[1], reverse=True)}
-                    logging.debug('Found %d keywords in the list', len(kwd_cnt))
-                    if len(kwd_cnt) > 0:
-                        chat_summary_message += trl(0, guild.id, "chat_summary_keywords_title")
-                        for k, v in kwd_cnt.items():
-                            if v == 0:
-                                continue
-                            logging.debug('Appending keyword %s with count %d', k, v)
-                            chat_summary_message += trl(0, guild.id, "chat_summary_keywords_line").format(keyword=k, count=v)
+                kwd_cnt = i.get('KeywordsCounting', {})
+                logging.debug('Getting keywords')
+                kwd_cnt = {k: v for k, v in sorted(kwd_cnt.items(), key=lambda item: item[1], reverse=True)}
+                logging.debug('Found %d keywords in the list', len(kwd_cnt))
+                if len(kwd_cnt) > 0:
+                    chat_summary_message += trl(0, guild.id, "chat_summary_keywords_title")
+                    for k, v in kwd_cnt.items():
+                        if v == 0:
+                            continue
+                        logging.debug('Appending keyword %s with count %d', k, v)
+                        chat_summary_message += trl(0, guild.id, "chat_summary_keywords_line").format(keyword=k, count=v)
 
-                    try:
-                        await channel.send(chat_summary_message)
-                    except Exception as e:
-                        sentry_sdk.capture_exception(e)
+                try:
+                    await channel.send(chat_summary_message)
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
 
-                    client['ChatSummary'].update_one({'GuildID': str(guild.id), 'ChannelID': str(channel.id)},
-                                                     {'$set': {'Messages': {}, 'MessageCount': 0, 'KeywordsCounting': {}}})
+                client['ChatSummary'].update_one({'GuildID': str(guild.id), 'ChannelID': str(channel.id)},
+                                                    {'$set': {'Messages': {}, 'MessageCount': 0, 'KeywordsCounting': {}}})
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
