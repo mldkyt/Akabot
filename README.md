@@ -20,9 +20,9 @@ Individual modules have their documentation listed below.
 - [Reaction Roles](https://github.com/mldchan/Akabot/wiki/Reaction-Roles) - This module allows users to assign or remove roles by reacting to messages containing specific buttons. It provides commands to create different types of reaction role setups, such as normal, add-only, remove-only, and single-choice reaction roles.
 - [Verification](https://github.com/mldchan/Akabot/wiki/Verification) - This module adds user verification in Discord servers. It prevents bots from accessing your Discord server.
 
-## Available Public Instance
+## Available Public Instances
 
-There are 2 public available instance of Akabot you can invite.
+There are 2 public available instances of Akabot you can invite.
 
 ### 1. The recommended one
 

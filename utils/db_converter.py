@@ -10,6 +10,10 @@ def update():
         print('[DB Conversion] Conversion already done, skipping...')
         return
 
+    if not os.path.exists("data/femboybot.db"):
+        print("[DB Conversion] Old DB doesn't exist, skipping...")
+        return
+
     conn = sqlite3.connect("data/femboybot.db")
     cur = conn.cursor()
 
