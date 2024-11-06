@@ -21,37 +21,6 @@ svc_tips = [
     "Music channels only: When in music mode, only music will be downloaded."
 ]
 
-with open("configs/media_downloader.json") as f:
-    data = json.load(f)
-    api_list = data["apiList"]
-    if "videoQuality" in data:
-        video_quality = data["videoQuality"]
-    else:
-        video_quality = "360"
-
-    if "audioQuality" in data:
-        audio_quality = data["audioQuality"]
-    else:
-        audio_quality = "128"
-
-    if "maxUploadSize" in data:
-        max_upload_size = data["maxUploadSize"]
-    else:
-        max_upload_size = "25m"
-
-    if video_quality not in ["360", "480", "720", "1080"]:
-        video_quality = "360"
-
-    if audio_quality not in ["64", "96", "128", "256", "320"]:
-        audio_quality = "128"
-
-    if max_upload_size.endswith("m"):
-        max_upload_size = int(max_upload_size[:-1]) * 1024 * 1024
-    elif max_upload_size.endswith("k"):
-        max_upload_size = int(max_upload_size[:-1]) * 1024
-    else:
-        max_upload_size = int(max_upload_size)
-
 
 def get_random_tip():
     return random.choice(svc_tips)
@@ -61,6 +30,37 @@ class MediaDownloader(discord.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         super().__init__()
         self.bot = bot
+
+        with open("configs/media_downloader.json") as f:
+            data = json.load(f)
+            self.api_list = data["apiList"]
+            if "videoQuality" in data:
+                self.video_quality = data["videoQuality"]
+            else:
+                self.video_quality = "360"
+
+            if "audioQuality" in data:
+                self.audio_quality = data["audioQuality"]
+            else:
+                self.audio_quality = "128"
+
+            if "maxUploadSize" in data:
+                self.max_upload_size = data["maxUploadSize"]
+            else:
+                self.max_upload_size = "25m"
+
+            if self.video_quality not in ["360", "480", "720", "1080"]:
+                self.video_quality = "360"
+
+            if self.audio_quality not in ["64", "96", "128", "256", "320"]:
+                self.audio_quality = "128"
+
+            if self.max_upload_size.endswith("m"):
+                self.max_upload_size = int(self.max_upload_size[:-1]) * 1024 * 1024
+            elif self.max_upload_size.endswith("k"):
+                self.max_upload_size = int(self.max_upload_size[:-1]) * 1024
+            else:
+                self.max_upload_size = int(self.max_upload_size)
 
     server_info = {}
 
@@ -104,8 +104,8 @@ class MediaDownloader(discord.Cog):
             "url": first_url,
             "filenameStyle": "pretty",
             "alwaysProxy": True,
-            "videoQuality": video_quality,
-            "audioBitrate": audio_quality
+            "videoQuality": self.video_quality,
+            "audioBitrate": self.audio_quality
         }
 
         if audio_only:
@@ -146,18 +146,18 @@ class MediaDownloader(discord.Cog):
                                     break
                                 f.write(chunk)
 
-                    if os.path.exists(details['filename']) and 0 < os.path.getsize(details['filename']) < max_upload_size:
+                    if os.path.exists(details['filename']) and 0 < os.path.getsize(details['filename']) < self.max_upload_size:
                         if message is not None:
                             await message.edit(
-                                content=f"Uploading {details['filename']} ({math.floor(os.path.getsize(details['filename']) / 1024)}KB / {math.floor(max_upload_size / 1024)}KB)...\n-# " + get_random_tip())
+                                content=f"Uploading {details['filename']} ({math.floor(os.path.getsize(details['filename']) / 1024)}KB / {math.floor(self.max_upload_size / 1024)}KB)...\n-# " + get_random_tip())
                         await msg.reply(file=discord.File(details['filename']))
                         os.remove(details['filename'])
                         if message is not None:
                             await message.edit(content="Done processing.\n-# " + get_random_tip())
                             await message.delete(delay=5)
-                    elif os.path.getsize(details['filename']) > max_upload_size:
+                    elif os.path.getsize(details['filename']) > self.max_upload_size:
                         if message is not None:
-                            await message.edit(content=f"File too large ({os.path.getsize(details['filename'])} > {max_upload_size})\n-# " + get_random_tip())
+                            await message.edit(content=f"File too large ({os.path.getsize(details['filename'])} > {self.max_upload_size})\n-# " + get_random_tip())
                         os.remove(details['filename'])
                         if message is not None:
                             await message.edit(content="Done processing.\n-# " + get_random_tip())
@@ -182,7 +182,7 @@ class MediaDownloader(discord.Cog):
                                         break
                                     f.write(chunk)
                         files_downloaded.append(details['audioFilename'])
-                        if os.path.exists(details['audioFilename']) and 0 < os.path.getsize(details['audioFilename']) < max_upload_size:
+                        if os.path.exists(details['audioFilename']) and 0 < os.path.getsize(details['audioFilename']) < self.max_upload_size:
                             files_to_upload.append(discord.File(details['audioFilename']))
 
                     for i in range(0, len(details['picker']), 9):
@@ -197,7 +197,7 @@ class MediaDownloader(discord.Cog):
                                             break
                                         f.write(chunk)
                             files_downloaded.append(file_name)
-                            if os.path.exists(file_name) and 0 < os.path.getsize(file_name) < max_upload_size:
+                            if os.path.exists(file_name) and 0 < os.path.getsize(file_name) < self.max_upload_size:
                                 curr_files_to_upload.append(discord.File(file_name))
 
                         if message is not None:
