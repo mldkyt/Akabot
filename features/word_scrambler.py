@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 import re
 
@@ -63,6 +64,51 @@ def get_word_scrambler_original_message(channel_id: int) -> int | None:
 def end_word_scrambler(channel_id: int):
     client["WordScramble"].delete_one({"ChannelID": str(channel_id)})
 
+async def get_word_by_context(channel: discord.TextChannel):
+    if channel is None:
+        raise ValueError("Channel is None")
+
+    chan_conf = get_setting(channel.guild.id, "word_scramble_channels", {})
+    chan_conf = chan_conf[str(channel.id)]
+    if "context" not in chan_conf:
+        return get_random_english_word()
+
+    if chan_conf["context"] == "english":
+        return get_random_english_word()
+
+
+    if chan_conf["context"] == "channel":
+        words = []
+        if not channel.permissions_for(channel.guild.me).read_message_history:
+            return get_random_english_word()
+        async for message in channel.history(limit=100):
+            if message.author.bot:
+                continue
+            words_iter = re.findall(r"[a-zA-Z]+", message.content)
+            for i in words_iter:
+                if chan_conf['min'] < len(i) < chan_conf['max']:
+                    words.append(i.lower())
+
+        return random.choice(words) if words else get_random_english_word()
+
+    if chan_conf["context"] == "all_channels":
+        words = []
+        for channel in channel.guild.text_channels:
+            if not channel.permissions_for(channel.guild.me).read_message_history:
+                continue
+            async for message in channel.history(limit=100):
+                if message.author.bot:
+                    continue
+                words_iter = re.findall(r"[a-zA-Z]+", message.content)
+                for i in words_iter:
+                    if chan_conf['min'] < len(i) < chan_conf['max']:
+                        words.append(i.lower())
+
+        return random.choice(words) if words else get_random_english_word()
+
+    logging.warning("Invalid context for word scramble")
+    return get_random_english_word()
+
 
 class WordScrambler(discord.Cog):
     def __init__(self, bot: discord.Bot):
@@ -81,17 +127,19 @@ class WordScrambler(discord.Cog):
     @commands.has_permissions(manage_messages=True)
     async def word_scramble_start(self, ctx: discord.ApplicationContext):
         try:
+            await ctx.defer(ephemeral=True)
+
             if is_word_scrambler_running(ctx.channel.id):
                 await ctx.respond("A word scramble game is already running in this channel", ephemeral=True)
                 return
 
-            word = get_random_english_word()
+            word = await get_word_by_context(ctx.channel)
             scrambled_word = scramble_word(word)
 
             msg = await ctx.channel.send("# Word Scramble!\nUnscramble the word below:\n\n`" + scrambled_word + "`")
             start_word_scrambler(ctx.channel.id, msg.id, word)
 
-            await ctx.respond("Word scrambler started", ephemeral=True)
+            await ctx.followup.send("Word scrambler started", ephemeral=True)
         except Exception as e:
             await ctx.respond("Failed to start word scrambler", ephemeral=True)
             sentry_sdk.capture_exception(e)
@@ -122,7 +170,8 @@ class WordScrambler(discord.Cog):
     @discord.option(name="chance", description="One in what chance to start per minute? Higher value = Less occurence", type=int, required=True)
     @discord.option(name="min", description="Minimum word length", type=int, required=True)
     @discord.option(name="max", description="Maximum word length", type=int, required=True)
-    async def word_scramble_set_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel, chance: int, min_characters: int, max_characters: int):
+    @discord.option(name="context", description="Context for word scramble", type=str, required=True, choices=["english", "channel messages", "messages in all channels"])
+    async def word_scramble_set_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel, chance: int, min_characters: int, max_characters: int, context: str):
         try:
             if min_characters < 3:
                 await ctx.respond("Minimum word length must be at least 3", ephemeral=True)
@@ -140,11 +189,21 @@ class WordScrambler(discord.Cog):
                 await ctx.respond("Chance must be at least 1", ephemeral=True)
                 return
 
+            if context == "channel messages":
+                context = "channel"
+            elif context == "messages in all channels":
+                context = "all_channels"
+
+            if context not in ["english", "channel", "all_channels"]: # Extra check just in case
+                await ctx.respond("Invalid context", ephemeral=True)
+                return
+
             sett = get_setting(ctx.guild.id, "word_scramble_channels", {})
             sett[str(channel.id)] = {
                 "chance": chance,
                 "min": min_characters,
-                "max": max_characters
+                "max": max_characters,
+                "context": context
             }
 
             set_setting(ctx.guild.id, "word_scramble_channels", sett)
@@ -257,7 +316,7 @@ class WordScrambler(discord.Cog):
 
                 rand = random.randint(1, settings["chance"])
                 if rand == 1:
-                    word = get_random_english_word_range(settings["min"], settings["max"])
+                    word = await get_word_by_context(guild.get_channel(channel_id))
                     if len(word) < settings["min"] or len(word) > settings["max"]:
                         continue
 
