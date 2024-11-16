@@ -19,6 +19,7 @@ Individual modules have their documentation listed below.
 - [Moderation](https://github.com/mldchan/Akabot/wiki/Moderation) - This module provides commands to perform moderation actions such as kicking, banning, timing out, and removing timeouts for users in a Discord server.
 - [Reaction Roles](https://github.com/mldchan/Akabot/wiki/Reaction-Roles) - This module allows users to assign or remove roles by reacting to messages containing specific buttons. It provides commands to create different types of reaction role setups, such as normal, add-only, remove-only, and single-choice reaction roles.
 - [Verification](https://github.com/mldchan/Akabot/wiki/Verification) - This module adds user verification in Discord servers. It prevents bots from accessing your Discord server.
+- [Word Scrambler] - Scrambles random English words or words from previous messagse in chat and lets your members unscramble them for extra rewards in the leveling system.
 
 ## Available Public Instances
 
