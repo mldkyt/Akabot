@@ -7,8 +7,10 @@ import sentry_sdk
 
 from database import client
 from utils.english_words import get_random_english_word, scramble_word, get_random_english_word_range
+from utils.leveling import get_level_for_xp, add_xp, get_xp, update_roles_for_member
 from utils.settings import get_setting, set_setting
 from discord.ext import commands, tasks
+from utils.languages import get_translation_for_key_localized as trl
 
 
 def start_word_scrambler(channel_id: int, message_id: int, word: str) -> str:
@@ -29,10 +31,6 @@ def is_word_scrambler_running(channel_id: int) -> bool:
     if data is None:
         return False
 
-    if data["Expires"] < datetime.datetime.now():
-        client["WordScramble"].delete_one({"ChannelID": str(channel_id)})
-        return False
-
     return True
 
 
@@ -44,7 +42,6 @@ def attempt_guess_word_scrambler(channel_id: int, guess: str) -> bool:
         return False
 
     if data["Expires"] < datetime.datetime.now():
-        client["WordScramble"].delete_one({"ChannelID": str(channel_id)})
         return False
 
     if data["Word"] == guess:
@@ -72,24 +69,10 @@ class WordScrambler(discord.Cog):
         super().__init__()
         self.bot = bot
 
-    # @discord.slash_command(name="debug_word_scramble", guild_ids=[1234573274504237087])
-    # async def debug_word_scramble(self, ctx: discord.ApplicationContext):
-    #
-    #     try:
-    #         word = get_random_english_word()
-    #         scrambled_word = scramble_word(word)
-    #
-    #         msg = await ctx.channel.send("# Word Scramble!\nUnscramble the word below:\n\n`" + scrambled_word + "`")
-    #         start_word_scrambler(ctx.channel.id, msg.id, word)
-    #
-    #         await ctx.respond("Word scrambler started", ephemeral=True)
-    #     except Exception as e:
-    #         await ctx.respond("Failed to start word scrambler", ephemeral=True)
-    #         sentry_sdk.capture_exception(e)
-
     @discord.Cog.listener()
     async def on_ready(self):
         self.random_word_scramble_task.start()
+        self.cleanup_task.start()
 
     word_scramble_commands = discord.SlashCommandGroup(name="word_scramble", description="Word Scramble commands")
 
@@ -173,6 +156,25 @@ class WordScrambler(discord.Cog):
             await ctx.respond("Failed to set channel", ephemeral=True)
             sentry_sdk.capture_exception(e)
 
+    @word_scramble_commands.command(name="set_xp_per_game",
+                                    description="Set XP to add per game won in word scramble")
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def word_scramble_set_xp(self, ctx: discord.ApplicationContext, xp: int | None = None):
+        if xp is None:
+            await ctx.respond("Current XP per game: " + str(get_setting(ctx.guild.id, "leveling_xp_per_word_scrambler", 100)),
+                              ephemeral=True)
+            return
+
+        else:
+            if xp < 0:
+                await ctx.respond("XP must be at least 0", ephemeral=True)
+                return
+
+            set_setting(ctx.guild.id, "leveling_xp_per_word_scrambler", xp)
+            await ctx.respond("XP per game set", ephemeral=True)
+
+
     @word_scramble_commands.command(name="remove_channel", description="Remove a channel from word scramble")
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
@@ -208,10 +210,34 @@ class WordScrambler(discord.Cog):
 
                 orig = await msg.channel.fetch_message(orig)
 
+                xp = get_setting(msg.guild.id, "leveling_xp_per_word_scrambler", 100)
+
                 await orig.edit(
-                    content="# Word Scramble!\n\nWon by " + msg.author.mention + "\nThe word was: `" + msg.content + "`")
-                rep = await msg.reply("Correct! The word was: `" + msg.content + "`")
+                    content=f"# Word Scramble!\n"
+                            f"\n"
+                            f"Won by {msg.author.mention}"
+                            f"\nThe word was: `{msg.content}`")
+                rep = await msg.reply(f"Correct! The word was: `{msg.content}`" if xp == 0 else
+                                      f"Correct! The word was: `{msg.content}`"
+                                      f"\nYou earned {xp} XP!")
                 await rep.delete(delay=5)
+
+                # Leveling
+                before_level = get_level_for_xp(msg.guild.id, get_xp(msg.guild.id, msg.author.id))
+                add_xp(msg.guild.id, msg.author.id, get_setting(msg.guild.id, "leveling_xp_per_word_scrambler", 100))
+                after_level = get_level_for_xp(msg.guild.id, get_xp(msg.guild.id, msg.author.id))
+
+                if not msg.channel.permissions_for(msg.guild.me).send_messages:
+                    return
+
+                if msg.guild.me.guild_permissions.manage_roles:
+                    await update_roles_for_member(msg.guild, msg.author)
+
+                if before_level != after_level and msg.channel.can_send():
+                    msg2 = await msg.channel.send(
+                        trl(msg.author.id, msg.guild.id, "leveling_level_up").format(mention=msg.author.mention,
+                                                                                     level=str(after_level)))
+                    await msg2.delete(delay=5)
 
                 end_word_scrambler(msg.channel.id)
         except Exception as e:
