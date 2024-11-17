@@ -3,8 +3,11 @@ import logging
 import discord
 import sentry_sdk
 from discord.ext import commands as discord_commands_ext
+from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from dotenv import load_dotenv
+from sentry_sdk.integrations.pymongo import PyMongoIntegration
 
 load_dotenv()
 
@@ -41,7 +44,10 @@ BOT_VERSION = get_key("Bot_Version", "3.5")
 
 if get_key("Sentry_Enabled", "false") == "true":
     sentry_sdk.init(get_key("Sentry_DSN"),
-                    integrations=[LoggingIntegration(level=logging.INFO, event_level=logging.WARN)],
+                    integrations=[LoggingIntegration(level=logging.INFO, event_level=logging.WARN),
+                                  AioHttpIntegration(),
+                                  AsyncioIntegration(),
+                                  PyMongoIntegration()],
                     traces_sample_rate=1.0,
                     profiles_sample_rate=1.0)
 
