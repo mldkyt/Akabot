@@ -14,8 +14,17 @@ SEND_METHOD = get_key("Send_Server_Count_Method", "post")
 SEND_URL = get_key("Send_Server_Count_URL", "")
 
 TOPGG_SEND = get_key("TopGG_Send", "false") == "true"
-TOPGG_TOKEN = get_key("TopGG_Token", "")
-TOPGG_BOT_ID = get_key("TopGG_Bot_ID", "")
+TOPGG_TOKEN = get_key("TopGG_Token", "None")
+TOPGG_BOT_ID = get_key("TopGG_Bot_ID", "None")
+
+if SEND_URL == "None":
+    SEND_URL = None
+
+if TOPGG_TOKEN == "None":
+    TOPGG_TOKEN = None
+
+if TOPGG_BOT_ID == "None":
+    TOPGG_BOT_ID = None
 
 
 class SendServerCount(discord.Cog):
