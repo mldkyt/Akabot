@@ -1,0 +1,36 @@
+
+services:
+    akabot:
+        env_file: .env
+        build: .
+        develop:
+            watch:
+                - path: features/
+                  target: /app/features
+                  action: sync+restart
+                - path: utils/
+                  target: /app/utils
+                  action: sync+restart
+                - path: main.py
+                  target: /app
+                  action: sync+restart
+                - path: database.py
+                  target: /app
+                  action: sync+restart
+                - path: lang/
+                  target: /app/lang
+                  action: sync
+                - path: Dockerfile
+                  action: rebuild
+                - path: requirements.txt
+                  action: rebuild
+        networks:
+            - akabot
+    mongodb:
+        image: mongo:latest
+        networks:
+            - akabot
+
+networks:
+    akabot:
+        driver: bridge
