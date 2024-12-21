@@ -4,6 +4,7 @@ import sentry_sdk
 from discord.ext import commands as cmds_ext
 from discord.ui import View
 from discord.ui.input_text import InputText
+import gitlab
 
 from utils.analytics import analytics
 from utils.config import get_key
@@ -44,37 +45,71 @@ class BugReportModal(discord.ui.Modal):
         self.add_item(self.title_input)
         self.add_item(self.description_input)
 
+    async def submit_bug_report_on_github(self, interaction: discord.Interaction):
+        issue_body = ("- This bug report was created by {display} ({user} {id}) on Discord\n\n"
+                      "---\n\n"
+                      "### The issue was described by the user as follows:\n\n"
+                      "{desc}".format(display=interaction.user.display_name,
+                                      user=interaction.user.name,
+                                      id=interaction.user.id,
+                                      desc=self.description_input.value))
+
+        git_user = get_key("GitHub_User")
+        git_repo = get_key("GitHub_Repo")
+        token = get_key("GitHub_Token")
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        data = {
+            "title": "Bug Report: {bug}".format(bug=self.title_input.value),
+            "body": issue_body,
+            "labels": ["bug", "in-bot"]
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers,
+                                    json=data) as response:
+                if response.status != 201:
+                    await interaction.response.send_message(f"Failed to submit bug report: {await response.text()}",
+                                                            ephemeral=True)
+                    return
+        await interaction.response.send_message(
+            trl(self.user_id, 0, "feedback_bug_report_submitted", append_tip=True), ephemeral=True)
+
+    async def submit_bug_report_on_gitlab(self, interaction: discord.Interaction):
+        issue_body = ("- This bug report was created by {display} ({user} {id}) on Discord\n\n"
+                      "---\n\n"
+                      "### The issue was described by the user as follows:\n\n"
+                      "{desc}".format(display=interaction.user.display_name,
+                                      user=interaction.user.name,
+                                      id=interaction.user.id,
+                                      desc=self.description_input.value))
+
+        gitlab_instance = get_key("GitLab_Instance", "https://gitlab.com")
+        gitlab_project_id = get_key("GitLab_ProjectID")
+        gitlab_token = get_key("GitLab_Token")
+
+        gl = gitlab.Gitlab(url=gitlab_instance, private_token=gitlab_token)
+        gl.projects.get(gitlab_project_id).issues.create({
+            'title': f'Bug Report: {self.title_input.value}',
+            'description': issue_body,
+            'labels': ['bug', 'in-bot']
+        })
+
+        await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
+                                                ephemeral=True)
+
     async def callback(self, interaction: discord.Interaction):
         try:
-            issue_body = ("- This bug report was created by {display} ({user} {id}) on Discord\n\n"
-                          "---\n\n"
-                          "### The issue was described by the user as follows:\n\n"
-                          "{desc}".format(display=interaction.user.display_name,
-                                          user=interaction.user.name,
-                                          id=interaction.user.id,
-                                          desc=self.description_input.value))
+            issue_platform = get_key("Issue_Platform", "github")
 
-            git_user = get_key("GitHub_User")
-            git_repo = get_key("GitHub_Repo")
-            token = get_key("GitHub_Token")
-            headers = {
-                "Authorization": f"token {token}",
-                "Accept": "application/vnd.github.v3+json"
-            }
-            data = {
-                "title": "Bug Report: {bug}".format(bug=self.title_input.value),
-                "body": issue_body,
-                "labels": ["bug", "in-bot"]
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers,
-                                        json=data) as response:
-                    if response.status != 201:
-                        await interaction.response.send_message(f"Failed to submit bug report: {await response.text()}",
-                                                                ephemeral=True)
-                        return
-            await interaction.response.send_message(
-                trl(self.user_id, 0, "feedback_bug_report_submitted", append_tip=True), ephemeral=True)
+            if issue_platform == "github":
+                await self.submit_bug_report_on_github(interaction)
+            elif issue_platform == "gitlab":
+                await self.submit_bug_report_on_gitlab(interaction)
+            else:
+                await interaction.respond("Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.", ephemeral=True)
+
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await interaction.response.send_message(trl(self.user_id, 0, "command_error_generic"), ephemeral=True)
@@ -95,37 +130,72 @@ class FeatureModal(discord.ui.Modal):
         self.add_item(self.title_input)
         self.add_item(self.description_input)
 
+    async def submit_feature_on_github(self, interaction: discord.Interaction):
+        issue_body = ("- This feature request was created by {display} ({user} {id}) on Discord\n\n"
+                      "---\n\n"
+                      "### The issue was described by the user as follows:\n\n"
+                      "{desc}".format(display=interaction.user.display_name,
+                                      user=interaction.user.name,
+                                      id=interaction.user.id,
+                                      desc=self.description_input.value))
+
+        git_user = get_key("GitHub_User")
+        git_repo = get_key("GitHub_Repo")
+        token = get_key("GitHub_Token")
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        data = {
+            "title": "Feature request: {title}".format(title=self.title_input.value),
+            "body": issue_body,
+            "labels": ["enhancement", "in-bot"]
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers,
+                                    json=data) as response:
+                if response.status != 201:
+                    await interaction.response.send_message(
+                        f"Failed to submit feature request: {await response.text()}", ephemeral=True)
+                    return
+        await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
+                                                ephemeral=True)
+
+    async def submit_feature_on_gitlab(self, interaction: discord.Interaction):
+        issue_body = ("- This feature request was created by {display} ({user} {id}) on Discord\n\n"
+                      "---\n\n"
+                      "### The issue was described by the user as follows:\n\n"
+                      "{desc}".format(display=interaction.user.display_name,
+                                      user=interaction.user.name,
+                                      id=interaction.user.id,
+                                      desc=self.description_input.value))
+
+        gitlab_instance = get_key("GitLab_Instance", "https://gitlab.com")
+        gitlab_project_id = get_key("GitLab_ProjectID")
+        gitlab_token = get_key("GitLab_Token")
+
+        gl = gitlab.Gitlab(url=gitlab_instance, private_token=gitlab_token)
+        gl.projects.get(gitlab_project_id).issues.create({
+            'title': f'Feature Request: {self.title_input.value}',
+            'description': issue_body,
+            'labels': ['suggestion', 'in-bot']
+        })
+
+        await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
+                                                ephemeral=True)
+
+
     async def callback(self, interaction: discord.Interaction):
         try:
-            issue_body = ("- This feature request was created by {display} ({user} {id}) on Discord\n\n"
-                          "---\n\n"
-                          "### The issue was described by the user as follows:\n\n"
-                          "{desc}".format(display=interaction.user.display_name,
-                                          user=interaction.user.name,
-                                          id=interaction.user.id,
-                                          desc=self.description_input.value))
+            issue_platform = get_key("Issue_Platform", "github")
 
-            git_user = get_key("GitHub_User")
-            git_repo = get_key("GitHub_Repo")
-            token = get_key("GitHub_Token")
-            headers = {
-                "Authorization": f"token {token}",
-                "Accept": "application/vnd.github.v3+json"
-            }
-            data = {
-                "title": "Feature request: {title}".format(title=self.title_input.value),
-                "body": issue_body,
-                "labels": ["enhancement", "in-bot"]
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(f"https://api.github.com/repos/{git_user}/{git_repo}/issues", headers=headers,
-                                        json=data) as response:
-                    if response.status != 201:
-                        await interaction.response.send_message(
-                            f"Failed to submit feature request: {await response.text()}", ephemeral=True)
-                        return
-            await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
-                                                    ephemeral=True)
+            if issue_platform == "github":
+                await self.submit_feature_on_github(interaction)
+            elif issue_platform == "gitlab":
+                await self.submit_feature_on_gitlab(interaction)
+            else:
+                await interaction.respond("Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.", ephemeral=True)
+
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await interaction.response.send_message(trl(self.user_id, 0, "command_error_generic"), ephemeral=True)
@@ -145,11 +215,11 @@ class ConfirmSubmitBugReport(discord.ui.View):
         self.cancel_github.callback = self.cancel_gh
         self.add_item(self.cancel_github)
 
-    async def submit(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def submit(self, interaction: discord.Interaction):
         modal = BugReportModal(self.user_id)
         await interaction.response.send_modal(modal)
 
-    async def cancel_gh(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def cancel_gh(self, interaction: discord.Interaction):
         self.disable_all_items()
         await interaction.respond(
             trl(self.user_id, 0, "feedback_bug_report_direct", append_tip=True),
@@ -170,11 +240,11 @@ class ConfirmSubmitFeatureRequest(discord.ui.View):
         self.cancel_github.callback = self.cancel_gh
         self.add_item(self.cancel_github)
 
-    async def submit(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def submit(self, interaction: discord.Interaction):
         modal = FeatureModal(self.user_id)
         await interaction.response.send_modal(modal)
 
-    async def cancel_gh(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def cancel_gh(self, interaction: discord.Interaction):
         await interaction.respond(
             trl(self.user_id, 0, "feedback_feature_direct", append_tip=True),
             ephemeral=True)
