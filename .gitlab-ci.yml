@@ -7,15 +7,13 @@ stages:          # List of stages for jobs, and their order of execution
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
-    - docker build -t localhost:5000/akabot-msg:latest .
-    - docker image push localhost:5000/akabot-msg:latest
+    - docker build -t akabot-msg:latest .
   only:
     - "4.0-msg"
 
 build-dev-job:
   stage: build
   script:
-    - docker build -t localhost:5000/akabot-msg:devel .
-    - docker image push localhost:5000/akabot-msg:devel
+    - docker build -t akabot-msg:devel .
   except:
     - "4.0-msg"
