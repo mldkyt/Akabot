@@ -15,4 +15,6 @@ COPY lang/ /app/lang/
 COPY docs/ /app/docs/
 COPY configs/ /app/configs/
 
+STOPSIGNAL SIGKILL
+
 CMD ["python", "/app/main.py"]

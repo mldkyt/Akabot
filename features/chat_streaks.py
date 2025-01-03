@@ -69,7 +69,6 @@ class ChatStreakStorage:
 
         return "stayed", after_update, 0
 
-
     def reset_streak(self, guild_id: int, member_id: int) -> None:
         """Reset streak
 
@@ -80,7 +79,8 @@ class ChatStreakStorage:
 
         if client['ChatStreaks'].find_one({'GuildID': str(guild_id), 'MemberID': str(member_id)}) is None:
             client['ChatStreaks'].insert_one(
-                {'GuildID': str(guild_id), 'MemberID': str(member_id), 'LastMessage': get_server_midnight_time(guild_id),
+                {'GuildID': str(guild_id), 'MemberID': str(member_id),
+                 'LastMessage': get_server_midnight_time(guild_id),
                  'StartTime': get_server_midnight_time(guild_id)})
         else:
             client['ChatStreaks'].update_one({'GuildID': str(guild_id), 'MemberID': str(member_id)},

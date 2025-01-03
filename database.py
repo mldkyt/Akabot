@@ -9,3 +9,6 @@ port = get_key("DB_Port", "27017")
 db = get_key("DB_Database", "akabot")
 
 client = MongoClient(f'mongodb://{name}:{password}@{host}:{port}/', 27017)[db]
+if client is None:
+    print('Database connection failed')
+    exit(1)
