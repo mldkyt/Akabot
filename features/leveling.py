@@ -7,7 +7,9 @@ import emoji
 import sentry_sdk
 from discord.ext import commands as commands_ext
 
+from database import client
 from utils.analytics import analytics
+from utils.generic import validate_day
 from utils.languages import get_translation_for_key_localized as trl, get_language
 from utils.leveling import calc_multiplier, get_xp, add_xp, get_level_for_xp, get_xp_for_level, \
     add_mult, mult_exists, mult_change_name, mult_change_multiplier, \
@@ -18,7 +20,6 @@ from utils.per_user_settings import get_per_user_setting, set_per_user_setting
 from utils.settings import get_setting, set_setting
 from utils.tips import append_tip_to_message
 from utils.tzutil import get_now_for_server
-from utils.generic import validate_day
 
 
 class Leveling(discord.Cog):
@@ -657,6 +658,45 @@ class Leveling(discord.Cog):
             else:
                 await ctx.respond(trl(ctx.user.id, ctx.guild.id, "leveling_set_icon_error"), ephemeral=True)
 
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
+
+    @leveling_subcommand.command(name='leaderboard', description='Get the leaderboard for the server')
+    async def leveling_lb(self, ctx: discord.ApplicationContext):
+        try:
+            # Get the top 10 users
+            top_users = client['Leveling'].aggregate([
+                {
+                    '$match': {
+                        'GuildID': str(ctx.guild.id)
+                    }
+                },
+                {
+                    '$sort': {
+                        'XP': -1
+                    }
+                }
+            ])  # type: list[dict]
+            # has GuildID, UserID, XP
+
+            # Create the embed
+            leaderboard_message = trl(ctx.user.id, ctx.guild.id, "leveling_leaderboard_title")
+
+            # Add the users to the embed
+            i = 1
+            for _, user in enumerate(top_users):
+                user_obj = ctx.guild.get_member(int(user['UserID']))
+                if user_obj is None:
+                    continue
+                leaderboard_message += trl(ctx.user.id, ctx.guild.id, "leveling_leaderboard_row").format(
+                    position=i, user=user_obj.mention, level=get_level_for_xp(ctx.guild.id, user['XP']), xp=user['XP'])
+                i += 1
+
+                if i > 10:
+                    break
+
+            await ctx.respond(leaderboard_message, ephemeral=True)
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)

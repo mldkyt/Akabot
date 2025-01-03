@@ -137,6 +137,8 @@
   "leveling_error_invalid_extra_requirement": "Invalid extra requirement parameter. This parameter MUST NOT be zero and MUST be less than 4000. Set extra to 0 for no effort boosting.",
   "leveling_error_invalid_extra": "Invalid extra parameter. This parameter MUST be greater than or equal to 0 and MUST NOT be too much.",
   "leveling_error_invalid_initial": "Invalid initial parameter. This parameter MUST be greater than or equal to 0 and MUST NOT be too much.",
+  "leveling_leaderboard_title": "# Leveling Leaderboard\n",
+  "leveling_leaderboard_row": "{position}. {user} - Level {level} - {xp} XP\n",
   "logging_emoji_added_title": "Emoji Added",
   "logging_emoji_added": "An emoji named {name}, which isn't animated, was added",
   "logging_animated_emoji_added": "An emoji named {name}, which is animated, was added",
