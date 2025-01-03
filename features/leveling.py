@@ -4,7 +4,7 @@ import re
 import discord
 import emoji
 import sentry_sdk
-from discord.ext import commands as commands_ext
+from discord.ext import commands as commands_ext, pages
 
 from database import client
 from utils.analytics import analytics
@@ -796,6 +796,9 @@ class Leveling(discord.Cog):
             ])  # type: list[dict]
             # has GuildID, UserID, XP
 
+            lb_pages = []
+            insert_last = False
+
             # Create the embed
             leaderboard_message = trl(ctx.user.id, ctx.guild.id, "leveling_leaderboard_title")
 
@@ -808,11 +811,28 @@ class Leveling(discord.Cog):
                 leaderboard_message += trl(ctx.user.id, ctx.guild.id, "leveling_leaderboard_row").format(
                     position=i, user=user_obj.mention, level=get_level_for_xp(ctx.guild.id, user['XP']), xp=user['XP'])
                 i += 1
+                insert_last = True
 
-                if i > 10:
-                    break
+                if i % 10 == 0:
+                    if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                        language = get_language(ctx.guild.id, ctx.user.id)
+                        leaderboard_message = append_tip_to_message(ctx.guild.id, ctx.user.id, leaderboard_message,
+                                                                    language)
 
-            await ctx.respond(leaderboard_message, ephemeral=True)
+                    lb_pages.append(leaderboard_message)
+                    leaderboard_message = trl(ctx.user.id, ctx.guild.id, "leveling_leaderboard_title")
+                    insert_last = False
+
+            if not insert_last:
+                if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                    language = get_language(ctx.guild.id, ctx.user.id)
+                    leaderboard_message = append_tip_to_message(ctx.guild.id, ctx.user.id, leaderboard_message,
+                                                                language)
+
+                lb_pages.append(leaderboard_message)
+
+            pages_resp = pages.Paginator(pages=lb_pages)
+            await pages_resp.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
