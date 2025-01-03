@@ -2,7 +2,7 @@ import datetime
 
 import discord
 import sentry_sdk
-from discord.ext import commands as commands_ext
+from discord.ext import commands as commands_ext, pages
 
 from database import client
 from utils.analytics import analytics
@@ -205,6 +205,8 @@ class ChatStreaks(discord.Cog):
                 }
             ]).to_list()
 
+            lb_pages = []
+            lb_last = False
             message = trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_title")
 
             i = 1
@@ -220,14 +222,23 @@ class ChatStreaks(discord.Cog):
                                                                                                  days=str(days))
 
                 i += 1
+                lb_last = True
 
-                if i > 10:
-                    break
+                if i % 10 == 0:
+                    lb_pages.append(message)
+                    message = trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_title")
+                    lb_last = False
+
+            if lb_last:
+                # Insert last page element if there are rows
+                lb_pages.append(message)
 
             if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
                 language = get_language(ctx.guild.id, ctx.user.id)
                 message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
-            await ctx.respond(message, ephemeral=True)
+            # await ctx.respond(message, ephemeral=True)
+            resp = pages.Paginator(pages=lb_pages)
+            await resp.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
