@@ -1,12 +1,43 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import logging
 
 import discord
 import sentry_sdk
 from discord.ext import commands as discord_commands_ext
+from dotenv import load_dotenv
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from dotenv import load_dotenv
 from sentry_sdk.integrations.pymongo import PyMongoIntegration
 
 load_dotenv()
@@ -19,7 +50,6 @@ from features import welcoming, leveling, antiraid, chat_streaks, chat_revive, c
 from utils.config import get_key
 from utils.db_converter import update
 from utils.languages import get_translation_for_key_localized as trl
-
 
 log_level = get_key("Log_Level", "info")
 if log_level == "debug":
@@ -96,7 +126,7 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
     if isinstance(error, discord_commands_ext.BotMissingPermissions):
         await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_bot_no_perm").format(
             permissions=', '.join(error.missing_permissions)),
-                          ephemeral=True)
+            ephemeral=True)
         return
 
     sentry_sdk.capture_exception(error)

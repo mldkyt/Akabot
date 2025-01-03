@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 ### Media Downloader: Use Cobalt.tools to download media and repost it as files.
 ### THIS REQUIRES MESSAGE CONTENT INTENT FOR IT TO WORK!
 import datetime
@@ -82,14 +99,16 @@ class MediaDownloader(discord.Cog):
         if msg.guild.id in self.server_info:
             if (datetime.datetime.now() - self.server_info[msg.guild.id]).total_seconds() < 60:
                 if get_setting(msg.guild.id, f'{msg.channel.id}_media_downloader_verbose', 'false') == 'true':
-                    await msg.reply("Can't download right now. Please wait for the other download to finish.\n-# " + get_random_tip())
+                    await msg.reply(
+                        "Can't download right now. Please wait for the other download to finish.\n-# " + get_random_tip())
                 return
 
         self.server_info[msg.guild.id] = datetime.datetime.now()
 
         first_url = urls[0]
 
-        audio_only = "-a" in msg.content or get_setting(msg.guild.id, f'{msg.channel.id}_media_downloader_music', 'false') == 'true'
+        audio_only = "-a" in msg.content or get_setting(msg.guild.id, f'{msg.channel.id}_media_downloader_music',
+                                                        'false') == 'true'
         original_audio = "-o" in msg.content
 
         message = None
@@ -121,7 +140,8 @@ class MediaDownloader(discord.Cog):
             }, json=json_data) as details:
                 if details.status != 200:
                     if message is not None:
-                        await message.edit(content="There was an error downloading the media. Server returned a non-2xx status code.\n-# " + get_random_tip())
+                        await message.edit(
+                            content="There was an error downloading the media. Server returned a non-2xx status code.\n-# " + get_random_tip())
                         await message.delete(delay=5)
                     del self.server_info[msg.guild.id]
                     return
@@ -130,7 +150,8 @@ class MediaDownloader(discord.Cog):
 
                 if details['status'] == "error":
                     if message is not None:
-                        await message.edit(content="There was an error downloading the media. Service returned an error.\n-# " + get_random_tip())
+                        await message.edit(
+                            content="There was an error downloading the media. Service returned an error.\n-# " + get_random_tip())
                         await message.delete(delay=5)
                     del self.server_info[msg.guild.id]
                     return
@@ -146,7 +167,8 @@ class MediaDownloader(discord.Cog):
                                     break
                                 f.write(chunk)
 
-                    if os.path.exists(details['filename']) and 0 < os.path.getsize(details['filename']) < self.max_upload_size:
+                    if os.path.exists(details['filename']) and 0 < os.path.getsize(
+                            details['filename']) < self.max_upload_size:
                         if message is not None:
                             await message.edit(
                                 content=f"Uploading {details['filename']} ({math.floor(os.path.getsize(details['filename']) / 1024)}KB / {math.floor(self.max_upload_size / 1024)}KB)...\n-# " + get_random_tip())
@@ -157,7 +179,8 @@ class MediaDownloader(discord.Cog):
                             await message.delete(delay=5)
                     elif os.path.getsize(details['filename']) > self.max_upload_size:
                         if message is not None:
-                            await message.edit(content=f"File too large ({os.path.getsize(details['filename'])} > {self.max_upload_size})\n-# " + get_random_tip())
+                            await message.edit(
+                                content=f"File too large ({os.path.getsize(details['filename'])} > {self.max_upload_size})\n-# " + get_random_tip())
                         os.remove(details['filename'])
                         if message is not None:
                             await message.edit(content="Done processing.\n-# " + get_random_tip())
@@ -182,7 +205,8 @@ class MediaDownloader(discord.Cog):
                                         break
                                     f.write(chunk)
                         files_downloaded.append(details['audioFilename'])
-                        if os.path.exists(details['audioFilename']) and 0 < os.path.getsize(details['audioFilename']) < self.max_upload_size:
+                        if os.path.exists(details['audioFilename']) and 0 < os.path.getsize(
+                                details['audioFilename']) < self.max_upload_size:
                             files_to_upload.append(discord.File(details['audioFilename']))
 
                     for i in range(0, len(details['picker']), 9):
@@ -201,7 +225,8 @@ class MediaDownloader(discord.Cog):
                                 curr_files_to_upload.append(discord.File(file_name))
 
                         if message is not None:
-                            await message.edit(content=f"Uploading media {i + 1}-{i + 9}/{len(details['picker'])}...\n-# " + get_random_tip())
+                            await message.edit(
+                                content=f"Uploading media {i + 1}-{i + 9}/{len(details['picker'])}...\n-# " + get_random_tip())
                         await msg.reply(files=curr_files_to_upload)
 
                     if message is not None:
@@ -214,7 +239,8 @@ class MediaDownloader(discord.Cog):
 
     media_downloader_group = discord.SlashCommandGroup(name="media_downloader", description="Media downloader settings")
 
-    @media_downloader_group.command(name="enabled", description="Set if the media downloader is enabled in this channel.")
+    @media_downloader_group.command(name="enabled",
+                                    description="Set if the media downloader is enabled in this channel.")
     @discord.default_permissions(manage_guild=True)
     @commands.has_permissions(manage_guild=True)
     @commands.guild_only()

@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import discord
 import sentry_sdk
 from discord.ext import commands as commands_ext
@@ -91,7 +108,8 @@ class ReactionRoles(discord.Cog):
                 ephemeral=True)
         except Exception as e:
             sentry_sdk.capture_exception(e)
-            await interaction.response.send_message(trl(interaction.user.id, interaction.guild.id, "command_error_generic"), ephemeral=True)
+            await interaction.response.send_message(
+                trl(interaction.user.id, interaction.guild.id, "command_error_generic"), ephemeral=True)
 
     @reaction_roles_subcommand.command(name="edit", description="Edit a reaction role")
     @discord.default_permissions(manage_roles=True)
@@ -142,7 +160,8 @@ class ReactionRoles(discord.Cog):
                 ephemeral=True)
         except Exception as e:
             sentry_sdk.capture_exception(e)
-            await interaction.response.send_message(trl(interaction.user.id, interaction.guild.id, "command_error_generic"), ephemeral=True)
+            await interaction.response.send_message(
+                trl(interaction.user.id, interaction.guild.id, "command_error_generic"), ephemeral=True)
 
     @discord.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction) -> None:

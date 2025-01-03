@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import datetime
 import logging
 import random
@@ -155,9 +172,11 @@ class WordScrambler(discord.Cog):
 
             start_word_scrambler(ctx.channel.id, msg.id, word)
 
-            await ctx.followup.send(trl(ctx.user.id, ctx.guild.id, "word_scramble_started", append_tip=True), ephemeral=True)
+            await ctx.followup.send(trl(ctx.user.id, ctx.guild.id, "word_scramble_started", append_tip=True),
+                                    ephemeral=True)
         except Exception as e:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_start_failed", append_tip=True), ephemeral=True)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_start_failed", append_tip=True),
+                              ephemeral=True)
             sentry_sdk.capture_exception(e)
 
     @word_scramble_commands.command(name="end", description="Force end a word scramble game in this channel")
@@ -166,18 +185,21 @@ class WordScrambler(discord.Cog):
     async def word_scramble_end(self, ctx: discord.ApplicationContext):
         try:
             if not is_word_scrambler_running(ctx.channel.id):
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_not_running", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_not_running", append_tip=True),
+                                  ephemeral=True)
                 return
 
             message = get_word_scrambler_original_message(ctx.channel.id)
             if message is not None:
                 message = await ctx.channel.fetch_message(message)
-                await message.edit(content=trl(0, ctx.guild.id, "word_scramble_message_ended_forcibly", append_tip=True))
+                await message.edit(
+                    content=trl(0, ctx.guild.id, "word_scramble_message_ended_forcibly", append_tip=True))
 
             end_word_scrambler(ctx.channel.id)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_stopped", append_tip=True), ephemeral=True)
         except Exception as e:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_stop_failed", append_tip=True), ephemeral=True)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_stop_failed", append_tip=True),
+                              ephemeral=True)
             sentry_sdk.capture_exception(e)
 
     @word_scramble_commands.command(name="set_channel", description="Add a channel or set settings for word scramble")
@@ -193,11 +215,13 @@ class WordScrambler(discord.Cog):
                                         chance: int, min_characters: int, max_characters: int, context: str):
         try:
             if min_characters < 3:
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_min_length", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_min_length", append_tip=True),
+                                  ephemeral=True)
                 return
 
             if max_characters > 20:
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_max_length", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_max_length", append_tip=True),
+                                  ephemeral=True)
                 return
 
             if min_characters > max_characters:
@@ -206,7 +230,8 @@ class WordScrambler(discord.Cog):
                 return
 
             if chance < 1:
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_min_chance", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_min_chance", append_tip=True),
+                                  ephemeral=True)
                 return
 
             if context == "channel messages":
@@ -215,7 +240,8 @@ class WordScrambler(discord.Cog):
                 context = "all_channels"
 
             if context not in ["english", "channel", "all_channels"]:  # Extra check just in case
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_invalid_context", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_invalid_context", append_tip=True),
+                                  ephemeral=True)
                 return
 
             sett = get_setting(ctx.guild.id, "word_scramble_channels", {})
@@ -226,7 +252,8 @@ class WordScrambler(discord.Cog):
                 chance=chance, min_length=min_characters, max_length=max_characters, context=context
             ), ephemeral=True)
         except Exception as e:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_set_failed", append_tip=True), ephemeral=True)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_set_failed", append_tip=True),
+                              ephemeral=True)
             sentry_sdk.capture_exception(e)
 
     @word_scramble_commands.command(name="set_xp_per_game", description="Set XP to add per game won in word scramble")
@@ -244,7 +271,8 @@ class WordScrambler(discord.Cog):
 
         else:
             if xp < 0:
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_xp_min", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_xp_min", append_tip=True),
+                                  ephemeral=True)
                 return
 
             set_setting(ctx.guild.id, "leveling_xp_per_word_scrambler", xp)
@@ -261,11 +289,14 @@ class WordScrambler(discord.Cog):
             if channel.id in sett:
                 del sett[str(channel.id)]
                 set_setting(ctx.guild.id, "word_scramble_channels", sett)
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_remove_channel", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_remove_channel", append_tip=True),
+                                  ephemeral=True)
             else:
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_remove_not_found", append_tip=True), ephemeral=True)
+                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_remove_not_found", append_tip=True),
+                                  ephemeral=True)
         except Exception as e:
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_remove_failed", append_tip=True), ephemeral=True)
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_remove_failed", append_tip=True),
+                              ephemeral=True)
             sentry_sdk.capture_exception(e)
 
     @word_scramble_commands.command(name="set_role", description="Set a ping role for word scramble")
@@ -276,14 +307,17 @@ class WordScrambler(discord.Cog):
         if role is None:
             if unset:
                 set_setting(ctx.guild.id, "word_scramble_ping_role", None)
-                await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_notification_role_unset", append_tip=True), ephemeral=True)
+                await ctx.respond(
+                    trl(ctx.user.id, ctx.guild.id, "word_scramble_notification_role_unset", append_tip=True),
+                    ephemeral=True)
                 return
 
             # await ctx.respond("Current role: " + str(get_setting(ctx.guild.id, "word_scramble_ping_role", "None")),
             #                   ephemeral=True)
-            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "word_scramble_notification_role_current", append_tip=True).format(
-                role=str(get_setting(ctx.guild.id, "word_scramble_ping_role", "None"))
-            ), ephemeral=True)
+            await ctx.respond(
+                trl(ctx.user.id, ctx.guild.id, "word_scramble_notification_role_current", append_tip=True).format(
+                    role=str(get_setting(ctx.guild.id, "word_scramble_ping_role", "None"))
+                ), ephemeral=True)
             return
 
         set_setting(ctx.guild.id, "word_scramble_ping_role", role.id)

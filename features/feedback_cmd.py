@@ -1,10 +1,27 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import aiohttp
 import discord
+import gitlab
 import sentry_sdk
 from discord.ext import commands as cmds_ext
 from discord.ui import View
 from discord.ui.input_text import InputText
-import gitlab
 
 from utils.analytics import analytics
 from utils.config import get_key
@@ -108,7 +125,9 @@ class BugReportModal(discord.ui.Modal):
             elif issue_platform == "gitlab":
                 await self.submit_bug_report_on_gitlab(interaction)
             else:
-                await interaction.respond("Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.", ephemeral=True)
+                await interaction.respond(
+                    "Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.",
+                    ephemeral=True)
 
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -184,7 +203,6 @@ class FeatureModal(discord.ui.Modal):
         await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
                                                 ephemeral=True)
 
-
     async def callback(self, interaction: discord.Interaction):
         try:
             issue_platform = get_key("Issue_Platform", "github")
@@ -194,7 +212,9 @@ class FeatureModal(discord.ui.Modal):
             elif issue_platform == "gitlab":
                 await self.submit_feature_on_gitlab(interaction)
             else:
-                await interaction.respond("Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.", ephemeral=True)
+                await interaction.respond(
+                    "Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.",
+                    ephemeral=True)
 
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -249,11 +269,13 @@ class ConfirmSubmitFeatureRequest(discord.ui.View):
             trl(self.user_id, 0, "feedback_feature_direct", append_tip=True),
             ephemeral=True)
 
+
 class DiscordJoinView(View):
     def __init__(self):
         super().__init__(timeout=180)
 
-        join_btn = discord.ui.Button(label="Join the server", style=discord.ButtonStyle.link, url="https://discord.gg/YFksXpXnn6")
+        join_btn = discord.ui.Button(label="Join the server", style=discord.ButtonStyle.link,
+                                     url="https://discord.gg/YFksXpXnn6")
         self.add_item(join_btn)
 
 

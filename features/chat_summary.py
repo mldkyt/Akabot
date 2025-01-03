@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import datetime
 import logging
 
@@ -176,7 +193,8 @@ class ChatSummary(discord.Cog):
                         if v == 0:
                             continue
                         logging.debug('Appending keyword %s with count %d', k, v)
-                        chat_summary_message += trl(0, guild.id, "chat_summary_keywords_line").format(keyword=k, count=v)
+                        chat_summary_message += trl(0, guild.id, "chat_summary_keywords_line").format(keyword=k,
+                                                                                                      count=v)
 
                 try:
                     await channel.send(chat_summary_message)
@@ -184,7 +202,7 @@ class ChatSummary(discord.Cog):
                     sentry_sdk.capture_exception(e)
 
                 client['ChatSummary'].update_one({'GuildID': str(guild.id), 'ChannelID': str(channel.id)},
-                                                    {'$set': {'Messages': {}, 'MessageCount': 0, 'KeywordsCounting': {}}})
+                                                 {'$set': {'Messages': {}, 'MessageCount': 0, 'KeywordsCounting': {}}})
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
@@ -327,17 +345,22 @@ class ChatSummary(discord.Cog):
             await ctx.respond('Please provide a single keyword.', ephemeral=True)
             return
 
-        res = client['ChatSummary'].update_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id), 'Keywords': {'$exists': False}}, {'$set': {'Keywords': []}})
-        logging.debug('Added Keywords field to %s, matched %d, modified %d', ctx.guild.id, res.matched_count, res.modified_count)
+        res = client['ChatSummary'].update_one(
+            {'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id), 'Keywords': {'$exists': False}},
+            {'$set': {'Keywords': []}})
+        logging.debug('Added Keywords field to %s, matched %d, modified %d', ctx.guild.id, res.matched_count,
+                      res.modified_count)
 
-        res = client['ChatSummary'].find_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id), 'Keywords': kwd})
+        res = client['ChatSummary'].find_one(
+            {'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id), 'Keywords': kwd})
 
         if res is not None:
             logging.debug('Keyword %s already added', kwd)
             await ctx.respond('Keyword already added.', ephemeral=True)
             return
 
-        res = client['ChatSummary'].update_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id)}, {'$push': {'Keywords': kwd}})
+        res = client['ChatSummary'].update_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id)},
+                                               {'$push': {'Keywords': kwd}})
         logging.debug('Added keyword %s, affected %d, matched %d', kwd, res.modified_count, res.matched_count)
 
         await ctx.respond('Keyword added.', ephemeral=True)
@@ -349,14 +372,16 @@ class ChatSummary(discord.Cog):
     @analytics("chatsummary remove_keyword")
     async def chatsummary_remove_kwd(self, ctx: discord.ApplicationContext, kwd: str):
         logging.debug('Removing keyword %s', kwd)
-        res = client['ChatSummary'].find_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id), 'Keywords': kwd})
+        res = client['ChatSummary'].find_one(
+            {'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id), 'Keywords': kwd})
 
         if res is None:
             logging.debug('Keyword wasn\'t found')
             await ctx.respond('Keyword not found.', ephemeral=True)
             return
 
-        res = client['ChatSummary'].update_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id)}, {'$pull': {'Keywords': kwd}, '$unset': {f'KeywordsCounting.{kwd}': ''}})
+        res = client['ChatSummary'].update_one({'GuildID': str(ctx.guild.id), 'ChannelID': str(ctx.channel.id)},
+                                               {'$pull': {'Keywords': kwd}, '$unset': {f'KeywordsCounting.{kwd}': ''}})
         logging.debug('Removed %s, affected %d, matched %d', kwd, res.modified_count, res.matched_count)
 
         await ctx.respond('Keyword removed.', ephemeral=True)

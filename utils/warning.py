@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import datetime
 
 import discord
@@ -39,7 +56,8 @@ async def add_warning(user: discord.Member, guild: discord.Guild, reason: str) -
                 # try dm user
                 try:
                     await user.send(
-                        trl(user.id, guild.id, "warn_actions_auto_kick_dm").format(name=guild.name, warnings=action['Warnings']))
+                        trl(user.id, guild.id, "warn_actions_auto_kick_dm").format(name=guild.name,
+                                                                                   warnings=action['Warnings']))
                 except Exception:
                     pass
                 await user.kick(
@@ -48,10 +66,12 @@ async def add_warning(user: discord.Member, guild: discord.Guild, reason: str) -
                 # try dm user
                 try:
                     await user.send(
-                        trl(user.id, guild.id, "warn_actions_auto_ban_dm").format(name=guild.name, warnings=action['Warnings']))
+                        trl(user.id, guild.id, "warn_actions_auto_ban_dm").format(name=guild.name,
+                                                                                  warnings=action['Warnings']))
                 except Exception:
                     pass
-                await user.ban(reason=trl(user.id, guild.id, "warn_actions_auto_ban_reason").format(warnings=action['Warnings']))
+                await user.ban(
+                    reason=trl(user.id, guild.id, "warn_actions_auto_ban_reason").format(warnings=action['Warnings']))
             elif action['Action'].startswith('timeout'):
                 time = action['Action'].split(' ')[1]
                 total_seconds = 0
@@ -84,7 +104,8 @@ async def add_warning(user: discord.Member, guild: discord.Guild, reason: str) -
 
 
 def db_add_warning(guild_id: int, user_id: int, reason: str) -> ObjectId:
-    res = client['Warnings'].insert_one({'GuildID': str(guild_id), 'UserID': str(user_id), 'Reason': reason, 'Timestamp': get_date_time_str(guild_id)})
+    res = client['Warnings'].insert_one(
+        {'GuildID': str(guild_id), 'UserID': str(user_id), 'Reason': reason, 'Timestamp': get_date_time_str(guild_id)})
     return res.inserted_id
 
 

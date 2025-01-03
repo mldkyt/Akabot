@@ -1,27 +1,47 @@
-import datetime
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 
 import discord
 import sentry_sdk
 from discord.ext import commands, tasks
 
 from database import client
+from utils.languages import get_translation_for_key_localized as trl
+from utils.logging_util import log_into_logs
 from utils.settings import set_setting, get_setting
 from utils.tzutil import get_now_for_server
-from utils.logging_util import log_into_logs
-from utils.languages import  get_translation_for_key_localized as trl
 
 
 def db_add_ticket_channel(guild_id: int, ticket_category: int, user_id: int):
-    client['TicketChannels'].insert_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_category), 'UserID': str(user_id), 'MTime': get_now_for_server(guild_id), 'ATime': 'None'})
+    client['TicketChannels'].insert_one(
+        {'GuildID': str(guild_id), 'TicketChannelID': str(ticket_category), 'UserID': str(user_id),
+         'MTime': get_now_for_server(guild_id), 'ATime': 'None'})
 
 
 def db_is_ticket_channel(guild_id: int, ticket_channel_id: int):
-    count = client['TicketChannels'].count_documents({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})
+    count = client['TicketChannels'].count_documents(
+        {'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})
     return count > 0
 
 
 def db_get_ticket_creator(guild_id: int, ticket_channel_id: int) -> int:
-    user_id = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})['UserID']
+    user_id = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})[
+        'UserID']
     return int(user_id)
 
 
@@ -30,7 +50,8 @@ def db_remove_ticket_channel(guild_id: int, ticket_channel_id: int):
 
 
 def db_update_mtime(guild_id: int, ticket_channel_id: int):
-    client['TicketChannels'].update_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)}, {'$set': {'MTime': get_now_for_server(guild_id)}})
+    client['TicketChannels'].update_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)},
+                                        {'$set': {'MTime': get_now_for_server(guild_id)}})
 
 
 def check_ticket_archive_time(guild_id: int, ticket_channel_id: int) -> bool:
@@ -38,7 +59,8 @@ def check_ticket_archive_time(guild_id: int, ticket_channel_id: int) -> bool:
     if archive_time == "0":
         return False
 
-    mtime = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})['MTime']
+    mtime = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})[
+        'MTime']
 
     if mtime is None:
         return False
@@ -50,7 +72,8 @@ def check_ticket_archive_time(guild_id: int, ticket_channel_id: int) -> bool:
 
 
 def db_is_archived(guild_id: int, ticket_channel_id: int) -> bool:
-    atime = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})['ATime']
+    atime = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})[
+        'ATime']
     return atime != "None"
 
 
@@ -62,7 +85,8 @@ def check_ticket_hide_time(guild_id: int, ticket_channel_id: int) -> bool:
     if hide_time == "0":
         return False
 
-    atime = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})['ATime']
+    atime = client['TicketChannels'].find_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)})[
+        'ATime']
 
     if atime == 'None':
         return False
@@ -74,7 +98,8 @@ def check_ticket_hide_time(guild_id: int, ticket_channel_id: int) -> bool:
 
 
 def db_archive_ticket(guild_id: int, ticket_channel_id: int):
-    client['TicketChannels'].update_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)}, {'$set': {'ATime': get_now_for_server(guild_id)}})
+    client['TicketChannels'].update_one({'GuildID': str(guild_id), 'TicketChannelID': str(ticket_channel_id)},
+                                        {'$set': {'ATime': get_now_for_server(guild_id)}})
 
 
 def db_list_archived_tickets():
@@ -119,7 +144,8 @@ class TicketMessageView(discord.ui.View):
         if int(hide_time) > 0:
             print('[Tickets] Taking away send permissions')
             member = interaction.guild.get_member(db_get_ticket_creator(interaction.guild.id, interaction.channel.id))
-            await interaction.channel.set_permissions(member, view_channel=True, read_messages=True, send_messages=False)
+            await interaction.channel.set_permissions(member, view_channel=True, read_messages=True,
+                                                      send_messages=False)
             db_archive_ticket(interaction.guild.id, interaction.channel.id)
         else:
             print('[Tickets] Taking away ALL permissions')
@@ -168,7 +194,8 @@ class TicketCreateView(discord.ui.View):
 
         await interaction.response.send_message("Ticket created! " + channel.mention, ephemeral=True)
 
-        log_embed = discord.Embed(title="Ticket Created", description=f"Ticket created by {interaction.user.mention} in {channel.mention}")
+        log_embed = discord.Embed(title="Ticket Created",
+                                  description=f"Ticket created by {interaction.user.mention} in {channel.mention}")
         log_embed.add_field(name="Ticket ID", value=channel.id)
         log_embed.add_field(name="Ticket Creator", value=interaction.user.mention)
         log_embed.add_field(name="Ticket Channel", value=channel.mention)

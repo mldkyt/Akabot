@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import datetime
 
 import discord
@@ -37,12 +54,9 @@ class ChatStreakStorage:
 
         if not res:
             start_time = get_server_midnight_time(guild_id)
-            client['ChatStreaks'].insert_one({
-                'GuildID': str(guild_id),
-                'MemberID': str(member_id),
-                'LastMessage': start_time,
-                'StartTime': start_time
-            })
+            client['ChatStreaks'].insert_one(
+                {'GuildID': str(guild_id), 'MemberID': str(member_id), 'LastMessage': start_time,
+                 'StartTime': start_time})
 
             return "started", 0, 0
 
@@ -52,9 +66,9 @@ class ChatStreakStorage:
         # Check for streak expiry
         if get_server_midnight_time(guild_id) - last_message > datetime.timedelta(days=1, hours=1):
             streak = max((last_message - start_time).days, 0)
-            client['ChatStreaks'].update_one({'GuildID': str(guild_id), 'MemberID': str(member_id)},
-                                             {'$set': {'LastMessage': get_server_midnight_time(guild_id),
-                                                       'StartTime': get_server_midnight_time(guild_id)}})
+            client['ChatStreaks'].update_one({'GuildID': str(guild_id), 'MemberID': str(member_id)}, {
+                '$set': {'LastMessage': get_server_midnight_time(guild_id),
+                         'StartTime': get_server_midnight_time(guild_id)}})
             return "expired", streak, 0
 
         before_update = (last_message - start_time).days
@@ -78,14 +92,13 @@ class ChatStreakStorage:
         """
 
         if client['ChatStreaks'].find_one({'GuildID': str(guild_id), 'MemberID': str(member_id)}) is None:
-            client['ChatStreaks'].insert_one(
-                {'GuildID': str(guild_id), 'MemberID': str(member_id),
-                 'LastMessage': get_server_midnight_time(guild_id),
-                 'StartTime': get_server_midnight_time(guild_id)})
+            client['ChatStreaks'].insert_one({'GuildID': str(guild_id), 'MemberID': str(member_id),
+                                              'LastMessage': get_server_midnight_time(guild_id),
+                                              'StartTime': get_server_midnight_time(guild_id)})
         else:
-            client['ChatStreaks'].update_one({'GuildID': str(guild_id), 'MemberID': str(member_id)},
-                                             {'$set': {'LastMessage': get_server_midnight_time(guild_id),
-                                                       'StartTime': get_server_midnight_time(guild_id)}})
+            client['ChatStreaks'].update_one({'GuildID': str(guild_id), 'MemberID': str(member_id)}, {
+                '$set': {'LastMessage': get_server_midnight_time(guild_id),
+                         'StartTime': get_server_midnight_time(guild_id)}})
 
 
 class ChatStreaks(discord.Cog):
@@ -100,8 +113,7 @@ class ChatStreaks(discord.Cog):
             if message.author.bot:
                 return
 
-            (state, old_streak, new_streak) = self.streak_storage.set_streak(
-                message.guild.id, message.author.id)
+            (state, old_streak, new_streak) = self.streak_storage.set_streak(message.guild.id, message.author.id)
 
             print('[Chat Streaks] Info', state, old_streak, new_streak)
 
@@ -123,8 +135,7 @@ class ChatStreaks(discord.Cog):
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
-    streaks_subcommand = discord.SlashCommandGroup(
-        name='streaks', description='Manage the chat streaks')
+    streaks_subcommand = discord.SlashCommandGroup(name='streaks', description='Manage the chat streaks')
 
     @streaks_subcommand.command(name="reset", description="Reset streak for a specific user")
     @commands_ext.guild_only()
@@ -141,8 +152,7 @@ class ChatStreaks(discord.Cog):
             logging_embed = discord.Embed(title=trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_log_title"))
             logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "chat_streaks_reset_log_admin"),
                                     value=f'{ctx.user.mention}')
-            logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_user"),
-                                    value=f'{user.mention}')
+            logging_embed.add_field(name=trl(ctx.user.id, ctx.guild.id, "logging_user"), value=f'{user.mention}')
 
             # Send to log
             await log_into_logs(ctx.guild, logging_embed)
@@ -191,19 +201,9 @@ class ChatStreaks(discord.Cog):
     @analytics("streaks leaderboard")
     async def streaks_lb(self, ctx: discord.ApplicationContext):
         try:
-            rows = client['ChatStreaks'].aggregate([
-                {
-                    "$match": {"GuildID": str(ctx.guild.id)}
-                },
-                {
-                    "$addFields": {
-                        "MaxStreak": {"$max": {'$divide': [{"$subtract": ["$LastMessage", "$StartTime"]}, 86400000]}}
-                    }
-                },
-                {
-                    "$sort": {"MaxStreak": -1}
-                }
-            ]).to_list()
+            rows = client['ChatStreaks'].aggregate([{"$match": {"GuildID": str(ctx.guild.id)}}, {"$addFields": {
+                "MaxStreak": {"$max": {'$divide': [{"$subtract": ["$LastMessage", "$StartTime"]}, 86400000]}}}},
+                                                    {"$sort": {"MaxStreak": -1}}]).to_list()
 
             lb_pages = []
             lb_last = False

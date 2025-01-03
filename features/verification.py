@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import random
 
 import discord
@@ -149,7 +166,7 @@ class VerificationEnglishWordModal(discord.ui.Modal):
 
         self.text_1 = discord.ui.InputText(
             label=trl(user_id, 0, "verification_form_english_word").format(length=str(self.length)), required=True,
-                                           min_length=self.length, max_length=self.length)
+            min_length=self.length, max_length=self.length)
         self.add_item(self.text_1)
 
     async def callback(self, interaction: discord.Interaction):
