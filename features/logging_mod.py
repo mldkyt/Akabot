@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import discord
 import sentry_sdk
 from discord.ext import commands as commands_ext
@@ -141,7 +158,8 @@ class Logging(discord.Cog):
         super().__init__()
 
     @discord.Cog.listener()
-    async def on_guild_emojis_update(self, guild: discord.Guild, before: tuple[discord.Emoji], after: tuple[discord.Emoji]):
+    async def on_guild_emojis_update(self, guild: discord.Guild, before: tuple[discord.Emoji],
+                                     after: tuple[discord.Emoji]):
         try:
             if len(before) > len(after):  # Sticker deleted
                 for i in before:

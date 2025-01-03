@@ -1,3 +1,19 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 import datetime
 import os
 import sqlite3
@@ -27,20 +43,26 @@ def update():
 
     cur.execute('select id, guild_id, rule_id, rule_name, action, additional from automod_actions')
     for i in cur.fetchall():
-        client['AutomodActions'].update_one({'GuildID': str(i[1]), 'RuleID': i[2]}, {'$set': {'RuleName': i[3], 'Action': i[4], 'Additional': i[5]}}, upsert=True)
+        client['AutomodActions'].update_one({'GuildID': str(i[1]), 'RuleID': i[2]},
+                                            {'$set': {'RuleName': i[3], 'Action': i[4], 'Additional': i[5]}},
+                                            upsert=True)
 
     # Chat Revive
 
     cur.execute('select guild_id, channel_id, role_id, revival_time, last_message, revived from chat_revive')
     for i in cur.fetchall():
         client['ChatRevive'].update_one({'GuildID': str(i[0]), 'ChannelID': str(i[1])},
-                                        {'$set': {'RoleID': i[2], 'RevivalTime': i[3], 'LastMessage': datetime.datetime.now(datetime.UTC), 'Revived': True if str(i[5]) == '1' else False}}, upsert=True)
+                                        {'$set': {'RoleID': i[2], 'RevivalTime': i[3],
+                                                  'LastMessage': datetime.datetime.now(datetime.UTC),
+                                                  'Revived': True if str(i[5]) == '1' else False}}, upsert=True)
 
     # Chat Summary
 
     cur.execute('select guild_id, channel_id, enabled, messages from chat_summary')
     for i in cur.fetchall():
-        cur.execute('select guild_id, channel_id, member_id, messages from chat_summary_members where guild_id = ? and channel_id = ?', (i[0], i[1]))
+        cur.execute(
+            'select guild_id, channel_id, member_id, messages from chat_summary_members where guild_id = ? and channel_id = ?',
+            (i[0], i[1]))
         members = cur.fetchall()
 
         final_dict = {
@@ -78,7 +100,8 @@ def update():
 
     cur.execute('select guild_id, user_id, xp from leveling')
     for i in cur.fetchall():
-        client['Leveling'].update_one({'GuildID': str(i[0]), 'UserID': str(i[1])}, {'$set': {'XP': int(i[2])}}, upsert=True)
+        client['Leveling'].update_one({'GuildID': str(i[0]), 'UserID': str(i[1])}, {'$set': {'XP': int(i[2])}},
+                                      upsert=True)
 
     # Leveling: Multipliers
 
@@ -145,7 +168,8 @@ def update():
 
     cur.execute('select id, channel_id, guild_id from temporary_vc_creator_channels')
     for i in cur.fetchall():
-        client['TemporaryVCCreators'].update_one({'GuildID': str(i[2]), 'ChannelID': str(i[1])}, {'$set': {}}, upsert=True)
+        client['TemporaryVCCreators'].update_one({'GuildID': str(i[2]), 'ChannelID': str(i[1])}, {'$set': {}},
+                                                 upsert=True)
 
     # Tickets
 

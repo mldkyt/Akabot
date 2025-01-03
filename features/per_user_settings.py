@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import datetime
 
 import discord
@@ -27,7 +44,8 @@ class PerUserSettings(discord.Cog):
     user_settings_group = discord.SlashCommandGroup(name='user_settings', description='Per user settings')
 
     @user_settings_group.command(name='chat_streaks_alerts', description='Enable or disable chat streaks alerts')
-    @discord.option(name='state', description='How notifications should be sent', choices=['enabled', 'only when lost', 'off'])
+    @discord.option(name='state', description='How notifications should be sent',
+                    choices=['enabled', 'only when lost', 'off'])
     @analytics("user_settings chat_streaks_alerts")
     async def chat_streaks_alerts(self, ctx: discord.ApplicationContext, state: str):
         try:
@@ -45,7 +63,8 @@ class PerUserSettings(discord.Cog):
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
-    @user_settings_group.command(name='langauge', description='Set your personal language, applies across servers for you')
+    @user_settings_group.command(name='langauge',
+                                 description='Set your personal language, applies across servers for you')
     @discord.option(name='lang', description='Your language', choices=get_language_names())
     @analytics("user_settings language")
     async def set_language(self, ctx: discord.ApplicationContext, lang: str):
@@ -103,7 +122,8 @@ class PerUserSettings(discord.Cog):
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
 
-    @user_settings_group.command(name="birthday_announcements", description="Whether to announce birthdays in the server you're currently in")
+    @user_settings_group.command(name="birthday_announcements",
+                                 description="Whether to announce birthdays in the server you're currently in")
     @discord.option(name="state", description="Send announcements in this server")
     @analytics("user_settings birthday_announcements")
     async def set_birthday_announcement(self, ctx: discord.ApplicationContext, state: bool):

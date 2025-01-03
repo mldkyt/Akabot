@@ -1,3 +1,20 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 import datetime
 
 import discord
@@ -33,7 +50,8 @@ class BirthdayAnnouncements(discord.Cog):
         if now.hour != 12 or now.minute != 0:
             return
 
-        birthdays = client['UserBirthday'].find({'Birth.Year': now.year, 'Birth.Month': now.month, 'Birth.Day': now.day}).to_list()
+        birthdays = client['UserBirthday'].find(
+            {'Birth.Year': now.year, 'Birth.Month': now.month, 'Birth.Day': now.day}).to_list()
         for birthday in birthdays:
             # Test DM
             try:
@@ -56,7 +74,8 @@ class BirthdayAnnouncements(discord.Cog):
     async def set_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         set_setting(ctx.guild.id, "birthday_announcements_channel", str(channel.id))
         await ctx.respond(
-            trl(ctx.user.id, ctx.guild.id, "birthday_announcements_channel_set", append_tip=True).format(channel=channel.mention),
+            trl(ctx.user.id, ctx.guild.id, "birthday_announcements_channel_set", append_tip=True).format(
+                channel=channel.mention),
             ephemeral=True)
 
     @birthday_announcements_group.command(name="message", description="Customize the birthday announcement message")

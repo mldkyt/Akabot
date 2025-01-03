@@ -1,32 +1,54 @@
+#      Akabot is a general purpose bot with a ton of features.
+#      Copyright (C) 2023-2025 mldchan
+#
+#      This program is free software: you can redistribute it and/or modify
+#      it under the terms of the GNU Affero General Public License as
+#      published by the Free Software Foundation, either version 3 of the
+#      License, or (at your option) any later version.
+#
+#      This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU Affero General Public License for more details.
+#
+#      You should have received a copy of the GNU Affero General Public License
+#      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 
 import json
 import random
+
 import discord
 import sentry_sdk
-
-from utils.settings import get_setting, set_setting
 from discord.ext import commands
+
 from utils.analytics import analytics
+from utils.settings import get_setting, set_setting
+
 
 def pick_hug_gif():
     with open("configs/rp.json", "r") as f:
         data = json.load(f)
     return random.choice(data["hug_gifs"])
 
+
 def pick_kiss_yaoi_gif():
     with open("configs/rp.json", "r") as f:
         data = json.load(f)
     return random.choice(data["kiss_yaoi_gifs"])
+
 
 def pick_kiss_yuri_gif():
     with open("configs/rp.json", "r") as f:
         data = json.load(f)
     return random.choice(data["kiss_yuri_gifs"])
 
+
 def pick_bite_gif():
     with open("configs/rp.json", "r") as f:
         data = json.load(f)
     return random.choice(data["bite_gifs"])
+
 
 def get_footer_msg():
     footers = [
@@ -35,21 +57,23 @@ def get_footer_msg():
         "Drop gif suggestions in #akabot-suggestions in the support server",
         "Please be respectful to everyone in the server",
     ]
-    
+
     return random.choice(footers)
+
 
 def get_unbite_img():
     with open("configs/rp.json", "r") as f:
         data = json.load(f)
     return data["unbite_img"]
 
+
 class RoleplayCommands(discord.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
+
     rp_admin_group = discord.SlashCommandGroup("rp_admin", "Admin roleplay commands")
     rp_group = discord.SlashCommandGroup("rp", "Roleplay commands")
-    
+
     @rp_group.command(name="hug")
     @analytics("rp hug")
     async def hug(self, ctx, member: discord.Member):
@@ -105,7 +129,7 @@ class RoleplayCommands(discord.Cog):
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(content="Something went wrong", ephemeral=True)
-        
+
     @rp_group.command(name="unbite")
     @analytics("rp unbite")
     async def unbite(self, ctx, member: discord.Member):
@@ -126,7 +150,7 @@ class RoleplayCommands(discord.Cog):
     @rp_admin_group.command(name="enabled")
     @analytics("rp_admin enabled")
     async def rp_enable(self, ctx, enable: bool):
-        """Enable or disable roleplay commands"""        
+        """Enable or disable roleplay commands"""
         try:
             set_setting(ctx.guild.id, "roleplay_enabled", str(enable).lower())
             await ctx.respond(content=f"Roleplay commands have been {'enabled' if enable else 'disabled'}",
@@ -134,7 +158,7 @@ class RoleplayCommands(discord.Cog):
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(content="Something went wrong", ephemeral=True)
-        
+
     @rp_admin_group.command(name="list")
     @analytics("rp_admin list")
     @discord.default_permissions(manage_guild=True)
