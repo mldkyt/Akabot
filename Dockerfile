@@ -2,7 +2,7 @@ FROM python:3.12-alpine
 WORKDIR /app
 COPY requirements.txt /app/
 
-RUN pip install -r /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY features /app/features
 COPY utils /app/utils
