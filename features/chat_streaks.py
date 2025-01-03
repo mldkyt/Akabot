@@ -201,25 +201,28 @@ class ChatStreaks(discord.Cog):
                     }
                 },
                 {
-                    "$sort": {"max_streak": -1}
-                },
-                {
-                    "$limit": 10
+                    "$sort": {"MaxStreak": -1}
                 }
             ]).to_list()
 
             message = trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_title")
 
-            for i, row in enumerate(rows):
+            i = 1
+            for _, row in enumerate(rows):
                 member = ctx.guild.get_member(int(row['MemberID']))
                 if member is None:
                     continue
 
                 days = int(row['MaxStreak'])
 
-                message += trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_line").format(position=i + 1,
+                message += trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_line").format(position=i,
                                                                                                  user=member.mention,
                                                                                                  days=str(days))
+
+                i += 1
+
+                if i > 10:
+                    break
 
             if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
                 language = get_language(ctx.guild.id, ctx.user.id)
