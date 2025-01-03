@@ -14,7 +14,7 @@ from utils.settings import get_setting, set_setting
 def migration_1():
     # Convert user ID's in upvotes and downvotes to strings, if they are not already
     for x in client['SuggestionMessagesV2'].find():
-        if all(isinstance(x, str) for x in upvotes) and all(isinstance(x, str) for x in downvotes):
+        if all(isinstance(x, str) for x in x['Upvotes']) and all(isinstance(x, str) for x in x['Downvotes']):
             continue
 
         print('PERFORMING MIGRATION convert upvotes and downvotes to strings')
