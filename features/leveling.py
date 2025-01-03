@@ -330,7 +330,6 @@ class Leveling(discord.Cog):
             await ctx.respond(
                 trl(ctx.user.id, ctx.guild.id, "leveling_rename_multiplier_success", append_tip=True).format(
                     old_name=old_name, new_name=new_name), ephemeral=True)
-
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
@@ -698,11 +697,21 @@ class Leveling(discord.Cog):
                 insert_last = True
 
                 if i % 10 == 0:
+                    if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                        language = get_language(ctx.guild.id, ctx.user.id)
+                        leaderboard_message = append_tip_to_message(ctx.guild.id, ctx.user.id, leaderboard_message,
+                                                                    language)
+
                     lb_pages.append(leaderboard_message)
                     leaderboard_message = trl(ctx.user.id, ctx.guild.id, "leveling_leaderboard_title")
                     insert_last = False
 
-            if insert_last:
+            if not insert_last:
+                if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                    language = get_language(ctx.guild.id, ctx.user.id)
+                    leaderboard_message = append_tip_to_message(ctx.guild.id, ctx.user.id, leaderboard_message,
+                                                                language)
+
                 lb_pages.append(leaderboard_message)
 
             pages_resp = pages.Paginator(pages=lb_pages)

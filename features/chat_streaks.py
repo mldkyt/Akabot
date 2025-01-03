@@ -225,18 +225,21 @@ class ChatStreaks(discord.Cog):
                 lb_last = True
 
                 if i % 10 == 0:
+                    if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                        language = get_language(ctx.guild.id, ctx.user.id)
+                        message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
+
                     lb_pages.append(message)
                     message = trl(ctx.user.id, ctx.guild.id, "chat_streak_leaderboard_title")
                     lb_last = False
 
-            if lb_last:
-                # Insert last page element if there are rows
+            if not lb_last:
+                if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
+                    language = get_language(ctx.guild.id, ctx.user.id)
+                    message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
+
                 lb_pages.append(message)
 
-            if get_per_user_setting(ctx.user.id, 'tips_enabled', 'true') == 'true':
-                language = get_language(ctx.guild.id, ctx.user.id)
-                message = append_tip_to_message(ctx.guild.id, ctx.user.id, message, language)
-            # await ctx.respond(message, ephemeral=True)
             resp = pages.Paginator(pages=lb_pages)
             await resp.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
