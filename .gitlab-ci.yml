@@ -7,17 +7,13 @@ stages:          # List of stages for jobs, and their order of execution
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-    - docker build -t registry.mldchan.dev/mld/akabot/akabot:latest .
-    - docker push registry.mldchan.dev/mld/akabot/akabot:latest
+    - docker build -t akabot:latest .
   only:
     - "4.0"
 
 build-dev-job:
   stage: build
   script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-    - docker build -t registry.mldchan.dev/mld/akabot/akabot:devel .
-    - docker push registry.mldchan.dev/mld/akabot/akabot:devel
+    - docker build -t akabot:devel .
   except:
     - "4.0"
