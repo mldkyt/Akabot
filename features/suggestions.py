@@ -57,13 +57,13 @@ async def perform_basic_checks(interaction: discord.Interaction) -> bool | tuple
 
 
 async def update_existing_suggestions_message(interaction: discord.Interaction):
-    effective_avatar = interaction.user.default_avatar.url
-    if interaction.user.avatar:
-        effective_avatar = interaction.user.avatar.url
+    suggestions_msg = client['SuggestionMessagesV2'].find_one({'MessageID': str(interaction.message.id)})
+
+    author = interaction.guild.get_member(int(suggestions_msg['AuthorID']))
 
     new_emb = discord.Embed(title='Suggestion', color=Color.blue(),
-                            author=discord.EmbedAuthor(name=f'{interaction.user.display_name}\'s suggestion',
-                                                       icon_url=effective_avatar),
+                            author=discord.EmbedAuthor(name=f'{author.display_name}\'s suggestion',
+                                                       icon_url=author.display_avatar.url),
                             description=generate_message_content(str(interaction.message.id)))
     await interaction.response.edit_message(embed=new_emb)
 
