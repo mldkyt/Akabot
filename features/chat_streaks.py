@@ -26,6 +26,7 @@ from utils.analytics import analytics
 from utils.languages import get_translation_for_key_localized as trl, get_language
 from utils.logging_util import log_into_logs
 from utils.per_user_settings import get_per_user_setting
+from utils.settings import get_setting, set_setting
 from utils.tips import append_tip_to_message
 from utils.tzutil import get_server_midnight_time
 
@@ -124,14 +125,17 @@ class ChatStreaks(discord.Cog):
                     return
                 msg = await message.reply(
                     trl(message.author.id, message.guild.id, "chat_streaks_expired").format(streak=old_streak))
-                await msg.delete(delay=3)
-
+                if get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_expired', '60') != '0':
+                    await message.delete(
+                        delay=int(get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_expired', '60')))
             if state == "updated":
                 if get_per_user_setting(message.author.id, 'chat_streaks_alerts', 'on') != 'on':
                     return  # Only trigger if the user has the setting on
                 msg = await message.reply(
                     trl(message.author.id, message.guild.id, "chat_streaks_updated").format(streak=new_streak))
-                await msg.delete(delay=3)
+                if get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_updated', '10') != '0':
+                    await message.delete(
+                        delay=int(get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_updated', '10')))
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
@@ -181,6 +185,28 @@ class ChatStreaks(discord.Cog):
         except Exception as e:
             sentry_sdk.capture_exception(e)
             await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
+
+    @streaks_subcommand.command(name="configure_messages", description="Configure Chat Streaks messages")
+    @commands_ext.guild_only()
+    @discord.default_permissions(manage_guild=True)
+    @commands_ext.has_permissions(manage_guild=True)
+    @discord.option(name='delete_sent_message_expired',
+                    description='Configure the "Chat Streak Expired" message. 0 = disable, seconds.', type=int)
+    @discord.option(name='delete_sent_message_updated',
+                    description='Configure the "Chat Streak Updated" message. 0 = disable, seconds.', type=int)
+    @analytics("streaks streak")
+    async def configure_messages(self, ctx: discord.ApplicationContext, delete_sent_message_expired: int = -1,
+                                 delete_sent_message_updated: int = -1):
+        try:
+            prev_expired = get_setting(ctx.guild.id, 'chat_streaks_delete_sent_message_expired', '60')
+            prev_updated = get_setting(ctx.guild.id, 'chat_streaks_delete_sent_message_updated', '10')
+
+            set_setting(ctx.guild.id, 'chat_streaks_delete_sent_message_expired', str(delete_sent_message_expired))
+            set_setting(ctx.guild.id, 'chat_streaks_delete_sent_message_updated', str(delete_sent_message_updated))
+
+            await ctx.respond(trl(ctx.user.id, ctx.guild.id, "chat_streaks_configure_messages_success"), ephemeral=True)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @discord.slash_command(name='streak', description='Get your current streak')
     @analytics("streak")
