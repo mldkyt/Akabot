@@ -68,13 +68,12 @@ logging.basicConfig(
     level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logging.captureWarnings(True)
 
 BOT_VERSION = get_key("Bot_Version", "3.5")
 
 if get_key("Sentry_Enabled", "false") == "true":
     sentry_sdk.init(get_key("Sentry_DSN"),
-                    integrations=[LoggingIntegration(level=logging.INFO, event_level=logging.WARN),
+                    integrations=[LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
                                   AioHttpIntegration(),
                                   AsyncioIntegration(),
                                   PyMongoIntegration()],
