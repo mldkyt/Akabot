@@ -126,7 +126,7 @@ class ChatStreaks(discord.Cog):
                 msg = await message.reply(
                     trl(message.author.id, message.guild.id, "chat_streaks_expired").format(streak=old_streak))
                 if get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_expired', '60') != '0':
-                    await message.delete(
+                    await msg.delete(
                         delay=int(get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_expired', '60')))
             if state == "updated":
                 if get_per_user_setting(message.author.id, 'chat_streaks_alerts', 'on') != 'on':
@@ -134,7 +134,7 @@ class ChatStreaks(discord.Cog):
                 msg = await message.reply(
                     trl(message.author.id, message.guild.id, "chat_streaks_updated").format(streak=new_streak))
                 if get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_updated', '10') != '0':
-                    await message.delete(
+                    await msg.delete(
                         delay=int(get_setting(msg.guild.id, 'chat_streaks_delete_sent_message_updated', '10')))
         except Exception as e:
             sentry_sdk.capture_exception(e)
