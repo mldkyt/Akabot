@@ -131,7 +131,7 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
         # respond
         await ctx.respond(trl(ctx.user.id, ctx.guild.id, "command_error_generic"), ephemeral=True)
     except Exception:
-        print("Failed to respond")
+        logging.error("Failed to respond to message")
     raise error
 
 
@@ -192,5 +192,7 @@ if get_key('Feature_TemporaryVC', 'true') == 'true':
     bot.add_cog(temporary_vc.TemporaryVC(bot))
 if get_key("Feature_Roleplay", "true") == "true":
     bot.add_cog(rp.RoleplayCommands(bot))
+if get_key("Feature_StatisticChannels", "true") == "true":
+    bot.add_cog(statistics_channels.StatisticChannels(bot))
 
 bot.run(get_key("Bot_Token"))
