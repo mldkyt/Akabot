@@ -544,5 +544,9 @@
   "word_scramble_remove_failed": "Failed to remove channel from word scramble",
   "word_scramble_notification_role_unset": "Word scramble notification role unset",
   "word_scramble_notification_role_set": "Word scramble notification role set to {role}",
-  "word_scramble_notification_role_current": "Current word scramble notification role: {role}"
+  "word_scramble_notification_role_current": "Current word scramble notification role: {role}",
+  "statistic_channels_help": "# Formatting help:\n`{{members}}` - User count - `{members}`\n`{{members.bots}}` - Bot count - `{bots}`\n`{{guild.name}}` - Guild name - `{guild_name}`\n`{{guild.id}}` - Guild ID - `{guild_id}`\n`{{guild.owner}}` - Guild owner name - `{guild_owner}`\n`{{guild.owner.id}}` - Guild owner ID - `{guild_owner_id}`\n`{{guild.owner.name}}` - Guild owner username - `{guild_owner_name}`",
+  "statistic_channels_list_row": "- Channel: {channel}; Text: `{formatted}` (`{template}`)",
+  "statistic_channels_list_empty": "No statistics channels found on this server.",
+  "statistic_channel_remove": "Statistic channel was removed."
 }
