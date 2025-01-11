@@ -12,10 +12,10 @@ services:
           target: /app/utils
           action: sync+restart
         - path: main.py
-          target: /app
+          target: /app/main.py
           action: sync+restart
         - path: database.py
-          target: /app
+          target: /app/database.py
           action: sync+restart
         - path: lang/
           target: /app/lang
