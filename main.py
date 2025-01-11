@@ -46,7 +46,7 @@ from features import welcoming, leveling, antiraid, chat_streaks, chat_revive, c
     logging_mod, admin_cmds, giveaways, feedback_cmd, moderation, verification, velky_stompies, \
     roles_on_join, heartbeat, automod_actions, power_outage_announcement, per_user_settings, server_settings, \
     bot_help, announcement_channels, tickets, debug_commands, birthday_announcements, \
-    send_server_count, suggestions, temporary_vc, rp
+    send_server_count, suggestions, temporary_vc, rp, statistics_channels
 from utils.config import get_key
 from utils.db_converter import update
 from utils.languages import get_translation_for_key_localized as trl
