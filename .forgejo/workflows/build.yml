@@ -15,3 +15,6 @@ jobs:
 
       - name: Build the image
         run: docker build . -t akabot:latest
+
+      - name: Push to local server
+        run: docker push registry:5000/akabot:latest
