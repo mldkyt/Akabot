@@ -116,6 +116,37 @@ class BugReportModal(discord.ui.Modal):
         await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
                                                 ephemeral=True)
 
+    async def submit_bug_report_on_forgejo(self, interaction):
+        forgejo_instance = get_key("Forgejo_Instance")
+        forgejo_token = get_key('Forgejo_Token')
+        forgejo_owner = get_key('Forgejo_Owner')
+        forgejo_project = get_key('Forgejo_Project')
+
+        issue_body = ("- This bug report was created by {display} ({user} {id}) on Discord\n\n"
+                      "---\n\n"
+                      "### The issue was described by the user as follows:\n\n"
+                      "{desc}".format(display=interaction.user.display_name,
+                                      user=interaction.user.name,
+                                      id=interaction.user.id,
+                                      desc=self.description_input.value))
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f'https://{forgejo_instance}/api/v1/repos/{forgejo_owner}/{forgejo_project}/issues',
+                                    json={
+                                        'title': self.title_input.value,
+                                        'body': issue_body
+                                    },
+                                    headers={
+                                        'Authorization': f'token {forgejo_token}'
+                                    }) as r:
+                if r.ok:
+                    await interaction.response.send_message(
+                        trl(self.user_id, 0, "feedback_bug_report_submitted", append_tip=True),
+                        ephemeral=True)
+                else:
+                    await interaction.response.send_message(f"Failed to submit bug report: {await r.text()}",
+                                                            ephemeral=True)
+
     async def callback(self, interaction: discord.Interaction):
         try:
             issue_platform = get_key("Issue_Platform", "github")
@@ -124,6 +155,8 @@ class BugReportModal(discord.ui.Modal):
                 await self.submit_bug_report_on_github(interaction)
             elif issue_platform == "gitlab":
                 await self.submit_bug_report_on_gitlab(interaction)
+            elif issue_platform == "forgejo":
+                await self.submit_bug_report_on_forgejo(interaction)
             else:
                 await interaction.respond(
                     "Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.",
@@ -203,6 +236,37 @@ class FeatureModal(discord.ui.Modal):
         await interaction.response.send_message(trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
                                                 ephemeral=True)
 
+    async def submit_feature_on_forgejo(self, interaction):
+        forgejo_instance = get_key("Forgejo_Instance")
+        forgejo_token = get_key('Forgejo_Token')
+        forgejo_owner = get_key('Forgejo_Owner')
+        forgejo_project = get_key('Forgejo_Project')
+
+        issue_body = ("- This feature request was created by {display} ({user} {id}) on Discord\n\n"
+                      "---\n\n"
+                      "### The issue was described by the user as follows:\n\n"
+                      "{desc}".format(display=interaction.user.display_name,
+                                      user=interaction.user.name,
+                                      id=interaction.user.id,
+                                      desc=self.description_input.value))
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f'https://{forgejo_instance}/api/v1/repos/{forgejo_owner}/{forgejo_project}/issues',
+                                    json={
+                                        'title': self.title_input.value,
+                                        'body': issue_body
+                                    },
+                                    headers={
+                                        'Authorization': f'token {forgejo_token}'
+                                    }) as r:
+                if r.ok:
+                    await interaction.response.send_message(
+                        trl(self.user_id, 0, "feedback_feature_submitted", append_tip=True),
+                        ephemeral=True)
+                else:
+                    await interaction.response.send_message(f"Failed to submit feature request: {await r.text()}",
+                                                            ephemeral=True)
+
     async def callback(self, interaction: discord.Interaction):
         try:
             issue_platform = get_key("Issue_Platform", "github")
@@ -211,6 +275,8 @@ class FeatureModal(discord.ui.Modal):
                 await self.submit_feature_on_github(interaction)
             elif issue_platform == "gitlab":
                 await self.submit_feature_on_gitlab(interaction)
+            elif issue_platform == "forgejo":
+                await self.submit_feature_on_forgejo(interaction)
             else:
                 await interaction.respond(
                     "Error: This Akabot instance doesn't have issue reporting configured. Please contact the instance maintainer.",
