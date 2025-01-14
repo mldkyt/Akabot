@@ -548,5 +548,7 @@
   "statistic_channels_help": "# Formatting help:\n`{{members}}` - User count - `{members}`\n`{{members.bots}}` - Bot count - `{bots}`\n`{{guild.name}}` - Guild name - `{guild_name}`\n`{{guild.id}}` - Guild ID - `{guild_id}`\n`{{guild.owner}}` - Guild owner name - `{guild_owner}`\n`{{guild.owner.id}}` - Guild owner ID - `{guild_owner_id}`\n`{{guild.owner.name}}` - Guild owner username - `{guild_owner_name}`",
   "statistic_channels_list_row": "- Channel: {channel}; Text: `{formatted}` (`{template}`)",
   "statistic_channels_list_empty": "No statistics channels found on this server.",
-  "statistic_channel_remove": "Statistic channel was removed."
+  "statistic_channel_remove": "Statistic channel was removed.",
+  "suggestions_v2_refreshed": "1000 latest suggestions were refreshed.",
+  "suggestions_v2_information": "## Information about the suggestion:\n{message}\n\n**Author**: {author}\n**Upvotes**: {upvotes}\n**Downvotes**: {downvotes}\n**Upvote rate**: {percent}%\n\n**Upvoters**: {upvoters}\n**Downvoters**: {downvoters}"
 }

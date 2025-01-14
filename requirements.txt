@@ -5,3 +5,4 @@ emoji~=2.14.0
 requests~=2.32.3
 aiohttp~=3.11.11
 python-gitlab~=5.2.0
+py-cord~=2.6.1
