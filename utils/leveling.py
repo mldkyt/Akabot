@@ -90,7 +90,9 @@ def remove_reward_validator(c: Connection, member: Member, value: str) -> tuple[
 
     db_record = c.execute(
         select(server_settings_list.c.value)
-        .where((server_settings_list.c.value.like("{};%".format(role.id))) & (server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == "Leveling rewards"))
+        .where((server_settings_list.c.value.like("{};%".format(role.id))) & (
+                    server_settings_list.c.uid == str(member.guild.id)) & (
+                           server_settings_list.c.name == "Leveling rewards"))
     ).fetchone()
 
     if db_record is None:
@@ -118,7 +120,9 @@ def remove_reward_transformer(c: Connection, member: Member, value: str) -> str:
 
     db_record = c.execute(
         select(server_settings_list.c.value)
-        .where((server_settings_list.c.value.like("{};%".format(role.id))) & (server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == "Leveling rewards"))
+        .where((server_settings_list.c.value.like("{};%".format(role.id))) & (
+                    server_settings_list.c.uid == str(member.guild.id)) & (
+                           server_settings_list.c.name == "Leveling rewards"))
     ).fetchone()
 
     if db_record is not None:
@@ -148,20 +152,26 @@ def get_reward_view(c: Connection, m: Member, val: list[str]) -> str:
 def level_up_message_view(c: Connection, m: Member, s: str) -> str:
     return "Level-up message is enabled" if s == "true" else "Level-up message is disabled"
 
+
 def level_up_message_response(c: Connection, m: Member, s: str) -> str:
     return "Level-up messages were enabled" if s == "true" else "Level-up messages were disabled"
+
 
 def xp_per_message_view(c: Connection, m: Member, s: str) -> str:
     return f"{s} XP per message"
 
+
 def xp_per_message_response(c: Connection, m: Member, s: str) -> str:
     return f"Set the XP per message to {s}"
+
 
 def xp_per_level_view(c: Connection, m: Member, s: str) -> str:
     return f"{s} XP required per level"
 
+
 def xp_per_level_response(c: Connection, m: Member, s: str) -> str:
     return f"Set XP required per level to {s}"
+
 
 def add_multiplier_validator(c: Connection, m: Member, s: str) -> tuple[bool, str]:
     output = re.match(r"^(\d+)-(\d+) +- +(\d+)-(\d+), +(\d)$", s.strip())
@@ -195,6 +205,7 @@ def add_multiplier_validator(c: Connection, m: Member, s: str) -> tuple[bool, st
 
     return True, ""
 
+
 def add_multiplier_transformer(c: Connection, m: Member, s: str) -> str:
     output = re.match(r"^(\d+)-(\d+) +- +(\d+)-(\d+), +(\d)$", s.strip())
 
@@ -204,6 +215,7 @@ def add_multiplier_transformer(c: Connection, m: Member, s: str) -> str:
     multiplier = int(out_groups[4])
 
     return f"{start_month:02}-{start_day:02};{end_month:02}-{end_day:02};{multiplier}"
+
 
 def add_multiplier_view(c: Connection, m: Member, s: list[str]) -> str:
     out = []
@@ -215,10 +227,12 @@ def add_multiplier_view(c: Connection, m: Member, s: list[str]) -> str:
 
     return ", ".join(out)
 
+
 def add_multiplier_response(c: Connection, m: Member, s: str) -> str:
     split = s.split(";")
 
     return f"Added {split[2]}x multiplier from {split[0]} to {split[1]}."
+
 
 def remove_multiplier_response(c: Connection, m: Member, s: str) -> str:
     split = s.split(";")
@@ -274,7 +288,7 @@ setting_leveling_multipliers = ServerSetting(
 def get_xp(c: Connection, uid: int, gid: int) -> int:
     result = c.execute(
         select(leveling.c.xp)
-        .where((leveling.c.uid == uid) & (leveling.c.gid == gid))
+        .where((leveling.c.uid == str(uid)) & (leveling.c.gid == str(gid)))
     ).fetchone()
 
     if not result:
@@ -308,7 +322,6 @@ def get_multiplier(c: Connection, m: Member):
             # catch leap years, we validate against 2024 since it's a leap year
             pass
 
-
     return multiplier
 
 
@@ -318,18 +331,18 @@ def add_xp(c: Connection, member: Member):
 
     existing = c.execute(
         select(leveling.c.xp)
-        .where((leveling.c.uid == member.id) & (leveling.c.gid == member.guild.id))
+        .where((leveling.c.uid == str(member.id)) & (leveling.c.gid == str(member.guild.id)))
     ).fetchone()
 
     if existing is None:
         c.execute(
-            insert(leveling).values(uid=member.id, gid=member.guild.id, xp=xp_per_msg)
+            insert(leveling).values(uid=str(member.id), gid=str(member.guild.id), xp=xp_per_msg)
         )
         return
 
     c.execute(
         update(leveling)
-        .where((leveling.c.uid == member.id) & (leveling.c.gid == member.guild.id))
+        .where((leveling.c.uid == str(member.id)) & (leveling.c.gid == str(member.guild.id)))
         .values(xp=(existing[0] or 0) + xp_per_msg)
     )
 

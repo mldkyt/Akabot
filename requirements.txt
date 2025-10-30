@@ -1,3 +1,0 @@
-py-cord-dev[speed]
-python-dotenv
-sqlalchemy

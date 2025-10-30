@@ -118,7 +118,7 @@ class ServerSetting:
 
             setting = c.execute(
                 select(server_settings.c.value)
-                .where((server_settings.c.uid == member.guild.id) & (server_settings.c.name == self.name))
+                .where((server_settings.c.uid == str(member.guild.id)) & (server_settings.c.name == self.name))
             ).fetchone()
 
             if setting is None:
@@ -128,7 +128,7 @@ class ServerSetting:
         elif self.setting_type == SettingType.LIST:
             setting = c.execute(
                 select(server_settings_list.c.value)
-                .where((server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == self.name))
+                .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name))
             ).fetchall()
 
             if len(setting) == 0:
@@ -164,19 +164,19 @@ class ServerSetting:
 
         setting = c.execute(
             select(server_settings.c.value)
-            .where((server_settings.c.uid == member.guild.id) & (server_settings.c.name == self.name))
+            .where((server_settings.c.uid == str(member.guild.id)) & (server_settings.c.name == self.name))
         ).fetchone()
 
         if setting is None:
             c.execute(
                 insert(server_settings)
-                .values(uid=member.guild.id, name=self.name, value=value)
+                .values(uid=str(member.guild.id), name=self.name, value=value)
             )
         else:
             c.execute(
                 update(server_settings)
                 .values(value=value)
-                .where((server_settings.c.uid == member.guild.id) & (server_settings.c.name == self.name))
+                .where((server_settings.c.uid == str(member.guild.id)) & (server_settings.c.name == self.name))
             )
 
     def add_to_list(self, c: Connection, member: Member, value: str, silent: bool = False):
@@ -191,7 +191,7 @@ class ServerSetting:
 
         a = c.execute(
             select(server_settings_list.c.value)
-            .where((server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == self.name) & (
+            .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name) & (
                         server_settings_list.c.value == value))
         ).fetchone()
 
@@ -203,7 +203,7 @@ class ServerSetting:
 
         c.execute(
             insert(server_settings_list)
-            .values(uid=member.guild.id, name=self.name, value=value)
+            .values(uid=str(member.guild.id), name=self.name, value=value)
         )
 
     def remove_from_list(self, c: Connection, member: Member, value: str, silent: bool = False):
@@ -218,7 +218,7 @@ class ServerSetting:
 
         a = c.execute(
             select(server_settings_list.c.value)
-            .where((server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == self.name) & (
+            .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name) & (
                         server_settings_list.c.value == value))
         ).fetchone()
 
@@ -230,14 +230,14 @@ class ServerSetting:
 
         c.execute(
             delete(server_settings_list)
-            .where((server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == self.name) & (
+            .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name) & (
                         server_settings_list.c.value == value))
         )
 
     def is_in_list(self, c: Connection, member: Member, value: str) -> bool:
         a = c.execute(
             select(server_settings_list.c.value)
-            .where((server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == self.name) & (
+            .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name) & (
                     server_settings_list.c.value == value))
         ).fetchone()
 
@@ -246,7 +246,7 @@ class ServerSetting:
     def clear_list(self, c: Connection, member: Member):
         c.execute(
             delete(server_settings_list.c.value)
-            .where((server_settings_list.c.uid == member.guild.id) & (server_settings_list.c.name == self.name))
+            .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name))
         )
 
 class ServerSettings:
