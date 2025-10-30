@@ -14,7 +14,7 @@ md_obj = MetaData()
 server_settings = Table(
     "server_settings",
     md_obj,
-    Column("uid", Integer, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
     Column("name", VARCHAR, primary_key=True),
     Column("value", VARCHAR)
 )
@@ -23,7 +23,7 @@ server_settings_list = Table(
     "server_settings_list",
     md_obj,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("uid", Integer),
+    Column("uid", VARCHAR),
     Column("name", VARCHAR),
     Column("value", VARCHAR),
     UniqueConstraint("name", "value")
@@ -32,8 +32,8 @@ server_settings_list = Table(
 leveling = Table(
     "leveling",
     md_obj,
-    Column("uid", Integer, primary_key=True),
-    Column("gid", Integer, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
+    Column("gid", VARCHAR, primary_key=True),
     Column("xp", Integer)
 )
 

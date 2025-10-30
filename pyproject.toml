@@ -3,4 +3,8 @@ name = "nekona"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "py-cord-dev[speed]>=2.8.0",
+    "python-dotenv>=1.2.1",
+    "sqlalchemy>=2.0.44",
+]
