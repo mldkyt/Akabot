@@ -5,7 +5,10 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, VARCHAR,
 if not os.path.exists("data"):
     os.mkdir("data")
 
-engine = create_engine("sqlite:///data/nekona.db", echo=True)
+engine = create_engine(
+    os.getenv("DB_URL", "sqlite:///data/nekona.db"),
+    echo=True
+)
 
 md_obj = MetaData()
 
@@ -37,4 +40,58 @@ leveling = Table(
     Column("xp", Integer)
 )
 
-md_obj.create_all(engine, checkfirst=True)
+# Chat Summary
+
+chat_summary_channels = Table(
+    "chat_summary_channel",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("messages", Integer),
+    Column("last_member", VARCHAR, default="0", nullable=False)
+)
+
+chat_summary_members = Table(
+    "chat_summary_members",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
+    Column("messages", Integer)
+)
+
+monthly_chat_summary_channels = Table(
+    "chat_summary_channel_monthly",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("messages", Integer),
+    Column("last_member", VARCHAR, default="0", nullable=False)
+)
+
+monthly_chat_summary_members = Table(
+    "chat_summary_members_monthly",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
+    Column("messages", Integer)
+)
+
+yearly_chat_summary_channels = Table(
+    "chat_summary_channel_yearly",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("messages", Integer),
+    Column("last_member", VARCHAR, default="0", nullable=False)
+)
+
+yearly_chat_summary_members = Table(
+    "chat_summary_members_yearly",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
+    Column("messages", Integer)
+)
