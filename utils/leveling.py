@@ -1,11 +1,11 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import discord
 from discord import Member
 from sqlalchemy import Connection, insert, select, update
 
-from database import leveling, server_settings, server_settings_list
+from database import leveling, server_settings_list
 from utils.conversion import convert_role
 from utils.server_settings import ServerSetting, setting_is_number, setting_is_boolean, setting_to_boolean, SettingType
 
@@ -358,6 +358,10 @@ def xp_to_next_level(c: Connection, member: Member, xp: int) -> int:
 
 
 async def apply_leveling_rewards(c: Connection, member: discord.Member):
+    if not member.guild.me.guild_permissions.manage_roles:
+        print("TODO: warn server owner about not able to give out roles")
+        return
+
     xp = get_xp(c, member.id, member.guild.id)
     level = calculate_level(c, member, xp)
 
@@ -371,9 +375,15 @@ async def apply_leveling_rewards(c: Connection, member: discord.Member):
 
     for i in rewards:
         if level > i[1] and i[0] not in member.roles:
-            to_add.append(i[0])
+            if i[0] < member.guild.self_role:
+                to_add.append(i[0])
+            else:
+                print("TODO: warn server owner about not able to give out roles")
         elif level < i[1] and i[0] in member.roles:
-            to_remove.append(i[0])
+            if i[0] < member.guild.self_role:
+                to_remove.append(i[0])
+            else:
+                print("TODO: warn server owner about not able to give out roles")
 
     if len(to_add) > 0:
         await member.add_roles(*to_add)

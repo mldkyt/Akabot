@@ -2,7 +2,7 @@ from decimal import InvalidOperation
 from enum import Enum
 from typing import Callable
 
-from discord import Member, AutocompleteContext
+from discord import Member, AutocompleteContext, Guild
 from sqlalchemy import Connection, select, insert, update, delete
 
 from database import server_settings, server_settings_list
@@ -129,6 +129,31 @@ class ServerSetting:
             setting = c.execute(
                 select(server_settings_list.c.value)
                 .where((server_settings_list.c.uid == str(member.guild.id)) & (server_settings_list.c.name == self.name))
+            ).fetchall()
+
+            if len(setting) == 0:
+                return []
+
+            return [i[0] for i in setting]
+        else:
+            raise ValueError(f"Variable type {self.setting_type} is invalid")
+
+    def get_direct(self, c: Connection, g: Guild) -> str | list[str]:
+        if self.setting_type == SettingType.NORMAL:
+
+            setting = c.execute(
+                select(server_settings.c.value)
+                .where((server_settings.c.uid == str(g.id)) & (server_settings.c.name == self.name))
+            ).fetchone()
+
+            if setting is None:
+                return self.default_value
+
+            return setting[0]
+        elif self.setting_type == SettingType.LIST:
+            setting = c.execute(
+                select(server_settings_list.c.value)
+                .where((server_settings_list.c.uid == str(g.id)) & (server_settings_list.c.name == self.name))
             ).fetchall()
 
             if len(setting) == 0:
