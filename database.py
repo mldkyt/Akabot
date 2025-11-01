@@ -22,8 +22,26 @@ server_settings = Table(
     Column("value", VARCHAR)
 )
 
+user_settings = Table(
+    "user_settings",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("name", VARCHAR, primary_key=True),
+    Column("value", VARCHAR)
+)
+
 server_settings_list = Table(
     "server_settings_list",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("uid", VARCHAR),
+    Column("name", VARCHAR),
+    Column("value", VARCHAR),
+    UniqueConstraint("name", "value")
+)
+
+user_settings_list = Table(
+    "user_settings_list",
     md_obj,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("uid", VARCHAR),
