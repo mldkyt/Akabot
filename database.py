@@ -1,13 +1,15 @@
 import os.path
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, VARCHAR, UniqueConstraint
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, VARCHAR, UniqueConstraint, DATE, \
+    StaticPool
 
 if not os.path.exists("data"):
     os.mkdir("data")
 
 engine = create_engine(
     os.getenv("DB_URL", "sqlite:///data/nekona.db"),
-    echo=True
+    connect_args={"check_same_thread": False, "timeout": 2},
+    poolclass=StaticPool
 )
 
 md_obj = MetaData()
@@ -112,4 +114,13 @@ yearly_chat_summary_members = Table(
     Column("cid", VARCHAR, primary_key=True),
     Column("uid", VARCHAR, primary_key=True),
     Column("messages", Integer)
+)
+
+chat_streaks = Table(
+    "chat_streaks",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
+    Column("start_date", DATE, nullable=False, comment="YYYY-MM-DD"),
+    Column("last_message_date", DATE, nullable=False, comment="YYYY-MM-DD")
 )

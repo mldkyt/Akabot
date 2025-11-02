@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime
 
@@ -284,6 +285,7 @@ setting_leveling_multipliers = ServerSetting(
     list_remove_response=remove_multiplier_response
 )
 
+nekona_logger = logging.getLogger("nekona")
 
 def get_xp(c: Connection, uid: int, gid: int) -> int:
     result = c.execute(
@@ -359,7 +361,7 @@ def xp_to_next_level(c: Connection, member: Member, xp: int) -> int:
 
 async def apply_leveling_rewards(c: Connection, member: discord.Member):
     if not member.guild.me.guild_permissions.manage_roles:
-        print("TODO: warn server owner about not able to give out roles")
+        nekona_logger.warning("TODO: warn server owner about not able to give out roles")
         return
 
     xp = get_xp(c, member.id, member.guild.id)
@@ -378,12 +380,12 @@ async def apply_leveling_rewards(c: Connection, member: discord.Member):
             if i[0] < member.guild.self_role:
                 to_add.append(i[0])
             else:
-                print("TODO: warn server owner about not able to give out roles")
+                nekona_logger.warning("TODO: warn server owner about not able to give out roles")
         elif level < i[1] and i[0] in member.roles:
             if i[0] < member.guild.self_role:
                 to_remove.append(i[0])
             else:
-                print("TODO: warn server owner about not able to give out roles")
+                nekona_logger.warning("TODO: warn server owner about not able to give out roles")
 
     if len(to_add) > 0:
         await member.add_roles(*to_add)
