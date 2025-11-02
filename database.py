@@ -1,3 +1,4 @@
+import json
 import os.path
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, VARCHAR, UniqueConstraint, DATE, \
@@ -8,7 +9,7 @@ if not os.path.exists("data"):
 
 engine = create_engine(
     os.getenv("DB_URL", "sqlite:///data/nekona.db"),
-    connect_args={"check_same_thread": False, "timeout": 2},
+    connect_args=json.loads(os.getenv("DB_ARGS") or "{}"),
     poolclass=StaticPool
 )
 
