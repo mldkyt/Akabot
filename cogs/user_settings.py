@@ -16,7 +16,6 @@ class UserSettings(discord.Cog):
     user_settings_gr = discord.SlashCommandGroup(name="user_settings")
 
     @user_settings_gr.command()
-    @discord.default_permissions(manage_guild=True)
     @discord.option(name="name", description="Name of setting", autocomplete=user_setting_name_autocomplete)
     @discord.option(name="value", description="Value to set")
     async def set_setting(self, ctx: discord.ApplicationContext, name: str, value: str):
@@ -40,7 +39,6 @@ class UserSettings(discord.Cog):
             await ctx.respond(response, ephemeral=True)
 
     @user_settings_gr.command()
-    @discord.default_permissions(manage_guild=True)
     @discord.option(name="name", description="Name of setting", autocomplete=user_setting_name_autocomplete)
     async def get_setting(self, ctx: discord.ApplicationContext, name: str):
         """Set a setting"""
@@ -55,7 +53,6 @@ class UserSettings(discord.Cog):
         await ctx.respond(f"{name} is currently {value}", ephemeral=True)
 
     @user_settings_gr.command()
-    @discord.default_permissions(manage_guild=True)
     @discord.option(name="name", description="Name of setting", autocomplete=user_setting_name_list_autocomplete)
     async def add_list_setting(self, ctx: discord.ApplicationContext, name: str, value: str):
         """Add an element into a list setting"""
@@ -80,7 +77,6 @@ class UserSettings(discord.Cog):
             await ctx.respond(response, ephemeral=True)
 
     @user_settings_gr.command()
-    @discord.default_permissions(manage_guild=True)
     @discord.option(name="name", description="Name of setting", autocomplete=user_setting_name_list_autocomplete)
     async def remove_list_setting(self, ctx: discord.ApplicationContext, name: str, value: str):
         """Add an element into a list setting"""
@@ -105,7 +101,6 @@ class UserSettings(discord.Cog):
             await ctx.respond(response, ephemeral=True)
 
     @user_settings_gr.command()
-    @discord.default_permissions(manage_guild=True)
     @discord.option(name="name", description="Name of setting", autocomplete=user_setting_name_list_autocomplete)
     async def clear_list_setting(self, ctx: discord.ApplicationContext, name: str):
         """Add an element into a list setting"""
@@ -120,7 +115,6 @@ class UserSettings(discord.Cog):
         await ctx.respond(f"Cleared settings for list setting {name}", ephemeral=True)
 
     @user_settings_gr.command()
-    @discord.default_permissions(manage_guild=True)
     async def list_settings(self, ctx: discord.ApplicationContext):
         """Set a setting"""
         with engine.begin() as c:

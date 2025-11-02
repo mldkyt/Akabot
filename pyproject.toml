@@ -8,4 +8,5 @@ dependencies = [
     "py-cord-dev[speed]>=2.8.0",
     "python-dotenv>=1.2.1",
     "sqlalchemy>=2.0.44",
+    "psycopg2>=2.9.11"
 ]
