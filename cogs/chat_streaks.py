@@ -59,7 +59,7 @@ class ChatStreaks(Cog):
                 v = lb[i]
                 days = v[2] - v[1]
 
-                page += f"{i + 1}. <@{v[0]}> with {days.days} consecutive messages"
+                page += f"{i + 1}. <@{v[0]}> with {days.days} days of consecutive messages\n"
 
                 if (i + 1) % 10 == 0:
                     pages.append(page)
