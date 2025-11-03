@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from discord import Message, Guild, Member
-from sqlalchemy import Connection, select, insert, update, delete
+from sqlalchemy import Connection, select, insert, update, delete, desc
 
 from database import chat_summary_channels, chat_summary_members, monthly_chat_summary_channels, \
     monthly_chat_summary_members, yearly_chat_summary_channels, yearly_chat_summary_members
@@ -295,6 +295,7 @@ async def summarize(c: Connection, g: Guild):
                 select(yearly_chat_summary_members.c.uid, yearly_chat_summary_members.c.messages)
                 .where((yearly_chat_summary_members.c.gid == str(g.id)) & (
                             yearly_chat_summary_members.c.cid == str(channel.id)))
+                .order_by(desc(yearly_chat_summary_members.c.messages))
             ).fetchall()]
             msg_begin = "# Yearly Chat Summary"
             rows = int(chat_summary_rows_extra.get_direct(c, g))
@@ -308,6 +309,7 @@ async def summarize(c: Connection, g: Guild):
                 select(monthly_chat_summary_members.c.uid, monthly_chat_summary_members.c.messages)
                 .where((monthly_chat_summary_members.c.gid == str(g.id)) & (
                             monthly_chat_summary_members.c.cid == str(channel.id)))
+                .order_by(desc(monthly_chat_summary_members.c.messages))
             ).fetchall()]
             msg_begin = "# Monthly Chat Summary"
             rows = int(chat_summary_rows_extra.get_direct(c, g))
@@ -319,6 +321,7 @@ async def summarize(c: Connection, g: Guild):
             members_messages: list[tuple[str, int]] = [(i[0], i[1]) for i in c.execute(
                 select(chat_summary_members.c.uid, chat_summary_members.c.messages)
                 .where((chat_summary_members.c.gid == str(g.id)) & (chat_summary_members.c.cid == str(channel.id)))
+                .order_by(desc(chat_summary_members.c.messages))
             ).fetchall()]
             msg_begin = "# Chat Summary"
             rows = int(chat_summary_rows.get_direct(c, g))
