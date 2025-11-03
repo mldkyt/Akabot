@@ -1,4 +1,4 @@
-import logging
+from logger import nekona_logger
 import re
 from datetime import datetime
 
@@ -284,8 +284,6 @@ setting_leveling_multipliers = ServerSetting(
     list_add_response=add_multiplier_response,
     list_remove_response=remove_multiplier_response
 )
-
-nekona_logger = logging.getLogger("nekona")
 
 def get_xp(c: Connection, uid: int, gid: int) -> int:
     result = c.execute(

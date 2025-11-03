@@ -4,6 +4,7 @@ from discord import Cog, Bot, Message, slash_command, ApplicationContext, SlashC
 from discord.ext.pages import Paginator
 
 from database import engine
+from logger import nekona_logger
 from utils.chat_streaks import update_for_user, get_streak, server_disable_response, user_disable_response, \
     get_leaderboard, server_message_delay
 from utils.docs import Docs, DocsCommand, DocsSetting
@@ -20,56 +21,68 @@ class ChatStreaks(Cog):
 
     @Cog.listener()
     async def on_message(self, msg: Message):
-        if msg.author.bot:
-            return
-        if msg.guild is None:
-            return
-
-        with engine.begin() as c:
-            prev_streak = get_streak(c, msg.author)
-            update_for_user(c, msg.author)
-            next_streak = get_streak(c, msg.author)
-
-            if server_disable_response.get(c, msg.author) == "true":
+        try:
+            if msg.author.bot:
+                return
+            if msg.guild is None:
                 return
 
-            if user_disable_response.get(c, msg.author) == "true":
-                return
+            with engine.begin() as c:
+                prev_streak = get_streak(c, msg.author)
+                update_for_user(c, msg.author)
+                next_streak = get_streak(c, msg.author)
 
-            if next_streak > prev_streak:
-                a = await msg.reply(f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
-                await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+                if server_disable_response.get(c, msg.author) == "true":
+                    return
+
+                if user_disable_response.get(c, msg.author) == "true":
+                    return
+
+                if next_streak > prev_streak:
+                    a = await msg.reply(
+                        f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
+                    await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+        except Exception as e:
+            nekona_logger.exception(e)
 
     @chat_streaks.command()
     async def streak(self, ctx: ApplicationContext):
-        with engine.begin() as c:
-            streak = get_streak(c, ctx.user)
+        try:
+            with engine.begin() as c:
+                streak = get_streak(c, ctx.user)
 
-            await ctx.respond(f"Your current streak is {streak} days.", ephemeral=True)
+                await ctx.respond(f"Your current streak is {streak} days.", ephemeral=True)
+        except Exception as e:
+            nekona_logger.exception(e)
+            await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
     async def leaderboard(self, ctx: ApplicationContext):
-        with engine.begin() as c:
-            lb = get_leaderboard(c, ctx.user)
+        try:
+            with engine.begin() as c:
+                lb = get_leaderboard(c, ctx.user)
 
-            pages = []
-            page = "# Chat Streak Leaderboard\n"
+                pages = []
+                page = "# Chat Streak Leaderboard\n"
 
-            for i in range(len(lb)):
-                v = lb[i]
-                days = v[2] - v[1]
+                for i in range(len(lb)):
+                    v = lb[i]
+                    days = v[2] - v[1]
 
-                page += f"{i + 1}. <@{v[0]}> with {days.days} days of consecutive messages\n"
+                    page += f"{i + 1}. <@{v[0]}> with {days.days} days of consecutive messages\n"
 
-                if (i + 1) % 10 == 0:
+                    if (i + 1) % 10 == 0:
+                        pages.append(page)
+                        page = ""
+
+                if len(page) > 0:
                     pages.append(page)
-                    page = ""
 
-            if len(page) > 0:
-                pages.append(page)
-
-            paginator = Paginator(pages)
-            await paginator.respond(ctx.interaction, ephemeral=True)
+                paginator = Paginator(pages)
+                await paginator.respond(ctx.interaction, ephemeral=True)
+        except Exception as e:
+            nekona_logger.exception(e)
+            await ctx.respond("Error", ephemeral=True)
 
 def setup(bot: Bot):
     bot.add_cog(ChatStreaks(bot))

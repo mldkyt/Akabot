@@ -4,6 +4,7 @@ from discord import Cog, Message, Bot
 from discord.ext.tasks import loop
 
 from database import engine
+from logger import nekona_logger
 from utils.chat_summary import chat_summary, inc, summarize, chat_summary_rows, chat_summary_extra, \
     chat_summary_rows_extra, chat_summary_unique
 from utils.docs import Docs, DocsSetting
@@ -21,18 +22,21 @@ class ChatSummary(Cog):
 
     @Cog.listener()
     async def on_message(self, msg: Message):
-        with engine.begin() as c:
-            if msg.author.bot:
-                return
+        try:
+            with engine.begin() as c:
+                if msg.author.bot:
+                    return
 
-            if msg.guild is None:
-                return
+                if msg.guild is None:
+                    return
 
-            if not chat_summary.is_in_list(c, msg.author, str(msg.channel.id)):
-                return
+                if not chat_summary.is_in_list(c, msg.author, str(msg.channel.id)):
+                    return
 
-            # Count into chat summary
-            inc(c, msg)
+                # Count into chat summary
+                inc(c, msg)
+        except Exception as e:
+            nekona_logger.exception(e)
 
     @loop(minutes=1)
     async def task_summary(self):
@@ -43,7 +47,10 @@ class ChatSummary(Cog):
 
         for i in self.bot.guilds:
             with engine.begin() as c:
-                await summarize(c, i)
+                try:
+                    await summarize(c, i)
+                except Exception as e:
+                    nekona_logger.exception(e)
 
 def setup(bot: Bot):
     bot.add_cog(ChatSummary(bot))
