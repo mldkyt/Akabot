@@ -9,6 +9,7 @@ COPY pyproject.toml .
 RUN pip3 install --upgrade uv
 RUN uv sync
 
+COPY logger.py .
 COPY main.py .
 COPY database.py .
 COPY cogs/ cogs/.

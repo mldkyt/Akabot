@@ -2,6 +2,7 @@ import discord
 from discord import ApplicationContext
 
 from database import engine
+from logger import nekona_logger
 from utils.docs import Docs, DocsCommand, DocsSetting
 from utils.leveling import get_xp, add_xp, calculate_level, apply_leveling_rewards, setting_xp_per_message, \
     setting_level_up_message, setting_xp_per_level, \
@@ -17,38 +18,47 @@ class Leveling(discord.Cog):
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.guild is None:
-            return
+        try:
+            if message.guild is None:
+                return
 
-        if message.author.bot:
-            return
+            if message.author.bot:
+                return
 
-        with engine.begin() as c:
-            old_xp = get_xp(c, message.author.id, message.guild.id)
-            add_xp(c, message.author)
-            new_xp = get_xp(c, message.author.id, message.guild.id)
+            with engine.begin() as c:
+                old_xp = get_xp(c, message.author.id, message.guild.id)
+                add_xp(c, message.author)
+                new_xp = get_xp(c, message.author.id, message.guild.id)
 
-            old_level = calculate_level(c, message.author, old_xp)
-            new_level = calculate_level(c, message.author, new_xp)
+                old_level = calculate_level(c, message.author, old_xp)
+                new_level = calculate_level(c, message.author, new_xp)
 
-            if settings.get_setting("Leveling enable level-up message").get(c, message.author) == "true":
-                if old_level != new_level:
-                    await apply_leveling_rewards(c, message.author)
+                if settings.get_setting("Leveling enable level-up message").get(c, message.author) == "true":
+                    if old_level != new_level:
+                        await apply_leveling_rewards(c, message.author)
 
-                    level_up_message = await message.reply(f"**You leveled up!** {old_level} -> {new_level}")
-                    await level_up_message.delete(delay=5)
+                        level_up_message = await message.reply(f"**You leveled up!** {old_level} -> {new_level}")
+                        await level_up_message.delete(delay=5)
+        except Exception as e:
+            nekona_logger.exception(e)
 
     @discord.slash_command()
     async def level(self, ctx: ApplicationContext):
         """Get your current level"""
-        with engine.begin() as c:
-            xp = get_xp(c, ctx.user.id, ctx.guild.id)
-            level = calculate_level(c, ctx.user, xp)
-            to_next_level = xp_to_next_level(c, ctx.user, xp)
-            xp_per_level = int(setting_xp_per_level.get(c, ctx.user))
+        try:
+            with engine.begin() as c:
+                xp = get_xp(c, ctx.user.id, ctx.guild.id)
+                level = calculate_level(c, ctx.user, xp)
+                to_next_level = xp_to_next_level(c, ctx.user, xp)
+                xp_per_level = int(setting_xp_per_level.get(c, ctx.user))
 
-            await ctx.respond(f"You're on level {level}. {to_next_level}/{xp_per_level} ({(to_next_level / xp_per_level) * 100:.2f}%) XP for next level\n"
-                              f"The current multiplier is {get_multiplier(c, ctx.user)}x.", ephemeral=True)
+                await ctx.respond(
+                    f"You're on level {level}. {to_next_level}/{xp_per_level} ({(to_next_level / xp_per_level) * 100:.2f}%) XP for next level\n"
+                    f"The current multiplier is {get_multiplier(c, ctx.user)}x.", ephemeral=True)
+        except Exception as e:
+            nekona_logger.exception(e)
+            await ctx.respond("Error", ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(Leveling(bot))
