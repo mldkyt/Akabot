@@ -339,7 +339,11 @@ async def summarize(c: Connection, g: Guild):
 
         for j in range(len(members_messages)):
             k = members_messages[j]
-            msg += f"{j + 1}. **<@{k[0]}>**: {k[1]} messages\n"
+            m = await g.fetch_member(int(k[0]))
+            if m is not None:
+                msg += f"{j + 1}. **{m.display_name}**: {k[1]} messages\n"
+            else:
+                msg += f"{j + 1}. **<@{k[0]}>**: {k[1]} messages\n"
             if j >= rows - 1:
                 break
 
