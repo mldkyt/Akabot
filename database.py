@@ -125,3 +125,12 @@ chat_streaks = Table(
     Column("start_date", DATE, nullable=False, comment="YYYY-MM-DD"),
     Column("last_message_date", DATE, nullable=False, comment="YYYY-MM-DD")
 )
+
+counting_channels = Table(
+    "counting",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("current_count", Integer, nullable=False),
+    Column("last_counter", VARCHAR, nullable=False, default="0")
+)

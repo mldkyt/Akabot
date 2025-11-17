@@ -1,0 +1,151 @@
+import asyncio
+import re
+
+from discord import Member, Message, Guild
+from sqlalchemy import Connection, select, insert, update, delete
+
+from database import counting_channels
+from utils.conversion import convert_text_channel
+from utils.server_settings import ServerSetting, SettingType, setting_is_boolean, setting_to_boolean, \
+    setting_simple_string, setting_simple_list_string, setting_simple_string_boolean, setting_is_number, \
+    setting_is_channel, setting_to_channel
+
+setting_counting_channels = ServerSetting(
+    name="Counting channels",
+    setting_type=SettingType.LIST,
+    list_add_validator=setting_is_channel,
+    list_remove_validator=setting_is_channel,
+    list_add_transformer=setting_to_channel,
+    list_remove_transformer=setting_to_channel,
+    list_add_response=setting_simple_string("Channel <#%s> was added to counting channels."),
+    list_remove_response=setting_simple_string("Channel <#%s> was removed from counting channels."),
+    list_view=setting_simple_list_string("Counting channels: %s", ", ", "Counting channels: None"),
+)
+
+same_member_counting_mode = ServerSetting(
+    name="Counting same member mode",
+    setting_type=SettingType.NORMAL,
+    normal_validator=setting_is_boolean,
+    normal_transformer=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("Same member counting mode is %s", "enabled", "disabled"),
+    normal_view=setting_simple_string_boolean("Same member counting mode is currently %s", "enabled", "disabled"),
+    default="true"
+)
+
+any_count_mode = ServerSetting(
+    name="Counting any count mode",
+    setting_type=SettingType.NORMAL,
+    normal_validator=setting_is_boolean,
+    normal_transformer=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("Any count mode is now %s", "enabled", "disabled"),
+    normal_view=setting_simple_string_boolean("Any count mode is currently %s", "enabled", "disabled"),
+    default="false"
+)
+
+any_count_mode_count_frequency = ServerSetting(
+    name="Counting any count mode: Count frequency of words",
+    setting_type=SettingType.NORMAL,
+    normal_validator=setting_is_boolean,
+    normal_transformer=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("Any count mode %s count frequencies of words", "will", "won't"),
+    normal_view=setting_simple_string_boolean("Any count mode %s frequencies of words", "counts", "doesn't count"),
+    default="false"
+)
+
+any_count_mode_count_words = ServerSetting(
+    name="Counting any count mode: Count total word count",
+    setting_type=SettingType.NORMAL,
+    normal_validator=setting_is_boolean,
+    normal_transformer=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("Any count mode %s count total words", "will", "won't"),
+    normal_view=setting_simple_string_boolean("Any count mode %s total words", "counts", "doesn't count"),
+    default="false"
+)
+
+any_count_mode_minimum_frequency = ServerSetting(
+    name="Counting any count mode: Minimum frequency",
+    setting_type=SettingType.NORMAL,
+    normal_validator=setting_is_number,
+    normal_response=setting_simple_string("Any count mode's minimum frequency is `%s`, words less frequent than this are not counted"),
+    normal_view=setting_simple_string("Any count's minimum frequency of words is currently `%s`, words less frequent are not counted"),
+    default="false"
+)
+
+def attempt_to_parse_number(c: Connection, m: Message) -> list[int]:
+    if any_count_mode.get(c, m.author) == "false":
+        if not m.content.strip().isnumeric():
+            return []
+
+        return [int(m.content.strip())]
+
+    numbers_in_message = []
+
+    # Simple number parsing first
+    for i in re.finditer(r'([0-9]+)', m.content.strip()):
+        numbers_in_message.append(int(i.groups()[0]))
+
+    # Count of words
+    if any_count_mode_count_words.get(c, m.author) == "true":
+        numbers_in_message.append(len(m.content.strip().split(" ")))
+
+    if any_count_mode_count_frequency.get(c, m.author) == "true":
+        # Count of words that repeat
+        words = {}
+        for i in m.content.strip().split(" "):
+            if not i in words:
+                words[i] = 0
+            words[i] += 1
+
+        a = int(any_count_mode_minimum_frequency.get(c, m.author))
+        less_frequent_words = []
+        for k in words.keys():
+            if words[k] < a:
+                less_frequent_words.append(k)
+
+        for i in less_frequent_words:
+            del words[i]
+
+        words = {k: v for k, v in sorted(words.items(), key=lambda x: x[1], reverse=True)}
+        numbers_in_message.extend([i for i in words.values()])
+
+    return numbers_in_message
+
+async def handle_counting_channel(c: Connection, msg: Message):
+    a = c.execute(
+        select(counting_channels.c.current_count, counting_channels.c.last_counter)
+        .where((counting_channels.c.gid == str(msg.guild.id)) & (counting_channels.c.cid == str(msg.channel.id)))
+    ).fetchone()
+
+    numbers = attempt_to_parse_number(c, msg)
+
+    if a is None:
+        if 1 in numbers:
+            c.execute(
+                insert(counting_channels)
+                .values(gid=str(msg.guild.id), cid=str(msg.channel.id), current_count=2, last_counter=str(msg.author.id))
+            )
+            await msg.add_reaction('✅')
+        else:
+            await msg.add_reaction('❌')
+    else:
+        same_member = True
+        if same_member_counting_mode.get(c, msg.author) == "true":
+            same_member = a[1] != str(msg.author.id)
+
+        if a[0] in numbers and same_member:
+            c.execute(
+                update(counting_channels)
+                .where((counting_channels.c.gid == str(msg.guild.id)) & (counting_channels.c.cid == str(msg.channel.id)))
+                .values(current_count=a[0] + 1, last_counter=str(msg.author.id))
+            )
+            await msg.add_reaction("✅")
+        else:
+            await asyncio.gather(
+                msg.channel.send(f"Awww, {msg.author.mention} ruined the count at {a[0]}!"),
+                msg.add_reaction('❌')
+            )
+
+            c.execute(
+                delete(counting_channels)
+                .where((counting_channels.c.gid == str(msg.guild.id)) & (counting_channels.c.cid == str(msg.channel.id)))
+            )
