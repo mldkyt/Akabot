@@ -4,26 +4,10 @@ from discord import Member
 from sqlalchemy import Connection, select, insert, update, desc, func
 
 from database import chat_streaks
-from utils.server_settings import ServerSetting, SettingType, setting_is_boolean, setting_to_boolean, setting_is_number
+from utils.server_settings import ServerSetting, SettingType, setting_is_boolean, setting_to_boolean, setting_is_number, \
+    setting_simple_string_boolean, setting_simple_string
 from utils.user_settings import UserSetting
 
-
-
-def server_disable_response_response(c: Connection, m: Member, v: str) -> str:
-    if v == "true":
-        return "The bot WON'T respond to messages with chat streak updates in this server"
-    elif v == "false":
-        return "The bot WILL respond to message with chat streak updates in this server"
-    else:
-        return "How? This should not happen"
-
-def user_disable_response_response(c: Connection, m: Member, v: str) -> str:
-    if v == "true":
-        return "The bot WON'T respond to messages with chat streak updates to you"
-    elif v == "false":
-        return "The bot WILL respond to message with chat streak updates to you"
-    else:
-        return "How? This should not happen"
 
 def server_message_delay_validator(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     ok, err = setting_is_number(c, m, v)
@@ -36,15 +20,12 @@ def server_message_delay_validator(c: Connection, m: Member, v: str) -> tuple[bo
 
     return True, ""
 
-def server_message_delay_response(c: Connection, m: Member, v: str) -> str:
-    return f"When the bot responds to a message, the bot message will be deleted after {v} seconds"
-
 server_disable_response = ServerSetting(
     "Chat streaks disable response",
     setting_type=SettingType.NORMAL,
     normal_validator=setting_is_boolean,
     normal_transformer=setting_to_boolean,
-    normal_response=server_disable_response_response,
+    normal_response=setting_simple_string_boolean("The bot %s respond to messages with chat streak updates in this server", "WILL", "WON'T"),
     default="false"
 )
 
@@ -53,7 +34,7 @@ user_disable_response = UserSetting(
     setting_type=SettingType.NORMAL,
     normal_validator=setting_is_boolean,
     normal_transformer=setting_to_boolean,
-    normal_response=user_disable_response_response,
+    normal_response=setting_simple_string_boolean("The bot WON'T respond to messages with chat streak updates to you", "WON'T", "WILL"),
     default="false"
 )
 
@@ -61,7 +42,7 @@ server_message_delay = ServerSetting(
     "Chat streaks message duration",
     setting_type=SettingType.NORMAL,
     normal_validator=server_message_delay_validator,
-    normal_response=server_message_delay_response,
+    normal_response=setting_simple_string("When the bot responds to a message, the bot message will be deleted after %s seconds"),
     default="5"
 )
 

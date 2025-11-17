@@ -6,6 +6,8 @@ from discord import Member, AutocompleteContext, Guild
 from sqlalchemy import Connection, select, insert, update, delete
 
 from database import server_settings, server_settings_list
+from utils.conversion import convert_text_channel, convert_role
+
 
 class SettingType(Enum):
     NORMAL = 1
@@ -332,6 +334,85 @@ def setting_to_boolean(c: Connection, member: Member, value: str) -> str:
         return "true"
     else:
         return "false"
+
+# noinspection PyUnusedLocal
+def setting_is_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+    s = value.split(",")
+    if len(s) == 2 and s[1].isnumeric():
+        chat_convert = convert_text_channel(member.guild, s[0], int(s[1]))
+    else:
+        chat_convert = convert_text_channel(member.guild, value)
+
+    if chat_convert is None:
+        return False, "Invalid channel"
+    else:
+        return True, ""
+
+# noinspection PyUnusedLocal
+def setting_to_channel(c: Connection, member: Member, value: str) -> str:
+    s = value.split(",")
+    if len(s) == 2 and s[1].isnumeric():
+        chat_convert = convert_text_channel(member.guild, s[0], int(s[1]))
+    else:
+        chat_convert = convert_text_channel(member.guild, value)
+
+    if chat_convert is None:
+        raise ValueError("Value should not be null! This should have been caught by setting_is_channel")
+
+    return str(chat_convert.id)
+
+# noinspection PyUnusedLocal
+def setting_is_role(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+    s = value.split(",")
+    if len(s) == 2 and s[1].isnumeric():
+        role_convert = convert_role(member.guild, s[0], int(s[1]))
+    else:
+        role_convert = convert_role(member.guild, value)
+
+    if role_convert is None:
+        return False, "Invalid channel"
+    else:
+        return True, ""
+
+# noinspection PyUnusedLocal
+def setting_to_role(c: Connection, member: Member, value: str) -> str:
+    s = value.split(",")
+    if len(s) == 2 and s[1].isnumeric():
+        role_convert = convert_role(member.guild, s[0], int(s[1]))
+    else:
+        role_convert = convert_role(member.guild, value)
+
+    if role_convert is None:
+        raise ValueError("Value should not be null! This should have been caught by setting_is_channel")
+
+    return str(role_convert.id)
+
+
+def setting_simple_string(fmt: str):
+    def formatter(c: Connection, m: Member, v: str) -> str:
+        return fmt.replace("%s", v)
+
+    return formatter
+
+
+def setting_simple_list_string(fmt: str, sep: str, empty: str):
+    def formatter(c: Connection, m: Member, v: list[str]) -> str:
+        if len(v) == 0:
+            return empty
+        return fmt.replace("%s", sep.join(v))
+
+    return formatter
+
+
+def setting_simple_string_boolean(fmt: str, truthy: str, falsey: str):
+    def formatter(c: Connection, m: Member, v: str) -> str:
+        if v == "true":
+            return fmt.replace("%s", truthy)
+        else:
+            return fmt.replace("%s", falsey)
+
+    return formatter
+
 
 def setting_name_autocomplete(ctx: AutocompleteContext) -> list[str]:
     setting = ctx.options["name"]

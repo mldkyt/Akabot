@@ -8,7 +8,8 @@ from sqlalchemy import Connection, insert, select, update
 
 from database import leveling, server_settings_list
 from utils.conversion import convert_role
-from utils.server_settings import ServerSetting, setting_is_number, setting_is_boolean, setting_to_boolean, SettingType
+from utils.server_settings import ServerSetting, setting_is_number, setting_is_boolean, setting_to_boolean, SettingType, \
+    setting_simple_string, setting_simple_string_boolean
 
 
 # noinspection PyUnusedLocal
@@ -150,30 +151,6 @@ def get_reward_view(c: Connection, m: Member, val: list[str]) -> str:
     return "Leveling rewards: " + ", ".join(converted)
 
 
-def level_up_message_view(c: Connection, m: Member, s: str) -> str:
-    return "Level-up message is enabled" if s == "true" else "Level-up message is disabled"
-
-
-def level_up_message_response(c: Connection, m: Member, s: str) -> str:
-    return "Level-up messages were enabled" if s == "true" else "Level-up messages were disabled"
-
-
-def xp_per_message_view(c: Connection, m: Member, s: str) -> str:
-    return f"{s} XP per message"
-
-
-def xp_per_message_response(c: Connection, m: Member, s: str) -> str:
-    return f"Set the XP per message to {s}"
-
-
-def xp_per_level_view(c: Connection, m: Member, s: str) -> str:
-    return f"{s} XP required per level"
-
-
-def xp_per_level_response(c: Connection, m: Member, s: str) -> str:
-    return f"Set XP required per level to {s}"
-
-
 def add_multiplier_validator(c: Connection, m: Member, s: str) -> tuple[bool, str]:
     output = re.match(r"^(\d+)-(\d+) +- +(\d+)-(\d+), +(\d)$", s.strip())
     if not output:
@@ -244,23 +221,23 @@ def remove_multiplier_response(c: Connection, m: Member, s: str) -> str:
 setting_xp_per_message = ServerSetting(
     name="Leveling XP per message",
     normal_validator=setting_is_number,
-    normal_view=xp_per_message_view,
-    normal_response=xp_per_message_response,
+    normal_view=setting_simple_string("%s XP per message"),
+    normal_response=setting_simple_string("Set the XP per message to %s"),
     default="3"
 )
 setting_level_up_message = ServerSetting(
     name="Leveling enable level-up message",
     normal_validator=setting_is_boolean,
     normal_transformer=setting_to_boolean,
-    normal_view=level_up_message_view,
-    normal_response=level_up_message_response,
+    normal_view=setting_simple_string_boolean("Level-up messages are %s", "enabled", "disabled"),
+    normal_response=setting_simple_string_boolean("Level-up messages were %s" ,"enabled", "disabled"),
     default="true"
 )
 setting_xp_per_level = ServerSetting(
     name="Leveling XP per level",
     normal_validator=setting_is_number,
-    normal_view=xp_per_level_view,
-    normal_response=xp_per_level_response,
+    normal_view=setting_simple_string("%s XP required per level"),
+    normal_response=setting_simple_string("Set XP required per level to %s"),
     default="500"
 )
 setting_leveling_rewards = ServerSetting(
