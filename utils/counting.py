@@ -1,11 +1,10 @@
 import asyncio
 import re
 
-from discord import Guild, Member, Message
+from discord import Message
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import counting_channels
-from utils.conversion import convert_text_channel
 from utils.server_settings import (
     ServerSetting,
     SettingType,
@@ -128,7 +127,7 @@ def attempt_to_parse_number(c: Connection, m: Message) -> list[int]:
         # Count of words that repeat
         words = {}
         for i in m.content.strip().split(" "):
-            if not i in words:
+            if i not in words:
                 words[i] = 0
             words[i] += 1
 

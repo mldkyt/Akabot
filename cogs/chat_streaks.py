@@ -1,15 +1,12 @@
-from datetime import date, datetime
-from tkinter.constants import N
+from datetime import date
 
 from discord import (
     ApplicationContext,
     Bot,
     Cog,
-    IntegrationType,
     Member,
     Message,
     SlashCommandGroup,
-    slash_command,
 )
 from discord.ext.pages import Paginator
 
@@ -20,10 +17,11 @@ from utils.chat_streaks import (
     get_guild_link,
     get_leaderboard,
     get_streak,
+    get_unexpired_streak,
     server_disable_response,
     server_message_delay,
     update_for_user,
-    user_disable_response, get_unexpired_streak,
+    user_disable_response,
 )
 from utils.docs import Docs, DocsCommand, DocsSetting
 from utils.server_settings import SettingType, settings
@@ -47,7 +45,7 @@ class ChatStreaks(Cog):
             if not isinstance(msg.author, Member):
                 return
 
-            with (engine.begin() as c):
+            with engine.begin() as c:
                 unex_streak = get_unexpired_streak(c, msg.author)
                 prev_streak = get_streak(c, msg.author)
                 update_for_user(c, msg.author)

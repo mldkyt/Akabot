@@ -1,7 +1,6 @@
 import re
 
-from discord import ChannelType, Guild, Role, TextChannel
-from discord.abc import Messageable
+from discord import Guild, Role, TextChannel
 
 
 def convert_role(guild: Guild, value: str, index: int = 0) -> Role | None:
