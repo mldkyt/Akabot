@@ -1,8 +1,7 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from discord import Bot, Guild, Member
-from discord.ext.pages import Paginator
-from sqlalchemy import Connection, asc, desc, func, insert, select, update
+from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks
 from utils.server_settings import (

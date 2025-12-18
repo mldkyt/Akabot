@@ -1,5 +1,3 @@
-from discord import AutocompleteContext
-
 from utils.server_settings import SettingType
 
 

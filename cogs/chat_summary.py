@@ -1,5 +1,4 @@
-import asyncio
-from datetime import date, datetime
+from datetime import datetime
 
 from discord import (
     ApplicationContext,
@@ -79,7 +78,7 @@ class ChatSummary(Cog):
             try:
                 with engine.begin() as c:
                     await summarize(c, i)
-            except Exception as e:
+            except Exception:
                 nekona_logger.exception("Error during summarizing")
 
     chat_summary_commands = SlashCommandGroup(name="chat_summary")
