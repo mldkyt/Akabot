@@ -1,14 +1,32 @@
-from datetime import datetime
+from datetime import date, datetime
+from tkinter.constants import N
 
-from discord import Cog, Bot, Message, slash_command, ApplicationContext, SlashCommandGroup
+from discord import (
+    ApplicationContext,
+    Bot,
+    Cog,
+    IntegrationType,
+    Member,
+    Message,
+    SlashCommandGroup,
+    slash_command,
+)
 from discord.ext.pages import Paginator
 
 from database import engine
 from logger import nekona_logger
-from utils.chat_streaks import update_for_user, get_streak, server_disable_response, user_disable_response, \
-    get_leaderboard, server_message_delay
+from utils.chat_streaks import (
+    get_all_streaks_for,
+    get_guild_link,
+    get_leaderboard,
+    get_streak,
+    server_disable_response,
+    server_message_delay,
+    update_for_user,
+    user_disable_response, get_unexpired_streak,
+)
 from utils.docs import Docs, DocsCommand, DocsSetting
-from utils.server_settings import settings, SettingType
+from utils.server_settings import SettingType, settings
 from utils.user_settings import user_settings
 
 
@@ -26,8 +44,11 @@ class ChatStreaks(Cog):
                 return
             if msg.guild is None:
                 return
+            if not isinstance(msg.author, Member):
+                return
 
-            with engine.begin() as c:
+            with (engine.begin() as c):
+                unex_streak = get_unexpired_streak(c, msg.author)
                 prev_streak = get_streak(c, msg.author)
                 update_for_user(c, msg.author)
                 next_streak = get_streak(c, msg.author)
@@ -38,9 +59,16 @@ class ChatStreaks(Cog):
                 if user_disable_response.get(c, msg.author) == "true":
                     return
 
+                if unex_streak != prev_streak:
+                    a = await msg.reply(
+                        f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
+                    )
+                    await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+                    return
                 if next_streak > prev_streak:
                     a = await msg.reply(
-                        f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
+                        f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`."
+                    )
                     await a.delete(delay=int(server_message_delay.get(c, msg.author)))
         except Exception as e:
             nekona_logger.exception(e)
@@ -51,7 +79,9 @@ class ChatStreaks(Cog):
             with engine.begin() as c:
                 streak = get_streak(c, ctx.user)
 
-                await ctx.respond(f"Your current streak is {streak} days.", ephemeral=True)
+                await ctx.respond(
+                    f"Your current streak is {streak} days.", ephemeral=True
+                )
         except Exception as e:
             nekona_logger.exception(e)
             await ctx.respond("Error", ephemeral=True)
@@ -84,17 +114,56 @@ class ChatStreaks(Cog):
             nekona_logger.exception(e)
             await ctx.respond("Error", ephemeral=True)
 
+    @chat_streaks.command()
+    async def my_chat_streaks(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            my_chat_streaks_fetched = get_all_streaks_for(c, self.bot, ctx.user)
+
+            pages: list[str] = []
+            curpage = "# My Chat Streaks\n"
+
+            for i in range(len(my_chat_streaks_fetched)):
+                guild = self.bot.get_guild(int(my_chat_streaks_fetched[i][0]))
+                if guild is None:
+                    continue
+
+                guild_link = get_guild_link(guild)
+
+                days_from_now = date.today() - my_chat_streaks_fetched[i][2]
+
+                if days_from_now.days == 0:
+                    indicator = "🔥"
+                elif days_from_now.days == 1:
+                    indicator = "⚠️"
+                else:
+                    indicator = "❌"
+
+                guild_name = (
+                    f"**[{guild.name}]({guild_link.jump_url})**"
+                    if guild_link is not None
+                    else f"**{guild.name}**"
+                )
+
+                days = my_chat_streaks_fetched[i][2] - my_chat_streaks_fetched[i][1]
+                curpage += f"- {indicator} {guild_name} - {days.days} days\n"
+                if i % 5 == 4:
+                    pages.append(curpage)
+                    curpage = ""
+
+            if len(curpage.strip()) > 17:
+                pages.append(curpage)
+
+            paginator = Paginator(pages)
+            await paginator.respond(ctx.interaction, ephemeral=True)
+
+
 def setup(bot: Bot):
     bot.add_cog(ChatStreaks(bot))
 
-    settings.add_settings(
-        server_disable_response,
-        server_message_delay
-    )
+    settings.add_settings(server_disable_response, server_message_delay)
 
-    user_settings.add_settings(
-        user_disable_response
-    )
+    user_settings.add_settings(user_disable_response)
+
 
 def docs():
     return str(
@@ -104,24 +173,24 @@ def docs():
             commands=[
                 DocsCommand(
                     command="chat_streaks leaderboard",
-                    description="View the leaderboard. The leaderboard has arrows to navigate back and forth."
+                    description="View the leaderboard. The leaderboard has arrows to navigate back and forth.",
                 ),
                 DocsCommand(
                     command="chat_streaks streak",
-                    description="View the amount of days on your streak."
-                )
+                    description="View the amount of days on your streak.",
+                ),
             ],
             settings=[
                 DocsSetting(
                     name="Chat streaks disable response",
                     description="Both a server and user setting. The server setting disables Chat Streak responses for everyone, the user setting disabled it on all servers for you.",
-                    setting_type=SettingType.NORMAL
+                    setting_type=SettingType.NORMAL,
                 ),
                 DocsSetting(
                     name="Chat streaks message duration",
                     description="A server setting that configures how long the response is shown for.",
-                    setting_type=SettingType.NORMAL
-                )
-            ]
+                    setting_type=SettingType.NORMAL,
+                ),
+            ],
         )
     )

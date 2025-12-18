@@ -1,6 +1,6 @@
 import re
 
-from discord import Guild, Role, TextChannel, ChannelType
+from discord import ChannelType, Guild, Role, TextChannel
 from discord.abc import Messageable
 
 
@@ -26,7 +26,10 @@ def convert_role(guild: Guild, value: str, index: int = 0) -> Role | None:
 
     return None
 
-def convert_text_channel(guild: Guild, value: str, index: int = 0) -> TextChannel | None:
+
+def convert_text_channel(
+    guild: Guild, value: str, index: int = 0
+) -> TextChannel | None:
     # mention
     a = re.match(r"^<#(\d+)>$", value)
     if a is not None:
