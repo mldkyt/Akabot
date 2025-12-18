@@ -1,19 +1,36 @@
 from decimal import InvalidOperation
 from typing import Callable
 
-from discord import Member, AutocompleteContext
-from sqlalchemy import Connection, select, insert, update, delete
+from discord import AutocompleteContext, Member
+from sqlalchemy import Connection, delete, insert, select, update
 
-from database import user_settings as us_table, user_settings_list as usl_table
+from database import user_settings as us_table
+from database import user_settings_list as usl_table
 from utils.server_settings import SettingType
 
 
 class UserSetting:
-    def __init__(self, name: str, *, setting_type: SettingType = SettingType.NORMAL,
-                 normal_validator: Callable[[Connection, Member, str], tuple[bool, str]] | None = None, list_add_validator: Callable[[Connection, Member, str], tuple[bool, str]] | None = None, list_remove_validator: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
-                 normal_transformer: Callable[[Connection, Member, str], str] | None = None, list_add_transformer: Callable[[Connection, Member, str], str] | None = None, list_remove_transformer: Callable[[Connection, Member, str], str] | None = None,
-                 default: str | None = None, normal_response: Callable[[Connection, Member, str], str] | None = None, list_add_response: Callable[[Connection, Member, str], str] | None = None, list_remove_response: Callable[[Connection, Member, str], str] | None = None,
-                 normal_view: Callable[[Connection, Member, str], str] | None = None, list_view: Callable[[Connection, Member, list[str]], str] | None = None):
+    def __init__(
+        self,
+        name: str,
+        *,
+        setting_type: SettingType = SettingType.NORMAL,
+        normal_validator: Callable[[Connection, Member, str], tuple[bool, str]]
+        | None = None,
+        list_add_validator: Callable[[Connection, Member, str], tuple[bool, str]]
+        | None = None,
+        list_remove_validator: Callable[[Connection, Member, str], tuple[bool, str]]
+        | None = None,
+        normal_transformer: Callable[[Connection, Member, str], str] | None = None,
+        list_add_transformer: Callable[[Connection, Member, str], str] | None = None,
+        list_remove_transformer: Callable[[Connection, Member, str], str] | None = None,
+        default: str | None = None,
+        normal_response: Callable[[Connection, Member, str], str] | None = None,
+        list_add_response: Callable[[Connection, Member, str], str] | None = None,
+        list_remove_response: Callable[[Connection, Member, str], str] | None = None,
+        normal_view: Callable[[Connection, Member, str], str] | None = None,
+        list_view: Callable[[Connection, Member, list[str]], str] | None = None,
+    ):
         self.name = name
 
         self.setting_type = setting_type
@@ -34,7 +51,9 @@ class UserSetting:
             self.list_remove_response = list_remove_response
             self.list_view = list_view
 
-    def validate_add(self, c: Connection, member: Member, value: str) -> tuple[bool, str]:
+    def validate_add(
+        self, c: Connection, member: Member, value: str
+    ) -> tuple[bool, str]:
         if self.setting_type == SettingType.NORMAL:
             if self.normal_validator is None:
                 return True, ""
@@ -48,14 +67,18 @@ class UserSetting:
 
         raise ValueError(f"Invalid setting_type {self.setting_type} for validate_add")
 
-    def validate_remove(self, c: Connection, member: Member, value: str) -> tuple[bool, str]:
+    def validate_remove(
+        self, c: Connection, member: Member, value: str
+    ) -> tuple[bool, str]:
         if self.setting_type == SettingType.LIST:
             if self.list_remove_validator is None:
                 return True, ""
 
             return self.list_remove_validator(c, member, value)
 
-        raise ValueError(f"Invalid setting_type {self.setting_type} for validate_remove")
+        raise ValueError(
+            f"Invalid setting_type {self.setting_type} for validate_remove"
+        )
 
     def transform_add(self, c: Connection, member: Member, value: str) -> str:
         if self.setting_type == SettingType.NORMAL:
@@ -78,7 +101,9 @@ class UserSetting:
 
             return self.list_remove_transformer(c, member, value)
 
-        raise ValueError(f"Invalid setting_type {self.setting_type} for transform_remove")
+        raise ValueError(
+            f"Invalid setting_type {self.setting_type} for transform_remove"
+        )
 
     def respond_add(self, c: Connection, member: Member, value: str) -> str:
         value = self.transform_add(c, member, value)
@@ -107,15 +132,15 @@ class UserSetting:
 
         raise ValueError(f"Invalid setting_type {self.setting_type} for respond_remove")
 
-    def default(self) -> list | str:
+    def default(self) -> list[str] | str:
         return self.default_value
 
     def get(self, c: Connection, member: Member) -> str | list[str]:
         if self.setting_type == SettingType.NORMAL:
-
             setting = c.execute(
-                select(us_table.c.value)
-                .where((us_table.c.uid == str(member.id)) & (us_table.c.name == self.name))
+                select(us_table.c.value).where(
+                    (us_table.c.uid == str(member.id)) & (us_table.c.name == self.name)
+                )
             ).fetchone()
 
             if setting is None:
@@ -124,8 +149,10 @@ class UserSetting:
             return setting[0]
         elif self.setting_type == SettingType.LIST:
             setting = c.execute(
-                select(usl_table.c.value)
-                .where((usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name))
+                select(usl_table.c.value).where(
+                    (usl_table.c.uid == str(member.id))
+                    & (usl_table.c.name == self.name)
+                )
             ).fetchall()
 
             if len(setting) == 0:
@@ -151,7 +178,9 @@ class UserSetting:
 
     def set(self, c: Connection, member: Member, value: str):
         if self.setting_type != SettingType.NORMAL:
-            raise InvalidOperation(f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}")
+            raise InvalidOperation(
+                f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
+            )
 
         ok, err = self.validate_add(c, member, value)
         if not ok:
@@ -160,25 +189,33 @@ class UserSetting:
         value = self.transform_add(c, member, value)
 
         setting = c.execute(
-            select(us_table.c.value)
-            .where((us_table.c.uid == str(member.id)) & (us_table.c.name == self.name))
+            select(us_table.c.value).where(
+                (us_table.c.uid == str(member.id)) & (us_table.c.name == self.name)
+            )
         ).fetchone()
 
         if setting is None:
             c.execute(
-                insert(us_table)
-                .values(uid=str(member.guild.id), name=self.name, value=value)
+                insert(us_table).values(
+                    uid=str(member.guild.id), name=self.name, value=value
+                )
             )
         else:
             c.execute(
                 update(us_table)
                 .values(value=value)
-                .where((us_table.c.uid == str(member.id)) & (us_table.c.name == self.name))
+                .where(
+                    (us_table.c.uid == str(member.id)) & (us_table.c.name == self.name)
+                )
             )
 
-    def add_to_list(self, c: Connection, member: Member, value: str, silent: bool = False):
+    def add_to_list(
+        self, c: Connection, member: Member, value: str, silent: bool = False
+    ):
         if self.setting_type != SettingType.LIST:
-            raise InvalidOperation(f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}")
+            raise InvalidOperation(
+                f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
+            )
 
         ok, err = self.validate_add(c, member, value)
         if not ok:
@@ -187,9 +224,11 @@ class UserSetting:
         value = self.transform_add(c, member, value)
 
         a = c.execute(
-            select(usl_table.c.value)
-            .where((usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name) & (
-                        usl_table.c.value == value))
+            select(usl_table.c.value).where(
+                (usl_table.c.uid == str(member.id))
+                & (usl_table.c.name == self.name)
+                & (usl_table.c.value == value)
+            )
         ).fetchone()
 
         if a is not None:
@@ -199,13 +238,18 @@ class UserSetting:
             raise ValueError(f"Value {value} is already in list {self.name}")
 
         c.execute(
-            insert(usl_table)
-            .values(uid=str(member.guild.id), name=self.name, value=value)
+            insert(usl_table).values(
+                uid=str(member.guild.id), name=self.name, value=value
+            )
         )
 
-    def remove_from_list(self, c: Connection, member: Member, value: str, silent: bool = False):
+    def remove_from_list(
+        self, c: Connection, member: Member, value: str, silent: bool = False
+    ):
         if self.setting_type != SettingType.LIST:
-            raise InvalidOperation(f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}")
+            raise InvalidOperation(
+                f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
+            )
 
         ok, err = self.validate_remove(c, member, value)
         if not ok:
@@ -214,9 +258,11 @@ class UserSetting:
         value = self.transform_remove(c, member, value)
 
         a = c.execute(
-            select(usl_table.c.value)
-            .where((usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name) & (
-                        usl_table.c.value == value))
+            select(usl_table.c.value).where(
+                (usl_table.c.uid == str(member.id))
+                & (usl_table.c.name == self.name)
+                & (usl_table.c.value == value)
+            )
         ).fetchone()
 
         if a is None:
@@ -226,25 +272,31 @@ class UserSetting:
             raise ValueError(f"Value {value} not found in list {self.name}")
 
         c.execute(
-            delete(usl_table)
-            .where((usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name) & (
-                        usl_table.c.value == value))
+            delete(usl_table).where(
+                (usl_table.c.uid == str(member.id))
+                & (usl_table.c.name == self.name)
+                & (usl_table.c.value == value)
+            )
         )
 
     def is_in_list(self, c: Connection, member: Member, value: str) -> bool:
         a = c.execute(
-            select(usl_table.c.value)
-            .where((usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name) & (
-                    usl_table.c.value == value))
+            select(usl_table.c.value).where(
+                (usl_table.c.uid == str(member.id))
+                & (usl_table.c.name == self.name)
+                & (usl_table.c.value == value)
+            )
         ).fetchone()
 
         return a is not None
 
     def clear_list(self, c: Connection, member: Member):
         c.execute(
-            delete(usl_table.c.value)
-            .where((usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name))
+            delete(usl_table.c.value).where(
+                (usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name)
+            )
         )
+
 
 class UserSettings:
     def __init__(self):
@@ -266,7 +318,9 @@ class UserSettings:
 
         return None
 
-    def list_user_settings_pretty(self, c: Connection, member: Member) -> list[tuple[str, str]]:
+    def list_user_settings_pretty(
+        self, c: Connection, member: Member
+    ) -> list[tuple[str, str]]:
         sets = []
 
         for i in self.registered_settings:
@@ -278,21 +332,31 @@ class UserSettings:
 
         return sets
 
+
 user_settings = UserSettings()
 
 
 def user_setting_name_autocomplete(ctx: AutocompleteContext) -> list[str]:
     setting = ctx.options["name"]
 
-    options = [i.name for i in user_settings.get_settings() if i.name.startswith(setting) and i.setting_type == SettingType.NORMAL]
+    options = [
+        i.name
+        for i in user_settings.get_settings()
+        if i.name.startswith(setting) and i.setting_type == SettingType.NORMAL
+    ]
     options = options[:10]
 
     return options
 
+
 def user_setting_name_list_autocomplete(ctx: AutocompleteContext) -> list[str]:
     setting = ctx.options["name"]
 
-    options = [i.name for i in user_settings.get_settings() if i.name.startswith(setting) and i.setting_type == SettingType.LIST]
+    options = [
+        i.name
+        for i in user_settings.get_settings()
+        if i.name.startswith(setting) and i.setting_type == SettingType.LIST
+    ]
     options = options[:10]
 
     return options

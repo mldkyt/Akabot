@@ -3,11 +3,14 @@ from discord.ext.pages import Paginator
 
 from database import engine
 from utils.docs import Docs, DocsCommand, DocsCommandParameter
-from utils.server_settings import settings, setting_name_autocomplete, setting_name_list_autocomplete
+from utils.server_settings import (
+    setting_name_autocomplete,
+    setting_name_list_autocomplete,
+    settings,
+)
 
 
 class ServerSettings(discord.Cog):
-
     def __init__(self, bot: discord.Bot):
         super().__init__()
 
@@ -17,7 +20,11 @@ class ServerSettings(discord.Cog):
 
     @server_settings.command()
     @discord.default_permissions(manage_guild=True)
-    @discord.option(name="name", description="Name of setting", autocomplete=setting_name_autocomplete)
+    @discord.option(
+        name="name",
+        description="Name of setting",
+        autocomplete=setting_name_autocomplete,
+    )
     @discord.option(name="value", description="Value to set")
     async def set_setting(self, ctx: discord.ApplicationContext, name: str, value: str):
         """Set a setting"""
@@ -45,7 +52,11 @@ class ServerSettings(discord.Cog):
 
     @server_settings.command()
     @discord.default_permissions(manage_guild=True)
-    @discord.option(name="name", description="Name of setting", autocomplete=setting_name_autocomplete)
+    @discord.option(
+        name="name",
+        description="Name of setting",
+        autocomplete=setting_name_autocomplete,
+    )
     async def get_setting(self, ctx: discord.ApplicationContext, name: str):
         """Set a setting"""
 
@@ -64,8 +75,14 @@ class ServerSettings(discord.Cog):
 
     @server_settings.command()
     @discord.default_permissions(manage_guild=True)
-    @discord.option(name="name", description="Name of setting", autocomplete=setting_name_list_autocomplete)
-    async def add_list_setting(self, ctx: discord.ApplicationContext, name: str, value: str):
+    @discord.option(
+        name="name",
+        description="Name of setting",
+        autocomplete=setting_name_list_autocomplete,
+    )
+    async def add_list_setting(
+        self, ctx: discord.ApplicationContext, name: str, value: str
+    ):
         """Add an element into a list setting"""
 
         setting = settings.get_setting(name)
@@ -82,8 +99,12 @@ class ServerSettings(discord.Cog):
                 await ctx.respond(err, ephemeral=True)
                 return
 
-            if setting.is_in_list(c, ctx.user, setting.transform_add(c, ctx.user, value)):
-                await ctx.respond(f"The value {value} is already in the list {name}", ephemeral=True)
+            if setting.is_in_list(
+                c, ctx.user, setting.transform_add(c, ctx.user, value)
+            ):
+                await ctx.respond(
+                    f"The value {value} is already in the list {name}", ephemeral=True
+                )
                 return
 
             setting.add_to_list(c, ctx.user, value)
@@ -93,8 +114,14 @@ class ServerSettings(discord.Cog):
 
     @server_settings.command()
     @discord.default_permissions(manage_guild=True)
-    @discord.option(name="name", description="Name of setting", autocomplete=setting_name_list_autocomplete)
-    async def remove_list_setting(self, ctx: discord.ApplicationContext, name: str, value: str):
+    @discord.option(
+        name="name",
+        description="Name of setting",
+        autocomplete=setting_name_list_autocomplete,
+    )
+    async def remove_list_setting(
+        self, ctx: discord.ApplicationContext, name: str, value: str
+    ):
         """Add an element into a list setting"""
 
         setting = settings.get_setting(name)
@@ -111,8 +138,12 @@ class ServerSettings(discord.Cog):
                 await ctx.respond(err, ephemeral=True)
                 return
 
-            if not setting.is_in_list(c, ctx.user, setting.transform_remove(c, ctx.user, value)):
-                await ctx.respond(f"The value {value} is not in the list {name}", ephemeral=True)
+            if not setting.is_in_list(
+                c, ctx.user, setting.transform_remove(c, ctx.user, value)
+            ):
+                await ctx.respond(
+                    f"The value {value} is not in the list {name}", ephemeral=True
+                )
                 return
 
             setting.remove_from_list(c, ctx.user, value)
@@ -122,7 +153,11 @@ class ServerSettings(discord.Cog):
 
     @server_settings.command()
     @discord.default_permissions(manage_guild=True)
-    @discord.option(name="name", description="Name of setting", autocomplete=setting_name_list_autocomplete)
+    @discord.option(
+        name="name",
+        description="Name of setting",
+        autocomplete=setting_name_list_autocomplete,
+    )
     async def clear_list_setting(self, ctx: discord.ApplicationContext, name: str):
         """Add an element into a list setting"""
 
@@ -164,8 +199,10 @@ class ServerSettings(discord.Cog):
         paginator = Paginator(pages)
         await paginator.respond(ctx.interaction, ephemeral=True)
 
+
 def setup(bot: discord.Bot):
     bot.add_cog(ServerSettings(bot))
+
 
 def docs():
     return str(
@@ -179,13 +216,13 @@ def docs():
                     parameters=[
                         DocsCommandParameter(
                             name="name",
-                            description="The name of the setting to set. Use the dropdown to choose"
+                            description="The name of the setting to set. Use the dropdown to choose",
                         ),
                         DocsCommandParameter(
                             name="value",
-                            description="The value to set it to. In the case of an invalid value, the bot will tell you."
-                        )
-                    ]
+                            description="The value to set it to. In the case of an invalid value, the bot will tell you.",
+                        ),
+                    ],
                 ),
                 DocsCommand(
                     command="get_setting",
@@ -193,13 +230,13 @@ def docs():
                     parameters=[
                         DocsCommandParameter(
                             name="name",
-                            description="The name of the setting to get. Use the dropdown to choose."
+                            description="The name of the setting to get. Use the dropdown to choose.",
                         )
-                    ]
+                    ],
                 ),
                 DocsCommand(
                     command="list_settings",
-                    description="List all settings available in Nekona and their current values."
+                    description="List all settings available in Nekona and their current values.",
                 ),
                 DocsCommand(
                     command="add_list_setting",
@@ -207,13 +244,13 @@ def docs():
                     parameters=[
                         DocsCommandParameter(
                             name="name",
-                            description="The name of the list setting to add to. Use the dropdown to choose"
+                            description="The name of the list setting to add to. Use the dropdown to choose",
                         ),
                         DocsCommandParameter(
                             name="value",
-                            description="The value to add. In the case of an invalid value, the bot will tell you."
-                        )
-                    ]
+                            description="The value to add. In the case of an invalid value, the bot will tell you.",
+                        ),
+                    ],
                 ),
                 DocsCommand(
                     command="remove_list_setting",
@@ -221,13 +258,13 @@ def docs():
                     parameters=[
                         DocsCommandParameter(
                             name="name",
-                            description="The name of the list setting to remove from. Use the dropdown to choose"
+                            description="The name of the list setting to remove from. Use the dropdown to choose",
                         ),
                         DocsCommandParameter(
                             name="value",
-                            description="The value to remove. In the case of an invalid value, the bot will tell you."
-                        )
-                    ]
+                            description="The value to remove. In the case of an invalid value, the bot will tell you.",
+                        ),
+                    ],
                 ),
                 DocsCommand(
                     command="clear_list_setting",
@@ -235,10 +272,10 @@ def docs():
                     parameters=[
                         DocsCommandParameter(
                             name="name",
-                            description="The name of the list setting to remove from. Use the dropdown to choose"
+                            description="The name of the list setting to remove from. Use the dropdown to choose",
                         )
-                    ]
-                )
-            ]
+                    ],
+                ),
+            ],
         )
     )
