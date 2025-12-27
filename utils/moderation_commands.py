@@ -45,11 +45,4 @@ async def perform_basic_checks(
     if user.top_role > ctx.user.top_role:
         return False, f"This user has a higher rank than you, can't {k}"
 
-    # Check bot role
-    if ctx.guild.me.top_role < ctx.user.top_role:
-        return (
-            False,
-            f"That user has a higher rank than me, please give me a higher rank to {k} that user",
-        )
-
     return True, ""
