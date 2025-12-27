@@ -527,6 +527,9 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
 
             today = date.today()
             async for message in channel.history(limit=None):
+                if message.author.bot:
+                    return
+
                 # Add each message into each group
                 if (
                     message.created_at.day == today.day
