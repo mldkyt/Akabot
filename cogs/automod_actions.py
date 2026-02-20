@@ -11,11 +11,16 @@ class AutomodActions(Cog):
         super().__init__()
         self.bot = bot
 
+    has_init = False
+
     @Cog.listener()
     async def on_ready(self):
-        for i in self.bot.guilds:
-            if i.me.guild_permissions.manage_guild:
-                await fetch_actions(i)
+        if not self.has_init:
+            for i in self.bot.guilds:
+                if i.me.guild_permissions.manage_guild:
+                    await fetch_actions(i)
+
+            self.has_init = True
 
     @Cog.listener()
     async def on_auto_moderation_action_execution(
