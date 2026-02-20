@@ -12,9 +12,13 @@ class Heartbeat(Cog):
     def __init__(self):
         super().__init__()
 
+    has_started = False
+
     @Cog.listener()
     async def on_ready(self):
-        self.heartbeat.start()
+        if not self.has_started:
+            self.heartbeat.start()
+            self.has_started = True
 
     @loop(seconds=int(HEARTBEAT_INTERVAL))
     async def heartbeat(self):

@@ -16,10 +16,15 @@ class WelcomeGoodbye(Cog):
         super().__init__()
         self.bot = bot
 
+    has_init = False
+
     @Cog.listener()
     async def on_ready(self):
-        nekona_logger.debug("Welcoming: Starting timed tasks")
-        self.timed_tasks.start()
+        if not self.has_init:
+            nekona_logger.debug("Welcoming: Starting timed tasks")
+            self.timed_tasks.start()
+
+            self.has_init = True
 
     @Cog.listener()
     async def on_member_join(self, member: Member):

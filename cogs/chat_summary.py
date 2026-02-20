@@ -32,22 +32,27 @@ class ChatSummary(Cog):
         super().__init__()
         self.bot = bot
 
+    has_init = False
+
     @Cog.listener()
     async def on_ready(self):
-        self.task_summary.start()
+        if not self.has_init:
+            self.task_summary.start()
 
-        try:
-            with engine.begin() as c:
-                async for i in self.bot.fetch_guilds(limit=None):
-                    for j in chat_summary.get_direct(c, i):
-                        channel = await i.fetch_channel(int(j))
-                        if not isinstance(channel, TextChannel):
-                            continue
+            try:
+                with engine.begin() as c:
+                    async for i in self.bot.fetch_guilds(limit=None):
+                        for j in chat_summary.get_direct(c, i):
+                            channel = await i.fetch_channel(int(j))
+                            if not isinstance(channel, TextChannel):
+                                continue
 
-                        async for m in perform_backfill(i, channel):
-                            nekona_logger.info("Backfill info: %s", m)
-        except Exception:
-            nekona_logger.exception("Error when backfilling channels on startup")
+                            async for m in perform_backfill(i, channel):
+                                nekona_logger.info("Backfill info: %s", m)
+            except Exception:
+                nekona_logger.exception("Error when backfilling channels on startup")
+
+            self.has_init = True
 
     @Cog.listener()
     async def on_message(self, msg: Message):
