@@ -11,7 +11,7 @@ if not os.path.exists("logs"):
 
 load_dotenv()
 
-BOT_VERSION = "0.2.0"
+BOT_VERSION = "@VERSION@"
 
 nekona_logger.info(f"Nekona {BOT_VERSION} is starting up")
 
