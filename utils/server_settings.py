@@ -20,15 +20,9 @@ class ServerSetting:
         name: str,
         *,
         setting_type: SettingType = SettingType.NORMAL,
-        normal_validator: Callable[[Connection, Member, str], tuple[bool, str]]
-        | None = None,
-        list_add_validator: Callable[[Connection, Member, str], tuple[bool, str]]
-        | None = None,
-        list_remove_validator: Callable[[Connection, Member, str], tuple[bool, str]]
-        | None = None,
-        normal_transformer: Callable[[Connection, Member, str], str] | None = None,
-        list_add_transformer: Callable[[Connection, Member, str], str] | None = None,
-        list_remove_transformer: Callable[[Connection, Member, str], str] | None = None,
+            normal_processor: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
+            list_add_processor: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
+            list_remove_processor: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
         default: str | None = None,
         normal_response: Callable[[Connection, Member, str], str] | None = None,
         list_add_response: Callable[[Connection, Member, str], str] | None = None,
@@ -42,77 +36,43 @@ class ServerSetting:
 
         if self.setting_type == SettingType.NORMAL:
             self.default_value = default
-            self.normal_validator = normal_validator
-            self.normal_transformer = normal_transformer
+            self.normal_processor = normal_processor
             self.normal_response = normal_response
             self.normal_view = normal_view
         elif self.setting_type == SettingType.LIST:
             self.default_value = []
-            self.list_add_validator = list_add_validator
-            self.list_add_transformer = list_add_transformer
+            self.list_add_processor = list_add_processor
             self.list_add_response = list_add_response
-            self.list_remove_validator = list_remove_validator
-            self.list_remove_transformer = list_remove_transformer
+            self.list_remove_processor = list_remove_processor
             self.list_remove_response = list_remove_response
             self.list_view = list_view
 
-    def validate_add(
-        self, c: Connection, member: Member, value: str
-    ) -> tuple[bool, str]:
+    def process_add(self, c: Connection, member: Member, value: str) -> tuple[bool, str]:
         if self.setting_type == SettingType.NORMAL:
-            if self.normal_validator is None:
-                return True, ""
+            if self.normal_processor is None:
+                return True, value
 
-            return self.normal_validator(c, member, value)
+            return self.normal_processor(c, member, value)
         elif self.setting_type == SettingType.LIST:
-            if self.list_add_validator is None:
-                return True, ""
+            if self.list_add_processor is None:
+                return True, value
 
-            return self.list_add_validator(c, member, value)
-
-        raise ValueError(f"Invalid setting_type {self.setting_type} for validate_add")
-
-    def validate_remove(
-        self, c: Connection, member: Member, value: str
-    ) -> tuple[bool, str]:
-        if self.setting_type == SettingType.LIST:
-            if self.list_remove_validator is None:
-                return True, ""
-
-            return self.list_remove_validator(c, member, value)
-
-        raise ValueError(
-            f"Invalid setting_type {self.setting_type} for validate_remove"
-        )
-
-    def transform_add(self, c: Connection, member: Member, value: str) -> str:
-        if self.setting_type == SettingType.NORMAL:
-            if self.normal_transformer is None:
-                return value
-
-            return self.normal_transformer(c, member, value)
-        elif self.setting_type == SettingType.LIST:
-            if self.list_add_transformer is None:
-                return value
-
-            return self.list_add_transformer(c, member, value)
+            return self.list_add_processor(c, member, value)
 
         raise ValueError(f"Invalid setting_type {self.setting_type} for transform_add")
 
-    def transform_remove(self, c: Connection, member: Member, value: str) -> str:
+    def process_remove(self, c: Connection, member: Member, value: str) -> tuple[bool, str]:
         if self.setting_type == SettingType.LIST:
-            if self.list_remove_transformer is None:
-                return value
+            if self.list_remove_processor is None:
+                return True, value
 
-            return self.list_remove_transformer(c, member, value)
+            return self.list_remove_processor(c, member, value)
 
         raise ValueError(
             f"Invalid setting_type {self.setting_type} for transform_remove"
         )
 
     def respond_add(self, c: Connection, member: Member, value: str) -> str:
-        value = self.transform_add(c, member, value)
-
         if self.setting_type == SettingType.NORMAL:
             if self.normal_response is None:
                 return f"Set {self.name} to {value}"
@@ -127,8 +87,6 @@ class ServerSetting:
         raise ValueError(f"Invalid setting_type {self.setting_type} for respond_add")
 
     def respond_remove(self, c: Connection, member: Member, value: str) -> str:
-        value = self.transform_remove(c, member, value)
-
         if self.setting_type == SettingType.LIST:
             if self.list_remove_response is None:
                 return f"Removed {value} from list {self.name}"
@@ -168,7 +126,7 @@ class ServerSetting:
         else:
             raise ValueError(f"Variable type {self.setting_type} is invalid")
 
-    def get_direct(self, c: Connection, g: Guild) -> str | list[str]:
+    def get_guild(self, c: Connection, g: Guild) -> str | list[str]:
         if self.setting_type == SettingType.NORMAL:
             setting = c.execute(
                 select(server_settings.c.value).where(
@@ -216,11 +174,9 @@ class ServerSetting:
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
             )
 
-        ok, err = self.validate_add(c, member, value)
+        ok, value = self.process_add(c, member, value)
         if not ok:
-            raise ValueError(err)
-
-        value = self.transform_add(c, member, value)
+            raise ValueError(value)
 
         setting = c.execute(
             select(server_settings.c.value).where(
@@ -253,11 +209,9 @@ class ServerSetting:
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
             )
 
-        ok, err = self.validate_add(c, member, value)
+        ok, err = self.process_add(c, member, value)
         if not ok:
             raise ValueError(err)
-
-        value = self.transform_add(c, member, value)
 
         a = c.execute(
             select(server_settings_list.c.value).where(
@@ -287,11 +241,9 @@ class ServerSetting:
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
             )
 
-        ok, err = self.validate_remove(c, member, value)
+        ok, err = self.process_remove(c, member, value)
         if not ok:
             raise ValueError(err)
-
-        value = self.transform_remove(c, member, value)
 
         a = c.execute(
             select(server_settings_list.c.value).where(
@@ -374,18 +326,18 @@ settings = ServerSettings()
 
 
 # noinspection PyUnusedLocal
-def setting_is_number(c: Connection, member: Member, value: str):
+def setting_to_number(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     if not value.isnumeric():
         return False, f"{value} is not a number"
 
-    return True, ""
+    return True, value
 
 
 def setting_number_within_range(minimum: int, maximum: int):
-    def wrapper(c: Connection, m: Member, value: str):
-        ok, err = setting_is_number(c, m, value)
+    def wrapper(c: Connection, m: Member, value: str) -> tuple[bool, str]:
+        ok, value = setting_to_number(c, m, value)
         if not ok:
-            return False, err
+            return False, value
 
         if int(value) <= minimum:
             return False, f"Value must be greater than {minimum}"
@@ -393,7 +345,7 @@ def setting_number_within_range(minimum: int, maximum: int):
         if int(value) >= maximum:
             return False, f"Value must be less than {maximum}"
 
-        return True, ""
+        return True, value
 
     return wrapper
 
@@ -418,25 +370,17 @@ BOOLEAN_VALUES = [
     "off",
 ]
 
-
 # noinspection PyUnusedLocal
-def setting_is_boolean(c: Connection, member: Member, value: str):
-    if value not in BOOLEAN_VALUES:
-        return False, f"{value} is not a yes/no"
-
-    return True, ""
-
-
-# noinspection PyUnusedLocal
-def setting_to_boolean(c: Connection, member: Member, value: str) -> str:
+def setting_to_boolean(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     if value in ["true", "yes", "y", "1", "Y", "Yes", "On", "ON", "on"]:
-        return "true"
-    else:
-        return "false"
+        return True, "true"
+    elif value in ["false", "no", "n", "0", "N", "No", "Off", "OFF", "off"]:
+        return True, "false"
 
+    return False, f"Invalid value: {value}"
 
 # noinspection PyUnusedLocal
-def setting_is_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+def setting_to_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     if value in ["none", "0", "null", "unset", "un set", "don't set", "no", "false"]:
         return True, ""
 
@@ -448,31 +392,11 @@ def setting_is_channel(c: Connection, member: Member, value: str) -> tuple[bool,
 
     if chat_convert is None:
         return False, "Invalid channel"
-    else:
-        return True, ""
 
-
-# noinspection PyUnusedLocal
-def setting_to_channel(c: Connection, member: Member, value: str) -> str:
-    if value in ["none", "0", "null", "unset", "un set", "don't set", "no", "false"]:
-        return ""
-
-    s = value.split(",")
-    if len(s) == 2 and s[1].isnumeric():
-        chat_convert = convert_text_channel(member.guild, s[0], int(s[1]))
-    else:
-        chat_convert = convert_text_channel(member.guild, value)
-
-    if chat_convert is None:
-        raise ValueError(
-            "Value should not be null! This should have been caught by setting_is_channel"
-        )
-
-    return str(chat_convert.id)
-
+    return True, str(chat_convert.id)
 
 # noinspection PyUnusedLocal
-def setting_is_role(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+def setting_to_role(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     s = value.split(",")
     if len(s) == 2 and s[1].isnumeric():
         role_convert = convert_role(member.guild, s[0], int(s[1]))
@@ -480,25 +404,9 @@ def setting_is_role(c: Connection, member: Member, value: str) -> tuple[bool, st
         role_convert = convert_role(member.guild, value)
 
     if role_convert is None:
-        return False, "Invalid channel"
-    else:
-        return True, ""
+        return False, "Invalid role"
 
-
-# noinspection PyUnusedLocal
-def setting_to_role(c: Connection, member: Member, value: str) -> str:
-    s = value.split(",")
-    if len(s) == 2 and s[1].isnumeric():
-        role_convert = convert_role(member.guild, s[0], int(s[1]))
-    else:
-        role_convert = convert_role(member.guild, value)
-
-    if role_convert is None:
-        raise ValueError(
-            "Value should not be null! This should have been caught by setting_is_channel"
-        )
-
-    return str(role_convert.id)
+    return True, str(role_convert.id)
 
 
 def setting_simple_string(fmt: str):
