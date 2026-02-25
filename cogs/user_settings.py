@@ -33,12 +33,10 @@ class UserSettings(discord.Cog):
             return
 
         with engine.begin() as c:
-            ok, err = setting.validate_add(c, ctx.user, value)
+            ok, value = setting.process_add(c, ctx.user, value)
             if not ok:
-                await ctx.respond(err, ephemeral=True)
+                await ctx.respond(value, ephemeral=True)
                 return
-
-            value = setting.transform_add(c, ctx.user, value)
 
             setting.set(c, ctx.user, value)
 
@@ -79,13 +77,13 @@ class UserSettings(discord.Cog):
             return
 
         with engine.begin() as c:
-            ok, err = setting.validate_add(c, ctx.user, value)
+            ok, value = setting.process_add(c, ctx.user, value)
             if not ok:
-                await ctx.respond(err, ephemeral=True)
+                await ctx.respond(value, ephemeral=True)
                 return
 
             if setting.is_in_list(
-                c, ctx.user, setting.transform_add(c, ctx.user, value)
+                    c, ctx.user, value
             ):
                 await ctx.respond(
                     f"The value {value} is already in the list {name}", ephemeral=True
@@ -113,13 +111,13 @@ class UserSettings(discord.Cog):
             return
 
         with engine.begin() as c:
-            ok, err = setting.validate_remove(c, ctx.user, value)
+            ok, value = setting.process_remove(c, ctx.user, value)
             if not ok:
-                await ctx.respond(err, ephemeral=True)
+                await ctx.respond(value, ephemeral=True)
                 return
 
             if not setting.is_in_list(
-                c, ctx.user, setting.transform_remove(c, ctx.user, value)
+                    c, ctx.user, value
             ):
                 await ctx.respond(
                     f"The value {value} is not in the list {name}", ephemeral=True

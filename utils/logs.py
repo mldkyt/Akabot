@@ -14,8 +14,6 @@ from logger import nekona_logger
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_is_boolean,
-    setting_is_channel,
     setting_simple_string,
     setting_simple_string_boolean,
     setting_to_boolean,
@@ -25,8 +23,7 @@ from utils.server_settings import (
 logging_channel = ServerSetting(
     name="Logging channel",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_channel,
-    normal_transformer=setting_to_channel,
+    normal_processor=setting_to_channel,
     normal_response=setting_simple_string("Set logging channel to <#%s>"),
     normal_view=setting_simple_string("Logging channel: <#%s>"),
 )
@@ -79,8 +76,7 @@ for i in [
             ServerSetting(
                 name=f"Logging: Log {i[1]}",
                 setting_type=SettingType.NORMAL,
-                normal_validator=setting_is_boolean,
-                normal_transformer=setting_to_boolean,
+                normal_processor=setting_to_boolean,
                 normal_response=setting_simple_string_boolean(
                     f"Logging {i[1]} have been %s", "enabled", "disabled"
                 ),
@@ -95,7 +91,7 @@ for i in [
 def is_logging_enabled(c: Connection, g: Guild, logging_type: str) -> bool:
     for i in logging_settings:
         if i[0] == logging_type:
-            return i[1].get_direct(c, g) == "true"
+            return i[1].get_guild(c, g) == "true"
 
     nekona_logger.warning("Unable to find %s logging type!", logging_type)
     return True
@@ -104,7 +100,7 @@ def is_logging_enabled(c: Connection, g: Guild, logging_type: str) -> bool:
 async def send_message_to_log_channel(
     c: Connection, guild: Guild, message: str | Embed
 ):
-    channel_id = logging_channel.get_direct(c, guild)
+    channel_id = logging_channel.get_guild(c, guild)
     if not isinstance(channel_id, str):
         return
 

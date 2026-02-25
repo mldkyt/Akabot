@@ -11,8 +11,7 @@ from utils.conversion import convert_role
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_is_boolean,
-    setting_is_number,
+    setting_to_number,
     setting_simple_string,
     setting_simple_string_boolean,
     setting_to_boolean,
@@ -20,7 +19,7 @@ from utils.server_settings import (
 
 
 # noinspection PyUnusedLocal
-def add_reward_validator(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+def add_reward_transformer(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     split = value.split(",")
     if len(split) < 2:
         return (
@@ -46,34 +45,7 @@ def add_reward_validator(c: Connection, member: Member, value: str) -> tuple[boo
     if not level.isnumeric():
         return False, "The level number is not a number"
 
-    return True, ""
-
-
-# noinspection PyUnusedLocal
-def add_reward_transformer(c: Connection, member: Member, value: str) -> str:
-    split = value.split(",")
-    if len(split) < 2:
-        raise ValueError("Invalid amount of parameters was entered into the command")
-
-    role_id = split[0].strip()
-    level = split[1].strip()
-    index = split[2] if len(split) > 2 else "0"
-
-    if index.isnumeric():
-        index = int(index)
-    else:
-        index = 0
-
-    # Check the role
-    role = convert_role(member.guild, role_id, index)
-
-    if role is None:
-        raise ValueError("The role was not found")
-
-    if not level.isnumeric():
-        raise ValueError("The level required is not a numeric value")
-
-    return f"{role.id};{level}"
+    return True, f"{role.id};{level}"
 
 
 # noinspection PyUnusedLocal
@@ -83,9 +55,7 @@ def add_reward_response(c: Connection, member: Member, value: str):
     return f"Added level-up reward for <@&{split[0]}> for level {split[1]}"
 
 
-def remove_reward_validator(
-    c: Connection, member: Member, value: str
-) -> tuple[bool, str]:
+def remove_reward_transformer(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     split = value.split(",")
 
     role_id = split[0].strip()
@@ -110,41 +80,10 @@ def remove_reward_validator(
         )
     ).fetchone()
 
-    if db_record is None:
-        return False, "This role is not in rewards"
-
-    return True, ""
-
-
-def remove_reward_transformer(c: Connection, member: Member, value: str) -> str:
-    split = value.split(",")
-
-    role_id = split[0].strip()
-    index = split[1] if len(split) > 1 else "0"
-
-    if index.isnumeric():
-        index = int(index)
-    else:
-        index = 0
-
-    # Check the role
-    role = convert_role(member.guild, role_id, index)
-
-    if role is None:
-        raise ValueError("The role was not found")
-
-    db_record = c.execute(
-        select(server_settings_list.c.value).where(
-            (server_settings_list.c.value.like("{};%".format(role.id)))
-            & (server_settings_list.c.uid == str(member.guild.id))
-            & (server_settings_list.c.name == "Leveling rewards")
-        )
-    ).fetchone()
-
     if db_record is not None:
-        return f"{db_record[0]}"
+        return True, f"{db_record[0]}"
 
-    raise ValueError(f"Role not found in DB for {role.id} ({role.name})")
+    return False, f"Role not found in DB for {role.id} ({role.name})"
 
 
 def get_reward_view(c: Connection, m: Member, val: list[str]) -> str:
@@ -165,7 +104,7 @@ def get_reward_view(c: Connection, m: Member, val: list[str]) -> str:
     return "Leveling rewards: " + ", ".join(converted)
 
 
-def add_multiplier_validator(c: Connection, m: Member, s: str) -> tuple[bool, str]:
+def add_multiplier_transformer(c: Connection, m: Member, s: str) -> tuple[bool, str]:
     output = re.match(r"^(\d+)-(\d+) +- +(\d+)-(\d+), +(\d)$", s.strip())
     if not output:
         return (
@@ -177,7 +116,6 @@ def add_multiplier_validator(c: Connection, m: Member, s: str) -> tuple[bool, st
     start_month, start_day = (int(out_groups[0]), int(out_groups[1]))
     end_month, end_day = (int(out_groups[2]), int(out_groups[3]))
     multiplier = int(out_groups[4])
-
     try:
         start_date = datetime(2024, start_month, start_day)
     except Exception:
@@ -198,18 +136,7 @@ def add_multiplier_validator(c: Connection, m: Member, s: str) -> tuple[bool, st
     if multiplier < 1:
         return False, "Invalid multiplier"
 
-    return True, ""
-
-
-def add_multiplier_transformer(c: Connection, m: Member, s: str) -> str:
-    output = re.match(r"^(\d+)-(\d+) +- +(\d+)-(\d+), +(\d)$", s.strip())
-
-    out_groups = output.groups()
-    start_month, start_day = (int(out_groups[0]), int(out_groups[1]))
-    end_month, end_day = (int(out_groups[2]), int(out_groups[3]))
-    multiplier = int(out_groups[4])
-
-    return f"{start_month:02}-{start_day:02};{end_month:02}-{end_day:02};{multiplier}"
+    return True, f"{start_month:02}-{start_day:02};{end_month:02}-{end_day:02};{multiplier}"
 
 
 def add_multiplier_view(c: Connection, m: Member, s: list[str]) -> str:
@@ -237,15 +164,14 @@ def remove_multiplier_response(c: Connection, m: Member, s: str) -> str:
 
 setting_xp_per_message = ServerSetting(
     name="Leveling XP per message",
-    normal_validator=setting_is_number,
+    normal_processor=setting_to_number,
     normal_view=setting_simple_string("%s XP per message"),
     normal_response=setting_simple_string("Set the XP per message to %s"),
     default="3",
 )
 setting_level_up_message = ServerSetting(
     name="Leveling enable level-up message",
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_view=setting_simple_string_boolean(
         "Level-up messages are %s", "enabled", "disabled"
     ),
@@ -256,7 +182,7 @@ setting_level_up_message = ServerSetting(
 )
 setting_xp_per_level = ServerSetting(
     name="Leveling XP per level",
-    normal_validator=setting_is_number,
+    normal_processor=setting_to_number,
     normal_view=setting_simple_string("%s XP required per level"),
     normal_response=setting_simple_string("Set XP required per level to %s"),
     default="500",
@@ -264,20 +190,16 @@ setting_xp_per_level = ServerSetting(
 setting_leveling_rewards = ServerSetting(
     name="Leveling rewards",
     setting_type=SettingType.LIST,
-    list_add_validator=add_reward_validator,
-    list_add_transformer=add_reward_transformer,
+    list_add_processor=add_reward_transformer,
     list_add_response=add_reward_response,
-    list_remove_validator=remove_reward_validator,
-    list_remove_transformer=remove_reward_transformer,
+    list_remove_processor=remove_reward_transformer,
     list_view=get_reward_view,
 )
 setting_leveling_multipliers = ServerSetting(
     name="Leveling Multipliers",
     setting_type=SettingType.LIST,
-    list_add_validator=add_multiplier_validator,
-    list_add_transformer=add_multiplier_transformer,
-    list_remove_validator=add_multiplier_validator,
-    list_remove_transformer=add_multiplier_transformer,
+    list_add_processor=add_multiplier_transformer,
+    list_remove_processor=add_multiplier_transformer,
     list_view=add_multiplier_view,
     list_add_response=add_multiplier_response,
     list_remove_response=remove_multiplier_response,

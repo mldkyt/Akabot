@@ -8,9 +8,7 @@ from database import counting_channels
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_is_boolean,
-    setting_is_channel,
-    setting_is_number,
+    setting_to_number,
     setting_simple_list_string,
     setting_simple_string,
     setting_simple_string_boolean,
@@ -21,10 +19,8 @@ from utils.server_settings import (
 setting_counting_channels = ServerSetting(
     name="Counting channels",
     setting_type=SettingType.LIST,
-    list_add_validator=setting_is_channel,
-    list_remove_validator=setting_is_channel,
-    list_add_transformer=setting_to_channel,
-    list_remove_transformer=setting_to_channel,
+    list_add_processor=setting_to_channel,
+    list_remove_processor=setting_to_channel,
     list_add_response=setting_simple_string(
         "Channel <#%s> was added to counting channels."
     ),
@@ -39,8 +35,7 @@ setting_counting_channels = ServerSetting(
 same_member_counting_mode = ServerSetting(
     name="Counting same member mode",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "Same member counting mode is %s", "enabled", "disabled"
     ),
@@ -53,8 +48,7 @@ same_member_counting_mode = ServerSetting(
 any_count_mode = ServerSetting(
     name="Counting any count mode",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "Any count mode is now %s", "enabled", "disabled"
     ),
@@ -67,8 +61,7 @@ any_count_mode = ServerSetting(
 any_count_mode_count_frequency = ServerSetting(
     name="Counting any count mode: Count frequency of words",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "Any count mode %s count frequencies of words", "will", "won't"
     ),
@@ -81,8 +74,7 @@ any_count_mode_count_frequency = ServerSetting(
 any_count_mode_count_words = ServerSetting(
     name="Counting any count mode: Count total word count",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "Any count mode %s count total words", "will", "won't"
     ),
@@ -95,7 +87,7 @@ any_count_mode_count_words = ServerSetting(
 any_count_mode_minimum_frequency = ServerSetting(
     name="Counting any count mode: Minimum frequency",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_number,
+    normal_processor=setting_to_number,
     normal_response=setting_simple_string(
         "Any count mode's minimum frequency is `%s`, words less frequent than this are not counted"
     ),

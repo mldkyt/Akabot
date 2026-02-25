@@ -6,15 +6,14 @@ from sqlalchemy import Connection
 
 from database import engine
 from logger import nekona_logger
-from utils.server_settings import ServerSetting, SettingType, setting_is_channel, setting_to_channel, \
+from utils.server_settings import ServerSetting, SettingType, setting_to_channel, \
     setting_simple_string, setting_number_within_range
 
 # Welcome
 welcome_channel = ServerSetting(
     name="Welcome channel",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_channel,
-    normal_transformer=setting_to_channel,
+    normal_processor=setting_to_channel,
     normal_view=setting_simple_string("Channel for welcoming new members is set to <#%s>"),
     normal_response=setting_simple_string("Channel for welcoming new members was set to <#%s>"),
     default="0"
@@ -23,7 +22,7 @@ welcome_channel = ServerSetting(
 welcome_grace_period_first = ServerSetting(
     name="Welcoming first grace period",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_number_within_range(0, 120),
+    normal_processor=setting_number_within_range(0, 120),
     normal_view=setting_simple_string("First grace period (before welcome message is sent) is %s seconds"),
     normal_response=setting_simple_string("First grace period (before welcome message is sent) was set to %s seconds"),
     default="5"
@@ -32,7 +31,7 @@ welcome_grace_period_first = ServerSetting(
 welcome_grace_period_second = ServerSetting(
     name="Welcoming second grace period",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_number_within_range(0, 30),
+    normal_processor=setting_number_within_range(0, 30),
     normal_view=setting_simple_string("Second grace period (after welcome message is sent) is %s minutes"),
     normal_response=setting_simple_string("Second grace period (after welcome message is sent) was set to %s minutes"),
     default="5"
@@ -62,7 +61,7 @@ def validate_correct_type(c: Connection, m: Member, v: str) -> tuple[bool, str]:
 welcome_message_type = ServerSetting(
     name="Welcome message type",
     setting_type=SettingType.NORMAL,
-    normal_validator=validate_correct_type,
+    normal_processor=validate_correct_type,
     normal_view=setting_simple_string("Message of welcome messages is set to `%s`"),
     normal_response=setting_simple_string("Message of welcome messages was set to `%s`"),
     default="embed"
@@ -72,8 +71,7 @@ welcome_message_type = ServerSetting(
 goodbye_channel = ServerSetting(
     name="Goodbye channel",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_channel,
-    normal_transformer=setting_to_channel,
+    normal_processor=setting_to_channel,
     normal_view=setting_simple_string("Channel for saying goodbye to members is set to <#%s>"),
     normal_response=setting_simple_string("Channel for saying goodbye to members was set to <#%s>"),
     default="0"
@@ -98,7 +96,7 @@ goodbye_message_message = ServerSetting(
 goodbye_message_type = ServerSetting(
     name="Goodbye message type",
     setting_type=SettingType.NORMAL,
-    normal_validator=validate_correct_type,
+    normal_processor=validate_correct_type,
     normal_view=setting_simple_string("Message of goodbye messages is set to `%s`"),
     normal_response=setting_simple_string("Message of goodbye messages was set to `%s`"),
     default="embed"

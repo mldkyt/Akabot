@@ -29,27 +29,23 @@ def time_str_to_time(time: str):
         return 604800 * int(time[:-1])
 
 
-def validate_valid_format(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    # Check the format is valid (rule_name,action[,parameters])
+def process_add(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     args = v.split(",")
 
-    # Check cache
     if m.guild.id not in cached_automod_actions:
         return False, "No permission, or unable to fetch AutoMod rules"
 
-    # Validate args count
     if len(args) < 2:
         return False, "There must be at least 2 parameters; e.g. rule name, action"
 
-    # Validate rule name
+    rule = None
     for i in cached_automod_actions[m.guild.id]:
         if i.name == args[0].strip() and i.enabled:
             rule = i
             break
-    else:
+    if rule is None:
         return False, "The automod rule was not found"
 
-    # Validate action
     if args[1].strip() not in [
         "dm",
         "direct message",
@@ -63,91 +59,41 @@ def validate_valid_format(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     ]:
         return False, "Action must be one of: dm, kick, ban, mute"
 
-    def check_parameters():
-        # Validate parameters for dm, timeout
-        if len(args) == 4:
-            if args[1].strip() in [
-                "timeout",
-                "time out",
-                "mute",
-            ]:  # mute can have 4 parameters: rule_name, action, time, reason
-                time = time_str_to_time(args[2].strip())
-                if time is None:
-                    return False, "Invalid time format, must be e.g. 1w, 12h, 4d"
-                if time > 2419200:
-                    return False, "Date is outside of range"
-                return True, ""
-        elif len(args) == 3:
-            if args[1].strip() in [
-                "dm",
-                "direct message",
-                "pm",
-                "private message",
-                "kick",
-                "ban",
-            ]:  # rule_name, action, dm/reason
-                return True, ""
-            elif args[1].strip() in [
-                "timeout",
-                "time out",
-                "mute",
-            ]:  # rule_name, action, time
-                time = time_str_to_time(args[2].strip())
-                if time is None:
-                    return False, "Invalid time format, must be e.g. 1w, 12h, 4d"
-                if time > 2419200:
-                    return False, "Date is outside of range"
-                return True, ""
-        elif len(args) == 2:
-            if args[1].strip() in ["kick", "ban"]:  # rule_name, action
-                return True, ""
+    ok = False
+    err = ""
 
+    if len(args) == 4:
+        if args[1].strip() in ["timeout", "time out", "mute"]:
+            time = time_str_to_time(args[2].strip())
+            if time is None:
+                return False, "Invalid time format, must be e.g. 1w, 12h, 4d"
+            if time > 2419200:
+                return False, "Date is outside of range"
+            ok = True
+    elif len(args) == 3:
+        if args[1].strip() in [
+            "dm",
+            "direct message",
+            "pm",
+            "private message",
+            "kick",
+            "ban",
+        ]:
+            ok = True
+        elif args[1].strip() in ["timeout", "time out", "mute"]:
+            time = time_str_to_time(args[2].strip())
+            if time is None:
+                return False, "Invalid time format, must be e.g. 1w, 12h, 4d"
+            if time > 2419200:
+                return False, "Date is outside of range"
+            ok = True
+    elif len(args) == 2:
+        if args[1].strip() in ["kick", "ban"]:
+            ok = True
+
+    if not ok:
         return False, f"Invalid amount of parameters for {args[1]}"
 
-    ok, err = check_parameters()
-    if not ok:
-        return False, err
-
-    def check_database():
-        if args[1] in ["mute", "timeout", "time out"]:
-            action = "mute"
-        elif args[1] in ["dm", "direct message", "pm", "private message"]:
-            action = "dm"
-        else:
-            action = args[1]
-
-        # Validate whether an action already exists
-        # We only allow an instance of dm, and then one instance of either mute, kick or ban
-        check_action = ["dm"]
-        if action in ["mute", "kick", "ban"]:
-            check_action = ["mute", "kick", "ban"]
-
-        for i in automod_actions.get(c, m):
-            i_args = i.split(";")
-            if i_args[0] == str(rule.id) and i_args[1] in check_action:
-                return False, f"There's already a `{i_args[1]}` rule, please remove that rule to add one of " + ', '.join(
-                    check_action)
-
-        return True, ""
-
-    ok, err = check_database()
-    if not ok:
-        return False, err
-
-    return True, ""
-
-
-def transform_add(c: Connection, m: Member, v: str) -> str:
-    args = v.split(",")
-
-    rule = None
-    # Transform name to id
-    for i in cached_automod_actions[m.guild.id]:
-        if i.name == args[0].strip() and i.enabled:
-            rule = i
-            break
-
-    # Transform action
     if args[1] in ["mute", "timeout", "time out"]:
         action = "mute"
     elif args[1] in ["dm", "direct message", "pm", "private message"]:
@@ -155,43 +101,37 @@ def transform_add(c: Connection, m: Member, v: str) -> str:
     else:
         action = args[1]
 
-    return f"{rule.id};{action}" + (";" if len(args) > 2 else "") + ";".join(args[2:])
+    check_action = ["dm"]
+    if action in ["mute", "kick", "ban"]:
+        check_action = ["mute", "kick", "ban"]
 
+    for i in automod_actions.get(c, m):
+        i_args = i.split(";")
+        if i_args[0] == str(rule.id) and i_args[1] in check_action:
+            return False, (
+                    f"There's already a `{i_args[1]}` rule, please remove that rule to add one of "
+                    + ", ".join(check_action)
+            )
 
-def transform_remove(c: Connection, m: Member, v: str) -> str:
     args = v.split(",")
 
     rule = None
     for i in cached_automod_actions[m.guild.id]:
-        if args[0].strip().lower() in i.name.strip().lower():
+        if i.name == args[0].strip() and i.enabled:
             rule = i
+            break
 
-    if len(args) == 1:
-        for i in automod_actions.get(c, m):
-            if len(args) == 1:
-                if i.startswith(str(rule.id)):
-                    return i
+    if args[1] in ["mute", "timeout", "time out"]:
+        action = "mute"
+    elif args[1] in ["dm", "direct message", "pm", "private message"]:
+        action = "dm"
     else:
-        # Transform action
-        if args[1] in ["mute", "timeout", "time out"]:
-            action = "mute"
-        elif args[1] in ["dm", "direct message", "pm", "private message"]:
-            action = "dm"
-        else:
-            action = args[1]
+        action = args[1]
 
-        for i in automod_actions.get(c, m):
-            args_db = i.split(";")
-            if (
-                    args_db[0].strip().lower() == str(rule.id).strip().lower()
-                    and args_db[1].strip().lower() == action
-            ):
-                return i
-
-    return v
+    return True, f"{rule.id};{action}" + (";" if len(args) > 2 else "") + ";".join(args[2:])
 
 
-def validate_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
+def process_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     args = v.split(",")
 
     rule = None
@@ -225,7 +165,36 @@ def validate_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
         else:
             return False, "This rule was not found"
 
-    return True, ""
+    args = v.split(",")
+
+    rule = None
+    for i in cached_automod_actions[m.guild.id]:
+        if args[0].strip().lower() in i.name.strip().lower():
+            rule = i
+
+    if len(args) == 1:
+        for i in automod_actions.get(c, m):
+            if len(args) == 1:
+                if i.startswith(str(rule.id)):
+                    return True, i
+    else:
+        # Transform action
+        if args[1] in ["mute", "timeout", "time out"]:
+            action = "mute"
+        elif args[1] in ["dm", "direct message", "pm", "private message"]:
+            action = "dm"
+        else:
+            action = args[1]
+
+        for i in automod_actions.get(c, m):
+            args_db = i.split(";")
+            if (
+                    args_db[0].strip().lower() == str(rule.id).strip().lower()
+                    and args_db[1].strip().lower() == action
+            ):
+                return True, i
+
+    return True, v
 
 
 cached_automod_actions: dict[int, list[AutoModRule]] = {}
@@ -238,10 +207,8 @@ async def fetch_actions(g: Guild):
 automod_actions = ServerSetting(
     name="Automod actions",
     setting_type=SettingType.LIST,
-    list_add_validator=validate_valid_format,
-    list_add_transformer=transform_add,
-    list_remove_validator=validate_remove,
-    list_remove_transformer=transform_remove,
+    list_add_processor=process_add,
+    list_remove_processor=process_remove,
 )
 
 
@@ -333,7 +300,7 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
     payload.member = member
 
     with engine.begin() as c:
-        actions = automod_actions.get_direct(c, payload.guild)
+        actions = automod_actions.get_guild(c, payload.guild)
 
     for i in actions:
         if i.startswith(str(payload.rule_id)):

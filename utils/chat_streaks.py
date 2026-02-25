@@ -7,8 +7,7 @@ from database import chat_streaks
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_is_boolean,
-    setting_is_number,
+    setting_to_number,
     setting_simple_string,
     setting_simple_string_boolean,
     setting_to_boolean,
@@ -16,10 +15,10 @@ from utils.server_settings import (
 from utils.user_settings import UserSetting
 
 
-def server_message_delay_validator(
+def server_message_delay_processor(
     c: Connection, m: Member, v: str
 ) -> tuple[bool, str]:
-    ok, err = setting_is_number(c, m, v)
+    ok, err = setting_to_number(c, m, v)
     if not ok:
         return ok, err
 
@@ -27,14 +26,13 @@ def server_message_delay_validator(
     if v2 < 3 or v2 > 10:
         return False, "Invalid number range"
 
-    return True, ""
+    return True, v
 
 
 server_disable_response = ServerSetting(
     "Chat streaks disable response",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "The bot %s respond to messages with chat streak updates in this server",
         "WILL",
@@ -46,8 +44,7 @@ server_disable_response = ServerSetting(
 user_disable_response = UserSetting(
     "Chat streaks disable response",
     setting_type=SettingType.NORMAL,
-    normal_validator=setting_is_boolean,
-    normal_transformer=setting_to_boolean,
+    # TODO: normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "The bot WON'T respond to messages with chat streak updates to you",
         "WON'T",
@@ -59,7 +56,7 @@ user_disable_response = UserSetting(
 server_message_delay = ServerSetting(
     "Chat streaks message duration",
     setting_type=SettingType.NORMAL,
-    normal_validator=server_message_delay_validator,
+    normal_processor=server_message_delay_processor,
     normal_response=setting_simple_string(
         "When the bot responds to a message, the bot message will be deleted after %s seconds"
     ),
@@ -141,9 +138,6 @@ def get_streak(c: Connection, u: Member):
 
 def get_unexpired_streak(c: Connection, u: Member):
     """Get streak"""
-
-    now = date.today()
-
     a = c.execute(
         select(chat_streaks.c.start_date, chat_streaks.c.last_message_date).where(
             (chat_streaks.c.uid == str(u.id)) & (chat_streaks.c.gid == str(u.guild.id))
