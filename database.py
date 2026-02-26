@@ -2,7 +2,7 @@ import json
 import os.path
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, VARCHAR, UniqueConstraint, DATE, \
-    StaticPool
+    StaticPool, DateTime
 
 if not os.path.exists("data"):
     os.mkdir("data")
@@ -133,4 +133,19 @@ counting_channels = Table(
     Column("cid", VARCHAR, primary_key=True),
     Column("current_count", Integer, nullable=False),
     Column("last_counter", VARCHAR, nullable=False, default="0")
+)
+
+economy_money = Table(
+    "economy_money",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),  # user id
+    Column("wallet", Integer, nullable=False, default=0),  # player money in wallet
+    Column("bank", Integer, nullable=False, default=1000)  # player money in bank
+)
+
+economy_work = Table(
+    "economy_work",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("expires_at", DateTime)  # the expiry date, null if not any
 )
