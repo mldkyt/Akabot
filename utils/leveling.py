@@ -180,6 +180,12 @@ setting_level_up_message = ServerSetting(
     ),
     default="true",
 )
+setting_level_up_message_text = ServerSetting(
+    name="Leveling level-up message content",
+    normal_view=setting_simple_string("Level-up message content is `%s`"),
+    normal_response=setting_simple_string("Set level-up message content to %s"),
+    default="**You leveled up!** {old} -> {new}",
+)
 setting_xp_per_level = ServerSetting(
     name="Leveling XP per level",
     normal_processor=setting_to_number,
