@@ -1,6 +1,7 @@
 import os
 
 import discord
+from discord.ext import commands as commands_ext
 from dotenv import load_dotenv
 
 from logger import nekona_logger
@@ -41,6 +42,47 @@ async def on_ready():
             type=discord.ActivityType.playing, name=f"Nekona {BOT_VERSION}"
         )
     )
+
+
+@bot.event
+async def on_application_command_error(ctx: discord.ApplicationContext, error):
+    if isinstance(error, commands_ext.CommandOnCooldown):
+        minutes = int(error.retry_after / 60)
+        seconds = int(error.retry_after % 60)
+        if minutes > 0:
+            await ctx.respond(f"**Cooldown!** {minutes} minutes and {seconds} seconds remaining",
+                              ephemeral=True)
+        else:
+            await ctx.respond(f"**Cooldown!** {seconds} seconds remaining", ephemeral=True)
+        return
+
+    if isinstance(error, commands_ext.MissingPermissions):
+        await ctx.respond(
+            f"You do not have permission to use this command. Missing {', '.join(error.missing_permissions)}",
+            ephemeral=True)
+        return
+
+    if isinstance(error, commands_ext.NoPrivateMessage):
+        await ctx.respond("This command cannot be used in DMs", ephemeral=True)
+        return
+
+    if isinstance(error, commands_ext.BotMissingPermissions):
+        await ctx.respond(
+            f"The bot has missing permissions! Missing permissions: {', '.join(error.missing_permissions)}",
+            ephemeral=True)
+        return
+
+    if isinstance(error, commands_ext.PrivateMessageOnly):
+        await ctx.respond("This command can only be used in DMs.", ephemeral=True)
+        return
+
+    nekona_logger.exception("An error occurred:")
+    try:
+        # respond
+        await ctx.respond("An error occured", ephemeral=True)
+    except Exception as e:
+        nekona_logger.error("Failed to respond to message")
+    raise error
 
 
 bot.run(os.getenv("DISCORD_TOKEN"))
