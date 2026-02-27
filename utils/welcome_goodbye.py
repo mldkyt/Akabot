@@ -6,14 +6,14 @@ from sqlalchemy import Connection
 
 from database import engine
 from logger import nekona_logger
-from utils.server_settings import ServerSetting, SettingType, setting_to_channel, \
+from utils.server_settings import ServerSetting, SettingType, setting_to_text_channel, \
     setting_simple_string, setting_number_within_range
 
 # Welcome
 welcome_channel = ServerSetting(
     name="Welcome channel",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_channel,
+    normal_processor=setting_to_text_channel,
     normal_view=setting_simple_string("Channel for welcoming new members is set to <#%s>"),
     normal_response=setting_simple_string("Channel for welcoming new members was set to <#%s>"),
     default="0"
@@ -71,7 +71,7 @@ welcome_message_type = ServerSetting(
 goodbye_channel = ServerSetting(
     name="Goodbye channel",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_channel,
+    normal_processor=setting_to_text_channel,
     normal_view=setting_simple_string("Channel for saying goodbye to members is set to <#%s>"),
     normal_response=setting_simple_string("Channel for saying goodbye to members was set to <#%s>"),
     default="0"

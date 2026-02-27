@@ -5,7 +5,7 @@ from sqlalchemy import Connection, select, insert, update, delete
 
 from database import engine, chat_revive
 from logger import nekona_logger
-from utils.server_settings import ServerSetting, SettingType, setting_to_channel, setting_to_number, \
+from utils.server_settings import ServerSetting, SettingType, setting_to_text_channel, setting_to_number, \
     setting_simple_string, setting_to_role
 
 
@@ -17,7 +17,7 @@ def chat_revive_add(c: Connection, m: Member, v: str) -> tuple[bool, str]:
 
     args = [arg.strip() for arg in args]
 
-    ok, channel_id = setting_to_channel(c, m, args[0])
+    ok, channel_id = setting_to_text_channel(c, m, args[0])
     if not ok:
         return ok, channel_id
 
@@ -34,7 +34,7 @@ def chat_revive_add(c: Connection, m: Member, v: str) -> tuple[bool, str]:
 
 
 def chat_revive_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    ok, channel_id = setting_to_channel(c, m, v)
+    ok, channel_id = setting_to_text_channel(c, m, v)
     if not ok:
         return False, channel_id
 

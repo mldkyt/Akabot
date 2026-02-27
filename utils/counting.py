@@ -13,14 +13,14 @@ from utils.server_settings import (
     setting_simple_string,
     setting_simple_string_boolean,
     setting_to_boolean,
-    setting_to_channel,
+    setting_to_text_channel,
 )
 
 setting_counting_channels = ServerSetting(
     name="Counting channels",
     setting_type=SettingType.LIST,
-    list_add_processor=setting_to_channel,
-    list_remove_processor=setting_to_channel,
+    list_add_processor=setting_to_text_channel,
+    list_remove_processor=setting_to_text_channel,
     list_add_response=setting_simple_string(
         "Channel <#%s> was added to counting channels."
     ),

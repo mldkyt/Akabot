@@ -157,3 +157,10 @@ chat_revive = Table(
     Column("cid", VARCHAR, primary_key=True),
     Column("notif_time", DateTime, nullable=False)
 )
+
+temporary_vcs = Table(
+    "temporary_vcs",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True)
+)

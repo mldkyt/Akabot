@@ -6,7 +6,7 @@ from discord import AutocompleteContext, Guild, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import server_settings, server_settings_list
-from utils.conversion import convert_role, convert_text_channel
+from utils.conversion import convert_role, convert_text_channel, convert_voice_channel
 
 
 class SettingType(Enum):
@@ -372,7 +372,7 @@ def setting_to_boolean(c: Connection, member: Member, value: str) -> tuple[bool,
     return False, f"Invalid value: {value}"
 
 # noinspection PyUnusedLocal
-def setting_to_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+def setting_to_text_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
     if value in ["none", "0", "null", "unset", "un set", "don't set", "no", "false"]:
         return True, ""
 
@@ -381,6 +381,22 @@ def setting_to_channel(c: Connection, member: Member, value: str) -> tuple[bool,
         chat_convert = convert_text_channel(member.guild, s[0], int(s[1]))
     else:
         chat_convert = convert_text_channel(member.guild, value)
+
+    if chat_convert is None:
+        return False, "Invalid channel"
+
+    return True, str(chat_convert.id)
+
+
+def setting_to_voice_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
+    if value in ["none", "0", "null", "unset", "un set", "don't set", "no", "false"]:
+        return True, ""
+
+    s = value.split(",")
+    if len(s) == 2 and s[1].isnumeric():
+        chat_convert = convert_voice_channel(member.guild, s[0], int(s[1]))
+    else:
+        chat_convert = convert_voice_channel(member.guild, value)
 
     if chat_convert is None:
         return False, "Invalid channel"
