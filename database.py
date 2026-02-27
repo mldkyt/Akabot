@@ -149,3 +149,11 @@ economy_work = Table(
     Column("uid", VARCHAR, primary_key=True),
     Column("expires_at", DateTime)  # the expiry date, null if not any
 )
+
+chat_revive = Table(
+    "chat_revive",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("notif_time", DateTime, nullable=False)
+)
