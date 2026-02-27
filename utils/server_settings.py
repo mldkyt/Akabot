@@ -209,10 +209,6 @@ class ServerSetting:
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
             )
 
-        ok, err = self.process_add(c, member, value)
-        if not ok:
-            raise ValueError(err)
-
         a = c.execute(
             select(server_settings_list.c.value).where(
                 (server_settings_list.c.uid == str(member.guild.id))
@@ -240,10 +236,6 @@ class ServerSetting:
             raise InvalidOperation(
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
             )
-
-        ok, err = self.process_remove(c, member, value)
-        if not ok:
-            raise ValueError(err)
 
         a = c.execute(
             select(server_settings_list.c.value).where(
