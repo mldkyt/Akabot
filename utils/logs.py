@@ -17,13 +17,13 @@ from utils.server_settings import (
     setting_simple_string,
     setting_simple_string_boolean,
     setting_to_boolean,
-    setting_to_channel,
+    setting_to_text_channel,
 )
 
 logging_channel = ServerSetting(
     name="Logging channel",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_channel,
+    normal_processor=setting_to_text_channel,
     normal_response=setting_simple_string("Set logging channel to <#%s>"),
     normal_view=setting_simple_string("Logging channel: <#%s>"),
 )
