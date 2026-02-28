@@ -164,3 +164,26 @@ temporary_vcs = Table(
     Column("gid", VARCHAR, primary_key=True),
     Column("cid", VARCHAR, primary_key=True)
 )
+
+vc_notifications_all = Table(
+    "vc_notifs_all",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("gid", VARCHAR, primary_key=True)
+)
+
+vc_notifications_user = Table(
+    "vc_notifs_user",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("gid", VARCHAR, primary_key=True),
+    Column("tid", VARCHAR, primary_key=True),
+)
+
+vc_notifications_channel = Table(
+    "vc_notifs_channel",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("gid", VARCHAR, primary_key=True),
+    Column("tid", VARCHAR, primary_key=True),
+)
