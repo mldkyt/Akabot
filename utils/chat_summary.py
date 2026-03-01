@@ -1,12 +1,10 @@
 from datetime import date, datetime
 
 from discord import (
-    ApplicationContext,
     Guild,
     Member,
     Message,
     TextChannel,
-    WebhookMessage,
 )
 from sqlalchemy import Connection, delete, desc, insert, select, update
 
@@ -447,19 +445,9 @@ async def summarize(c: Connection, g: Guild):
         )
 
 
-async def perform_backfill_feedback(ctx: ApplicationContext):
-    status = await ctx.respond("The task was scheduled")
-    async for i in perform_backfill(ctx.guild, ctx.channel):
-        if isinstance(status, WebhookMessage):
-            await status.edit(content=i)
-
-    if isinstance(status, WebhookMessage):
-        await status.delete(delay=5)
-
-
 async def perform_backfill(guild: Guild, channel: TextChannel):
     try:
-        yield f"Backfilling channel {channel.name} in {guild.name}"
+        nekona_logger.debug("[Chat Summary/Backfill: Backfilling channel %s in %s", channel.name, guild.name)
         with engine.begin() as c:
             # Clear the messages
             c.execute(
@@ -508,7 +496,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
             today = date.today()
             async for message in channel.history(limit=None):
                 if message.author.bot:
-                    return
+                    continue
 
                 # Add each message into each group
                 if (
@@ -789,9 +777,13 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                 i += 1
                 if i % 500 == 0:
                     # Update status message
-                    yield f"Processing... {day_messages} messages today, {month_messages} this month, {year_messages} this year"
+                    nekona_logger.debug(
+                        "[Chat Summary/Backfill: Processing... %d messages today, %d this month, %d this year",
+                        day_messages, month_messages, year_messages)
 
-        yield f"OK: Task finished: {day_messages} messages today, {month_messages} messages this month, {year_messages} this year"
+            nekona_logger.debug(
+                "[Chat Summary/Backfill: OK: Task finished: %d messages today, %d messages this month, %d this year",
+                day_messages, month_messages, year_messages)
     except Exception:
         nekona_logger.exception("Chat Summary Backfill failed:")
-        yield "An error occurred"
+        nekona_logger.debug("[Chat Summary/Backfill: An error occurred")
