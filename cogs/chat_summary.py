@@ -20,7 +20,6 @@ from utils.chat_summary import (
     chat_summary_unique,
     inc,
     perform_backfill,
-    perform_backfill_feedback,
     summarize,
 )
 from utils.docs import Docs, DocsSetting
@@ -47,8 +46,9 @@ class ChatSummary(Cog):
                             if not isinstance(channel, TextChannel):
                                 continue
 
-                            async for m in perform_backfill(i, channel):
-                                nekona_logger.info("Backfill info: %s", m)
+                            nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s", channel.name)
+                            await perform_backfill(i, channel)
+                            nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s finished", channel.name)
             except Exception:
                 nekona_logger.exception("Error when backfilling channels on startup")
 
@@ -98,7 +98,10 @@ class ChatSummary(Cog):
             )
             return
 
-        await perform_backfill_feedback(ctx)
+        status = await ctx.respond("Backfilling channel...")
+        await perform_backfill(ctx.guild, ctx.channel)
+        await status.message.edit(content="Backfilling complete!")
+        await status.message.delete(delay=5)
 
 
 def setup(bot: Bot):
