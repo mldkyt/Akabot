@@ -104,7 +104,7 @@ class Docs:
         self.settings = settings
 
     def __str__(self):
-        a = self.name + "\n\n" + self.description + "\n\n"
+        a = "# " + self.name + "\n\n" + self.description + "\n\n"
 
         if len(self.commands) > 0:
             a += "## Commands:\n\n"

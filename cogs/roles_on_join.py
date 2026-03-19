@@ -24,16 +24,18 @@ def setup(bot: Bot):
 
 
 def docs():
-    return Docs(
-        name="Roles On Join",
-        description="Add roles to members who join the server",
-        settings=[
-            DocsSetting(
-                name="Roles On Join",
-                description="The roles to be added to members on join",
-                setting_type=SettingType.LIST,
-                add_description="Add a role. Accepts a role mention, ID or name. New members will get this role when they join",
-                remove_description="Remove a role. Accepts a role mention, ID or name. New members will no longer get this role when they join"
-            )
-        ]
+    return str(
+        Docs(
+            name="Roles On Join",
+            description="Add roles to members who join the server",
+            settings=[
+                DocsSetting(
+                    name="Roles On Join",
+                    description="The roles to be added to members on join",
+                    setting_type=SettingType.LIST,
+                    add_description="Add a role. Accepts a role mention, ID or name. New members will get this role when they join",
+                    remove_description="Remove a role. Accepts a role mention, ID or name. New members will no longer get this role when they join"
+                )
+            ]
+        )
     )
