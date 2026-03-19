@@ -29,16 +29,18 @@ def setup(bot: Bot):
 
 
 def docs():
-    return Docs(
-        name="Statistic Channels",
-        description="You can set up channels that periodically update with the statistics of your server on the top of your server channel list. Create a voice channel and put it on top of the list, and ensure the bot has channel edit permissions.",
-        settings=[
-            DocsSetting(
-                name="Statistic Channels",
-                description="Set up statistic channels. Templates have {members}, {bots}, {users}, {guild} and {owner} so far. You can suggest more in the support Discord server :)",
-                add_description="Format is \"<channel mention, name or ID>;<template>\". Template is above.",
-                remove_description="Mention the channel that you want to remove.",
-                setting_type=SettingType.LIST
-            )
-        ]
+    return str(
+        Docs(
+            name="Statistic Channels",
+            description="You can set up channels that periodically update with the statistics of your server on the top of your server channel list. Create a voice channel and put it on top of the list, and ensure the bot has channel edit permissions.",
+            settings=[
+                DocsSetting(
+                    name="Statistic Channels",
+                    description="Set up statistic channels. Templates have {members}, {bots}, {users}, {guild} and {owner} so far. You can suggest more in the support Discord server :)",
+                    add_description="Format is \"<channel mention, name or ID>;<template>\". Template is above.",
+                    remove_description="Mention the channel that you want to remove.",
+                    setting_type=SettingType.LIST
+                )
+            ]
+        )
     )

@@ -37,21 +37,23 @@ def setup(bot: Bot):
 
 
 def docs():
-    return Docs(
-        name="Chat Revive",
-        description="Dead channels? With the help of Chat Revive, you can revive them after a set amount of minutes.",
-        settings=[
-            DocsSetting(
-                name="Chat Revive Channels",
-                description="List of channels that should be in the chat revive.",
-                add_description="Syntax: \"channel, minutes\". Channel can be a mention, ID or name. Minutes is amount of minutes before a chat revive triggers.",
-                remove_description="Channel ID, name or mention to remove.",
-                setting_type=SettingType.LIST
-            ),
-            DocsSetting(
-                name="Chat Revive Role",
-                description="Role to ping when chat revive triggers.",
-                setting_type=SettingType.NORMAL
-            )
-        ]
+    return str(
+        Docs(
+            name="Chat Revive",
+            description="Dead channels? With the help of Chat Revive, you can revive them after a set amount of minutes.",
+            settings=[
+                DocsSetting(
+                    name="Chat Revive Channels",
+                    description="List of channels that should be in the chat revive.",
+                    add_description="Syntax: \"channel, minutes\". Channel can be a mention, ID or name. Minutes is amount of minutes before a chat revive triggers.",
+                    remove_description="Channel ID, name or mention to remove.",
+                    setting_type=SettingType.LIST
+                ),
+                DocsSetting(
+                    name="Chat Revive Role",
+                    description="Role to ping when chat revive triggers.",
+                    setting_type=SettingType.NORMAL
+                )
+            ]
+        )
     )

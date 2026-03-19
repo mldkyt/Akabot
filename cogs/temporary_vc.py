@@ -118,16 +118,18 @@ def setup(bot: Bot):
 
 
 def docs():
-    return Docs(
-        name="Temporary VC",
-        description="Temporary voice channels.",
-        settings=[
-            DocsSetting(
-                name="Temporary VCs",
-                description="List of temporary voice channels.",
-                add_description="Name or ID of a voice chat. Discord won't autocomplete mentions of voice chats for some reason.",
-                remove_description="Name or ID of a voice chat. Discord won't autocomplete mentions of voice chats for some reason.",
-                setting_type=SettingType.LIST
-            )
-        ]
+    return str(
+        Docs(
+            name="Temporary VC",
+            description="Temporary voice channels.",
+            settings=[
+                DocsSetting(
+                    name="Temporary VCs",
+                    description="List of temporary voice channels.",
+                    add_description="Name or ID of a voice chat. Discord won't autocomplete mentions of voice chats for some reason.",
+                    remove_description="Name or ID of a voice chat. Discord won't autocomplete mentions of voice chats for some reason.",
+                    setting_type=SettingType.LIST
+                )
+            ]
+        )
     )
