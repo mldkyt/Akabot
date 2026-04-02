@@ -18,6 +18,7 @@ from database import (
     yearly_chat_summary_members,
 )
 from logger import nekona_logger
+from utils.ads import get_ad
 from utils.conversion import convert_text_channel
 from utils.server_settings import (
     ServerSetting,
@@ -400,8 +401,8 @@ async def summarize(c: Connection, g: Guild):
             if j >= rows - 1:
                 break
 
-        msg += "\n-# Chat Summaries provided by Nekona :3"
-        await channel.send(msg)
+        ad = get_ad()
+        await channel.send(msg, view=ad)
 
         if now.month == 1 and now.day == 1:
             c.execute(
