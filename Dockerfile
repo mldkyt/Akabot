@@ -19,6 +19,8 @@ COPY utils/ utils/.
 COPY alembic.ini .
 COPY alembic/ alembic/.
 
+RUN rm cogs/devel.py
+
 COPY docker-entrypoint.sh .
 
 RUN chmod +x docker/prepare.sh
