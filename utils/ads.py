@@ -26,6 +26,25 @@ class VoteBotAd(View):
         )
 
 
+class DonateAd(View):
+    def __init__(self):
+        super().__init__()
+
+        self.add_item(
+            Button(label="Donate to the developer!", style=ButtonStyle.url, url=os.getenv("DONATE_URL", ""))
+        )
+
+
+class JoinDiscordAd(View):
+    def __init__(self):
+        super().__init__()
+
+        self.add_item(
+            Button(label="Join the Official Discord Server!", style=ButtonStyle.url,
+                   url=os.getenv("DISCORD_SERVER", ""))
+        )
+
+
 def get_ad() -> View | None:
     if os.getenv("DISABLE_ADS", "0") == "1":
         return None
@@ -37,6 +56,12 @@ def get_ad() -> View | None:
         InviteBotAd(),
         VoteBotAd()
     ]
+
+    if len(os.getenv("DONATE_URL", "")) > 0:
+        candidates.append(DonateAd())
+
+    if len(os.getenv("DISCORD_SERVER", "")) > 0:
+        candidates.append(JoinDiscordAd())
 
     if random.randint(1, 100) > 80:
         return random.choice(candidates)
