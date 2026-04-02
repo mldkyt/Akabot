@@ -44,7 +44,7 @@ server_disable_response = ServerSetting(
 user_disable_response = UserSetting(
     "Chat streaks disable response",
     setting_type=SettingType.NORMAL,
-    # TODO: normal_processor=setting_to_boolean,
+    normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
         "The bot WON'T respond to messages with chat streak updates to you",
         "WON'T",
