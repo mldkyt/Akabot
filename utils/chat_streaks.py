@@ -1,16 +1,16 @@
 from datetime import date, timedelta
 
-from discord import Bot, Guild, Member
+from discord import Bot, Guild, Member, Message
 from sqlalchemy import Connection, desc, insert, select, update
 
-from database import chat_streaks
+from database import chat_streaks, engine
+from utils.bot_channel import setting_bot_channel
 from utils.server_settings import (
     ServerSetting,
     SettingType,
     setting_to_number,
     setting_simple_string,
-    setting_simple_string_boolean,
-    setting_to_boolean,
+    setting_choice
 )
 from utils.user_settings import UserSetting
 
@@ -29,28 +29,20 @@ def server_message_delay_processor(
     return True, v
 
 
-server_disable_response = ServerSetting(
-    "Chat streaks disable response",
+server_response_setting = ServerSetting(
+    "Chat streaks response setting",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean(
-        "The bot %s respond to messages with chat streak updates in this server",
-        "WILL",
-        "WON'T",
-    ),
-    default="false",
+    normal_processor=setting_choice("off", "bot channel", "on"),
+    normal_response=setting_simple_string("The server mode has been set to %s"),
+    default="on",
 )
 
-user_disable_response = UserSetting(
-    "Chat streaks disable response",
+user_response_setting = UserSetting(
+    "Chat streaks response setting",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean(
-        "The bot WON'T respond to messages with chat streak updates to you",
-        "WON'T",
-        "WILL",
-    ),
-    default="false",
+    normal_processor=setting_choice("off", "expiry", "on"),
+    normal_response=setting_simple_string("The user mode has been set to %s"),
+    default="on",
 )
 
 server_message_delay = ServerSetting(
@@ -190,3 +182,29 @@ def get_guild_link(g: Guild):
             return i
 
     return None
+
+
+async def handle_send_reply(msg: Message, content: str) -> Message | None:
+    assert msg.guild is not None
+
+    with engine.begin() as c:
+        bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
+        setting_response = server_response_setting.get_guild(c, msg.guild)
+
+    if setting_response == "off":
+        return None
+
+    if len(bot_channel_id.strip()) == 0:
+        if setting_response == "on":
+            return await msg.reply(content)
+        else:
+            return None
+
+    bot_channel = msg.guild.get_channel(int(bot_channel_id))
+    if bot_channel is None:
+        if setting_response == "on":
+            return await msg.reply(content)
+        else:
+            return None
+
+    return await bot_channel.send(f"{msg.author.mention} {content}")
