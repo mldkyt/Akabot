@@ -417,6 +417,16 @@ def setting_to_role(c: Connection, member: Member, value: str) -> tuple[bool, st
     return True, str(role_convert.id)
 
 
+def setting_choice(*choices: str):
+    def processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
+        if v.strip() in choices:
+            return True, v
+
+        return False, f"Invalid choice \"{v}\", pick one from {', '.join(choices)}."
+
+    return processor
+
+
 def setting_simple_string(fmt: str):
     def formatter(c: Connection, m: Member, v: str) -> str:
         return fmt.replace("%s", v)

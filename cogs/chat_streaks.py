@@ -18,10 +18,9 @@ from utils.chat_streaks import (
     get_leaderboard,
     get_streak,
     get_unexpired_streak,
-    server_disable_response,
     server_message_delay,
     update_for_user,
-    user_disable_response,
+    handle_send_reply, user_response_setting, server_response_setting
 )
 from utils.docs import Docs, DocsCommand, DocsSetting
 from utils.server_settings import SettingType, settings
@@ -51,23 +50,23 @@ class ChatStreaks(Cog):
                 update_for_user(c, msg.author)
                 next_streak = get_streak(c, msg.author)
 
-                if server_disable_response.get(c, msg.author) == "true":
-                    return
-
-                if user_disable_response.get(c, msg.author) == "true":
-                    return
-
                 if unex_streak != prev_streak:
-                    a = await msg.reply(
-                        f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
-                    )
-                    await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+
+                    if user_response_setting.get(c, msg.author) in ["expiry", "on"]:
+                        a = await handle_send_reply(
+                            msg, f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
+                        )
+                        if a is not None:
+                            await a.delete(delay=int(server_message_delay.get(c, msg.author)))
                     return
                 if next_streak > prev_streak:
-                    a = await msg.reply(
-                        f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`."
-                    )
-                    await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+                    if user_response_setting.get(c, msg.author) == "on":
+                        a = await handle_send_reply(
+                            msg,
+                            f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`."
+                        )
+                        if a is not None:
+                            await a.delete(delay=int(server_message_delay.get(c, msg.author)))
         except Exception as e:
             nekona_logger.exception(e)
 
@@ -158,9 +157,9 @@ class ChatStreaks(Cog):
 def setup(bot: Bot):
     bot.add_cog(ChatStreaks(bot))
 
-    settings.add_settings(server_disable_response, server_message_delay)
+    settings.add_settings(server_response_setting, server_message_delay)
 
-    user_settings.add_settings(user_disable_response)
+    user_settings.add_settings(user_response_setting)
 
 
 def docs():

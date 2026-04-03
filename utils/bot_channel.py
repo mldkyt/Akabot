@@ -6,5 +6,6 @@ setting_bot_channel = ServerSetting(
     normal_processor=setting_to_text_channel,
     normal_response=setting_simple_string(
         "The bot channel is now set to <#%s>, everything will be posted there from now on!"),
-    normal_view=setting_simple_string("Bot channel: <#%s>")
+    normal_view=setting_simple_string("Bot channel: <#%s>"),
+    default=""
 )
