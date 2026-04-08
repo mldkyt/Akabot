@@ -104,7 +104,7 @@ class UserSettings(discord.Cog):
     async def remove_list_setting(
         self, ctx: discord.ApplicationContext, name: str, value: str
     ):
-        """Add an element into a list setting"""
+        """Remove an element from a list setting"""
 
         setting = user_settings.get_setting(name)
         if setting is None:
@@ -136,7 +136,7 @@ class UserSettings(discord.Cog):
         autocomplete=user_setting_name_list_autocomplete,
     )
     async def clear_list_setting(self, ctx: discord.ApplicationContext, name: str):
-        """Add an element into a list setting"""
+        """Clear a list setting"""
 
         setting = user_settings.get_setting(name)
         if setting is None:
