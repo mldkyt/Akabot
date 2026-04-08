@@ -184,7 +184,8 @@ def get_guild_link(g: Guild):
     return None
 
 
-async def handle_send_reply(msg: Message, content: str) -> Message | None:
+async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None, bool]:
+    """Handle send reply. Posts inside of bot channel or into the same channel. Returns true if posted into the same channel."""
     assert msg.guild is not None
 
     with engine.begin() as c:
@@ -192,19 +193,19 @@ async def handle_send_reply(msg: Message, content: str) -> Message | None:
         setting_response = server_response_setting.get_guild(c, msg.guild)
 
     if setting_response == "off":
-        return None
+        return None, False
 
     if len(bot_channel_id.strip()) == 0:
         if setting_response == "on":
-            return await msg.reply(content)
+            return await msg.reply(content), True
         else:
-            return None
+            return None, False
 
     bot_channel = msg.guild.get_channel(int(bot_channel_id))
     if bot_channel is None:
         if setting_response == "on":
-            return await msg.reply(content)
+            return await msg.reply(content), True
         else:
-            return None
+            return None, False
 
-    return await bot_channel.send(f"{msg.author.mention} {content}")
+    return await bot_channel.send(f"{msg.author.mention} {content}"), False

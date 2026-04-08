@@ -53,20 +53,20 @@ class ChatStreaks(Cog):
                 if unex_streak != prev_streak:
 
                     if user_response_setting.get(c, msg.author) in ["expiry", "on"]:
-                        a = await handle_send_reply(
+                        the_reply, reply_in_same_channel = await handle_send_reply(
                             msg, f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
                         )
-                        if a is not None:
-                            await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+                        if the_reply is not None and reply_in_same_channel:
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
                     return
                 if next_streak > prev_streak:
                     if user_response_setting.get(c, msg.author) == "on":
-                        a = await handle_send_reply(
+                        the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
                             f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`."
                         )
-                        if a is not None:
-                            await a.delete(delay=int(server_message_delay.get(c, msg.author)))
+                        if the_reply is not None and reply_in_same_channel:
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
         except Exception as e:
             nekona_logger.exception(e)
 
