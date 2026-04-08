@@ -22,8 +22,8 @@ from utils.chat_streaks import (
     update_for_user,
     handle_send_reply, user_response_setting, server_response_setting
 )
-from utils.docs import Docs, DocsCommand, DocsSetting
-from utils.server_settings import SettingType, settings
+from utils.docs import Docs, DocsCommand
+from utils.server_settings import settings
 from utils.user_settings import user_settings
 
 
@@ -178,16 +178,8 @@ def docs():
                 ),
             ],
             settings=[
-                DocsSetting(
-                    name="Chat streaks disable response",
-                    description="Both a server and user setting. The server setting disables Chat Streak responses for everyone, the user setting disabled it on all servers for you.",
-                    setting_type=SettingType.NORMAL,
-                ),
-                DocsSetting(
-                    name="Chat streaks message duration",
-                    description="A server setting that configures how long the response is shown for.",
-                    setting_type=SettingType.NORMAL,
-                ),
+                server_response_setting,
+                server_message_delay
             ],
         )
     )

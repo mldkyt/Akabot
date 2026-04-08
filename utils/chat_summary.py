@@ -58,6 +58,7 @@ def chat_summary_rows_processor(c: Connection, m: Member, v: str) -> tuple[bool,
 
 chat_summary = ServerSetting(
     "Chat summary channels",
+    description="List of channels to include in the Chat Summary counting.",
     setting_type=SettingType.LIST,
     list_add_processor=chat_summary_add_processor,
     list_add_response=setting_simple_string("Channel <#%s> was added to Chat Summary."),
@@ -70,6 +71,7 @@ chat_summary = ServerSetting(
 
 chat_summary_rows = ServerSetting(
     "Chat summary rows",
+    description="The amount of rows to show in the final Chat Summary message.",
     setting_type=SettingType.NORMAL,
     normal_processor=chat_summary_rows_processor,
     normal_response=setting_simple_string("Now showing %s rows in Chat Summaries"),
@@ -79,6 +81,7 @@ chat_summary_rows = ServerSetting(
 
 chat_summary_extra = ServerSetting(
     "Chat summary extra summaries",
+    description="Enables monthly and yearly Chat Summaries. At every end of month and year, the bot will summarize the entire month/year instead of the day.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
@@ -92,6 +95,7 @@ chat_summary_extra = ServerSetting(
 
 chat_summary_rows_extra = ServerSetting(
     "Chat summary rows (monthly, yearly)",
+    description="The amount of rows to show in the final monthly/yearly Chat Summary message.",
     setting_type=SettingType.NORMAL,
     normal_processor=chat_summary_rows_processor,
     normal_response=setting_simple_string(
@@ -105,6 +109,7 @@ chat_summary_rows_extra = ServerSetting(
 
 chat_summary_unique = ServerSetting(
     "Chat summary unique mode",
+    description="Don't count messages sent consecutively by one member, only count conversations. For instance, the bot will count 5 messages sent right after each other by one members as 1 message.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(

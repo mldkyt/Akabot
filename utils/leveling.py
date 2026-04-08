@@ -164,6 +164,7 @@ def remove_multiplier_response(c: Connection, m: Member, s: str) -> str:
 
 setting_xp_per_message = ServerSetting(
     name="Leveling XP per message",
+    description="How much XP to set per message",
     normal_processor=setting_to_number,
     normal_view=setting_simple_string("%s XP per message"),
     normal_response=setting_simple_string("Set the XP per message to %s"),
@@ -171,6 +172,7 @@ setting_xp_per_message = ServerSetting(
 )
 setting_level_up_message = ServerSetting(
     name="Leveling enable level-up message",
+    description='Whether to enable a brief "Level Up" message',
     normal_processor=setting_to_boolean,
     normal_view=setting_simple_string_boolean(
         "Level-up messages are %s", "enabled", "disabled"
@@ -182,12 +184,14 @@ setting_level_up_message = ServerSetting(
 )
 setting_level_up_message_text = ServerSetting(
     name="Leveling level-up message content",
+    description="Set the level-up message content. Available placeholders are {old}, {new}, {mention}, {server}, {name}, {username}",
     normal_view=setting_simple_string("Level-up message content is `%s`"),
     normal_response=setting_simple_string("Set level-up message content to %s"),
     default="**You leveled up!** {old} -> {new}",
 )
 setting_xp_per_level = ServerSetting(
     name="Leveling XP per level",
+    description="How much XP is required per level",
     normal_processor=setting_to_number,
     normal_view=setting_simple_string("%s XP required per level"),
     normal_response=setting_simple_string("Set XP required per level to %s"),
@@ -195,6 +199,7 @@ setting_xp_per_level = ServerSetting(
 )
 setting_leveling_rewards = ServerSetting(
     name="Leveling rewards",
+    description="The format `<role>, <level>` is required.",
     setting_type=SettingType.LIST,
     list_add_processor=add_reward_transformer,
     list_add_response=add_reward_response,
@@ -203,6 +208,7 @@ setting_leveling_rewards = ServerSetting(
 )
 setting_leveling_multipliers = ServerSetting(
     name="Leveling Multipliers",
+    description="Format `MM-DD - MM-DD`. Removes the multiplier.",
     setting_type=SettingType.LIST,
     list_add_processor=add_multiplier_transformer,
     list_remove_processor=add_multiplier_transformer,

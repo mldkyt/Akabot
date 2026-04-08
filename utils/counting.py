@@ -18,6 +18,7 @@ from utils.server_settings import (
 
 setting_counting_channels = ServerSetting(
     name="Counting channels",
+    description='The list of channels that should be considered "counting channels". Any channels in this list will be marked as counting channels.',
     setting_type=SettingType.LIST,
     list_add_processor=setting_to_text_channel,
     list_remove_processor=setting_to_text_channel,
@@ -34,6 +35,7 @@ setting_counting_channels = ServerSetting(
 
 same_member_counting_mode = ServerSetting(
     name="Counting same member mode",
+    description='Determines if a member can count twice consecutively or not. If set to "no", it will let anyone count as many times as they wish.',
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
@@ -47,6 +49,7 @@ same_member_counting_mode = ServerSetting(
 
 any_count_mode = ServerSetting(
     name="Counting any count mode",
+    description="Instead of explicitly checking for numbers, check for numbers in the entire message instead. Allows members to add anything to the message.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
@@ -60,6 +63,7 @@ any_count_mode = ServerSetting(
 
 any_count_mode_count_frequency = ServerSetting(
     name="Counting any count mode: Count frequency of words",
+    description="If any count mode is enabled, a number is also how many times has one word appeared in the counting message.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
@@ -73,6 +77,7 @@ any_count_mode_count_frequency = ServerSetting(
 
 any_count_mode_count_words = ServerSetting(
     name="Counting any count mode: Count total word count",
+    description="If any count mode is enabled, a number is also how many words are in the message.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_boolean,
     normal_response=setting_simple_string_boolean(
@@ -86,6 +91,7 @@ any_count_mode_count_words = ServerSetting(
 
 any_count_mode_minimum_frequency = ServerSetting(
     name="Counting any count mode: Minimum frequency",
+    description="If any count mode: count frequency of words is enabled, this is the minimum amount of that word has to be in the message to be considered as a number.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_number,
     normal_response=setting_simple_string(

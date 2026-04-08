@@ -2,8 +2,8 @@ from discord import Cog, Bot, VoiceState, Member, SlashCommandGroup, Application
 from sqlalchemy import select
 
 from database import engine, temporary_vcs
-from utils.docs import Docs, DocsSetting
-from utils.server_settings import settings, SettingType
+from utils.docs import Docs
+from utils.server_settings import settings
 from utils.temporary_vc import handle_voice_update, setting_temporary_vcs
 
 
@@ -123,13 +123,7 @@ def docs():
             name="Temporary VC",
             description="Temporary voice channels.",
             settings=[
-                DocsSetting(
-                    name="Temporary VCs",
-                    description="List of temporary voice channels.",
-                    add_description="Name or ID of a voice chat. Discord won't autocomplete mentions of voice chats for some reason.",
-                    remove_description="Name or ID of a voice chat. Discord won't autocomplete mentions of voice chats for some reason.",
-                    setting_type=SettingType.LIST
-                )
+                setting_temporary_vcs
             ]
         )
     )

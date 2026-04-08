@@ -2,8 +2,8 @@ from discord import Cog, Bot, Message
 from discord.ext.tasks import loop
 
 from utils.chat_revive import update_chat_revive, notifications, setting_chat_revive_role, setting_chat_revive_channels
-from utils.docs import Docs, DocsSetting
-from utils.server_settings import settings, SettingType
+from utils.docs import Docs
+from utils.server_settings import settings
 
 
 class ChatRevive(Cog):
@@ -42,18 +42,8 @@ def docs():
             name="Chat Revive",
             description="Dead channels? With the help of Chat Revive, you can revive them after a set amount of minutes.",
             settings=[
-                DocsSetting(
-                    name="Chat Revive Channels",
-                    description="List of channels that should be in the chat revive.",
-                    add_description="Syntax: \"channel, minutes\". Channel can be a mention, ID or name. Minutes is amount of minutes before a chat revive triggers.",
-                    remove_description="Channel ID, name or mention to remove.",
-                    setting_type=SettingType.LIST
-                ),
-                DocsSetting(
-                    name="Chat Revive Role",
-                    description="Role to ping when chat revive triggers.",
-                    setting_type=SettingType.NORMAL
-                )
+                setting_chat_revive_role,
+                setting_chat_revive_channels
             ]
         )
     )

@@ -2,8 +2,8 @@ from discord import AutoModActionExecutionEvent, AutoModRule, Bot, Cog
 
 from logger import nekona_logger
 from utils.automod_actions import automod_actions, fetch_actions, handle_automod_actions
-from utils.docs import Docs, DocsSetting
-from utils.server_settings import settings, SettingType
+from utils.docs import Docs
+from utils.server_settings import settings
 
 
 class AutomodActions(Cog):
@@ -69,13 +69,7 @@ def docs():
             name="Automod Actions",
             description="Automod Actions allow you to perform extra actions when an AutoMod rule is triggered.",
             settings=[
-                DocsSetting(
-                    name="Automod Actions",
-                    description="A list of automod actions. Note that only one DM action and one kick/ban/mute action can be set at the same time",
-                    setting_type=SettingType.LIST,
-                    add_description="Format is usually `name of automod action, action to perform, action parameter(s)`. Actions that can be set are `dm (message)`, `kick (reason)`, `ban (reason)`, `mute (duration, reason)`.",
-                    remove_description="Format is `name of automod action, action to remove`. This will remove that action."
-                )
+                automod_actions
             ]
         )
     )

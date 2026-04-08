@@ -9,6 +9,7 @@ from utils.server_settings import ServerSetting, SettingType, setting_simple_str
 
 setting_temporary_vcs = ServerSetting(
     name="Temporary VCs",
+    description="List of temporary voice channels.",
     setting_type=SettingType.LIST,
     list_add_processor=setting_to_voice_channel,
     list_add_response=setting_simple_string(

@@ -51,6 +51,7 @@ def statistic_channel_list_view(c: Connection, m: Member, v: list[str]) -> str:
 
 setting_statistic_channels = ServerSetting(
     name="Statistic Channels",
+    description="Set up statistic channels. Templates have {members}, {bots}, {users}, {guild} and {owner} so far. You can suggest more in the support Discord server :)",
     setting_type=SettingType.LIST,
     list_add_processor=statistic_channel_add_processor,
     list_add_response=statistic_channel_add_response,

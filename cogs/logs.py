@@ -26,7 +26,7 @@ from discord.abc import GuildChannel
 
 from database import engine
 from logger import nekona_logger
-from utils.docs import Docs, DocsSetting
+from utils.docs import Docs
 from utils.logs import (
     format_overwrite,
     format_perm_name,
@@ -37,7 +37,7 @@ from utils.logs import (
     logging_settings,
     send_message_to_log_channel,
 )
-from utils.server_settings import SettingType, settings
+from utils.server_settings import settings
 
 
 class Logging(Cog):
@@ -1456,19 +1456,8 @@ def docs():
             name="Logging",
             description="This module logs events into the logs channel of your choosing.",
             settings=[
-                DocsSetting(
-                    name="Logging channel",
-                    setting_type=SettingType.NORMAL,
-                    description="Where should the bot log (channel)",
-                ),
-                *[
-                    DocsSetting(
-                        name=i[1].name,
-                        description="Enable or disable notifications from this event",
-                        setting_type=SettingType.NORMAL,
-                    )
-                    for i in logging_settings
-                ],
+                logging_channel,
+                *[i[1] for i in logging_settings],
             ],
         )
     )

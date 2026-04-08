@@ -4,8 +4,8 @@ from discord import Cog, Bot, ButtonStyle, Button, Interaction, slash_command, A
 from discord.ui import View, button, Modal, InputText
 
 from database import engine
-from utils.docs import Docs, DocsSetting, DocsCommand
-from utils.server_settings import settings, SettingType
+from utils.docs import Docs, DocsCommand
+from utils.server_settings import settings
 from utils.verification import setting_verification_role
 
 
@@ -111,12 +111,7 @@ def docs():
             name="Verification",
             description="You can set up verification for your server using the verification module. Members have to solve a simple math problem to verify.",
             settings=[
-                DocsSetting(
-                    name="Verification role",
-                    setting_type=SettingType.NORMAL,
-                    description="The verification role",
-                    set_description="Sets the verification role to whatever you desire."
-                )
+                setting_verification_role
             ],
             commands=[
                 DocsCommand(

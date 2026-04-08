@@ -3,7 +3,7 @@ from discord import ApplicationContext, Message
 
 from database import engine
 from logger import nekona_logger
-from utils.docs import Docs, DocsCommand, DocsSetting
+from utils.docs import Docs, DocsCommand
 from utils.leveling import (
     add_xp,
     apply_leveling_rewards,
@@ -17,7 +17,7 @@ from utils.leveling import (
     setting_xp_per_message,
     xp_to_next_level, setting_level_up_message_text,
 )
-from utils.server_settings import SettingType, settings
+from utils.server_settings import settings
 
 
 class Leveling(discord.Cog):
@@ -101,39 +101,12 @@ def docs():
             description="Adds levels, level-up rewards and more fun into your server.",
             commands=[DocsCommand("level", description="Show user level")],
             settings=[
-                DocsSetting(
-                    "Leveling XP per message",
-                    setting_type=SettingType.NORMAL,
-                    description="How much XP to set per message",
-                ),
-                DocsSetting(
-                    "Leveling enable level-up message",
-                    setting_type=SettingType.NORMAL,
-                    description='Whether to enable a brief "Level Up" message',
-                ),
-                DocsSetting(
-                    "Leveling level-up message content",
-                    setting_type=SettingType.NORMAL,
-                    description="Set the level-up message content. Available placeholders are {old}, {new}, {mention}, {server}, {name}, {username}"
-                ),
-                DocsSetting(
-                    "Leveling XP per level",
-                    setting_type=SettingType.NORMAL,
-                    description="How much XP is required per level",
-                ),
-                DocsSetting(
-                    "Leveling rewards",
-                    setting_type=SettingType.LIST,
-                    description="Reward stuff for levels",
-                    add_description="The format `<role>, <level>` is required.",
-                ),
-                DocsSetting(
-                    "Leveling multipliers",
-                    setting_type=SettingType.LIST,
-                    description="Time-based leveling multipliers.",
-                    add_description="Must follow the format `<MM-DD> - <MM-DD>, <multiplier>`. Adds a multiplier.",
-                    remove_description="Format `MM-DD - MM-DD`. Removes the multiplier.",
-                ),
+                setting_xp_per_message,
+                setting_level_up_message,
+                setting_level_up_message_text,
+                setting_xp_per_level,
+                setting_leveling_rewards,
+                setting_leveling_multipliers
             ],
         )
     )

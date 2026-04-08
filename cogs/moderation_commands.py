@@ -17,13 +17,13 @@ from discord import (
 )
 
 from database import engine
-from utils.docs import Docs, DocsCommand, DocsCommandParameter, DocsSetting
+from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.moderation_commands import (
     is_user_moderator,
     moderator_roles,
     perform_basic_checks,
 )
-from utils.server_settings import SettingType, settings
+from utils.server_settings import settings
 
 
 class ModerationCommands(Cog):
@@ -551,11 +551,7 @@ def docs():
             name="Moderation Commands",
             description="The moderation commands, along with moderator roles, allow you to add an extra step for attackers to deal with when using bots to destroy your Discord server. Add your moderator role to moderator roles and remove the usual Discord permissions.",
             settings=[
-                DocsSetting(
-                    name="Moderator roles",
-                    setting_type=SettingType.LIST,
-                    description="Roles that should be considered as moderator roles. You can input a role name, ID or mention.",
-                )
+                moderator_roles
             ],
             commands=[
                 DocsCommand(

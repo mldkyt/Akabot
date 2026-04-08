@@ -8,6 +8,7 @@ from utils.server_settings import ServerSetting, SettingType, setting_to_boolean
 
 meowing = ServerSetting(
     name="Meow back at messages",
+    description="Meow back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
     normal_processor=setting_to_boolean,
@@ -17,6 +18,7 @@ meowing = ServerSetting(
 
 wafing = ServerSetting(
     name="Waf back at messages",
+    description="Waf back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
     normal_processor=setting_to_boolean,
@@ -26,6 +28,7 @@ wafing = ServerSetting(
 
 barking = ServerSetting(
     name="Bark back at messages",
+    description="Bark back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
     normal_processor=setting_to_boolean,
@@ -35,6 +38,7 @@ barking = ServerSetting(
 
 colon_3 = ServerSetting(
     name=":3 back at messages",
+    description=":3 back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
     normal_processor=setting_to_boolean,
@@ -44,6 +48,7 @@ colon_3 = ServerSetting(
 
 owo = ServerSetting(
     name="OwO back at messages",
+    description="OwO back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
     normal_processor=setting_to_boolean,
@@ -53,6 +58,7 @@ owo = ServerSetting(
 
 awawa = ServerSetting(
     name="awawa back at messages",
+    description="awawa back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
     normal_processor=setting_to_boolean,
