@@ -22,8 +22,8 @@ from utils.chat_summary import (
     perform_backfill,
     summarize,
 )
-from utils.docs import Docs, DocsSetting
-from utils.server_settings import SettingType, settings
+from utils.docs import Docs
+from utils.server_settings import settings
 
 
 class ChatSummary(Cog):
@@ -122,31 +122,11 @@ def docs():
             name="Chat Summary",
             description="Chat Summary shows a summary of who sent how many messages at the end of the day.",
             settings=[
-                DocsSetting(
-                    name="Chat summary channels",
-                    setting_type=SettingType.LIST,
-                    description="List of channels to include in the Chat Summary counting.",
-                ),
-                DocsSetting(
-                    name="Chat summary rows",
-                    setting_type=SettingType.NORMAL,
-                    description="The amount of rows to show in the final Chat Summary message.",
-                ),
-                DocsSetting(
-                    name="Chat summary extra summaries",
-                    setting_type=SettingType.NORMAL,
-                    description="Enables monthly and yearly Chat Summaries. At every end of month and year, the bot will summarize the entire month/year instead of the day.",
-                ),
-                DocsSetting(
-                    name="Chat summary rows (yearly, monthly)",
-                    setting_type=SettingType.NORMAL,
-                    description="The amount of rows to show in the final monthly/yearly Chat Summary message.",
-                ),
-                DocsSetting(
-                    name="Chat summary unique mode",
-                    setting_type=SettingType.NORMAL,
-                    description="Don't count messages sent consecutively by one member, only count conversations. For instance, the bot will count 5 messages sent right after each other by one members as 1 message.",
-                ),
+                chat_summary,
+                chat_summary_rows,
+                chat_summary_extra,
+                chat_summary_rows_extra,
+                chat_summary_unique
             ],
         )
     )

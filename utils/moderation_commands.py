@@ -11,6 +11,7 @@ from utils.server_settings import (
 
 moderator_roles = ServerSetting(
     name="Moderator roles",
+    description="Roles that should be considered as moderator roles. You can input a role name, ID or mention.",
     setting_type=SettingType.LIST,
     list_add_processor=setting_to_role,
     list_add_response=setting_simple_string("Added <@&%s> into moderator roles"),

@@ -31,6 +31,7 @@ def server_message_delay_processor(
 
 server_response_setting = ServerSetting(
     "Chat streaks response setting",
+    description="Chat streaks disable response",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_choice("off", "bot channel", "on"),
     normal_response=setting_simple_string("The server mode has been set to %s"),
@@ -47,6 +48,7 @@ user_response_setting = UserSetting(
 
 server_message_delay = ServerSetting(
     "Chat streaks message duration",
+    description="A server setting that configures how long the response is shown for.",
     setting_type=SettingType.NORMAL,
     normal_processor=server_message_delay_processor,
     normal_response=setting_simple_string(

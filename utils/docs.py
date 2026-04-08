@@ -1,4 +1,4 @@
-from utils.server_settings import SettingType
+from utils.server_settings import ServerSetting
 
 
 class DocsCommandParameter:
@@ -48,43 +48,6 @@ class DocsCommand:
         return a
 
 
-class DocsSetting:
-    def __init__(
-        self,
-        name: str,
-        *,
-        setting_type: SettingType,
-        description: str = "No description for this setting",
-        set_description: str = "Set the setting to the value",
-        add_description: str = "Add the value to the list",
-        remove_description: str = "Remove the value from the list",
-    ):
-        self.name = name
-        self.setting_type = setting_type
-        self.description = description
-
-        if setting_type == SettingType.NORMAL:
-            self.set_description = set_description
-        elif setting_type == SettingType.LIST:
-            self.add_description = add_description
-            self.remove_description = remove_description
-
-    def __str__(self):
-        if self.setting_type == SettingType.NORMAL:
-            return (
-                f"- Setting `{self.name}` - {self.description}\n"
-                + f"\t- **Set the setting** - `/settings set_setting name:{self.name} value:<your value>` {self.set_description}"
-            )
-        elif self.setting_type == SettingType.LIST:
-            return (
-                f"- Setting `{self.name}` - {self.description}\n"
-                + f"\t- **Add to list** - `/settings add_to_list name:{self.name} value:<your value>` - {self.add_description}\n"
-                + f"\t- **Remove from list** - `/settings remove_from_list name:{self.name} value:<your value>` - {self.remove_description}"
-            )
-
-        return f"Undefined description for setting {self.name}"
-
-
 class Docs:
     def __init__(
         self,
@@ -92,7 +55,7 @@ class Docs:
         *,
         description: str = "No description set for this command",
         commands: list[DocsCommand] = None,
-        settings: list[DocsSetting] = None,
+            settings: list[ServerSetting] = None,
     ):
         if commands is None:
             commands = []

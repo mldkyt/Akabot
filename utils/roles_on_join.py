@@ -7,6 +7,7 @@ from utils.server_settings import ServerSetting, setting_to_role, SettingType, s
 
 setting_roles_on_join = ServerSetting(
     name="Roles on join",
+    description="The roles to be added to members on join",
     list_add_processor=setting_to_role,
     list_remove_processor=setting_to_role,
     setting_type=SettingType.LIST,

@@ -206,6 +206,7 @@ async def fetch_actions(g: Guild):
 
 automod_actions = ServerSetting(
     name="Automod actions",
+    description="A list of automod actions. Note that only one DM action and one kick/ban/mute action can be set at the same time. Format is usually `name of automod action, action to perform, action parameter(s) for adding to this setting, and `name of automod action, action to remove` for removing that action.",
     setting_type=SettingType.LIST,
     list_add_processor=process_add,
     list_remove_processor=process_remove,

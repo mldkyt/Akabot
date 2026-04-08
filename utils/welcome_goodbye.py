@@ -12,6 +12,7 @@ from utils.server_settings import ServerSetting, SettingType, setting_to_text_ch
 # Welcome
 welcome_channel = ServerSetting(
     name="Welcome channel",
+    description="Set a channel to send welcome messages into.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_text_channel,
     normal_view=setting_simple_string("Channel for welcoming new members is set to <#%s>"),
@@ -21,6 +22,7 @@ welcome_channel = ServerSetting(
 
 welcome_grace_period_first = ServerSetting(
     name="Welcoming first grace period",
+    description="The number of seconds between a member join and the welcome message being sent. This can be used to not welcome raiders (if they get kicked quickly enough).",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_number_within_range(0, 120),
     normal_view=setting_simple_string("First grace period (before welcome message is sent) is %s seconds"),
@@ -30,6 +32,7 @@ welcome_grace_period_first = ServerSetting(
 
 welcome_grace_period_second = ServerSetting(
     name="Welcoming second grace period",
+    description="The number of minutes between the welcome message sent and it persisting when the member leaves. When it persists, a goodbye message is sent instead when the member leaves. When a member joins the server for a short period of time, this will unclog the goodbye channel.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_number_within_range(0, 30),
     normal_view=setting_simple_string("Second grace period (after welcome message is sent) is %s minutes"),
@@ -39,6 +42,7 @@ welcome_grace_period_second = ServerSetting(
 
 welcome_message_title = ServerSetting(
     name="Welcome message title",
+    description="The title of the embed in the welcome message. Not used if the message type is text. %s - server, %U - display name, %u - name of member, %m - mention of member",
     setting_type=SettingType.NORMAL,
     normal_view=setting_simple_string("Title of welcome messages is set to `%s`"),
     normal_response=setting_simple_string("Title of welcome messages was set to `%s`"),
@@ -47,6 +51,7 @@ welcome_message_title = ServerSetting(
 
 welcome_message_message = ServerSetting(
     name="Welcome message",
+    description="The text of the message or the content of the embed. %s - server, %U - display name, %u - name of member, %m - mention of member",
     setting_type=SettingType.NORMAL,
     normal_view=setting_simple_string("Message of welcome messages is set to `%s`"),
     normal_response=setting_simple_string("Message of welcome messages was set to `%s`"),
@@ -60,6 +65,7 @@ def validate_correct_type(c: Connection, m: Member, v: str) -> tuple[bool, str]:
 
 welcome_message_type = ServerSetting(
     name="Welcome message type",
+    description="The type of the welcome message. Can be one of `text` or `embed`.",
     setting_type=SettingType.NORMAL,
     normal_processor=validate_correct_type,
     normal_view=setting_simple_string("Message of welcome messages is set to `%s`"),
@@ -70,6 +76,7 @@ welcome_message_type = ServerSetting(
 # Goodbye
 goodbye_channel = ServerSetting(
     name="Goodbye channel",
+    description="Set a channel to send goodbye messages into.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_text_channel,
     normal_view=setting_simple_string("Channel for saying goodbye to members is set to <#%s>"),
@@ -79,6 +86,7 @@ goodbye_channel = ServerSetting(
 
 goodbye_message_title = ServerSetting(
     name="Goodbye message title",
+    description="The title of the embed in the goodbye message. Not used if the message type is text. %s - server, %U - display name, %u - name of member, %m - mention of member",
     setting_type=SettingType.NORMAL,
     normal_view=setting_simple_string("Title of goodbye messages is set to `%s`"),
     normal_response=setting_simple_string("Title of goodbye messages was set to `%s`"),
@@ -87,6 +95,7 @@ goodbye_message_title = ServerSetting(
 
 goodbye_message_message = ServerSetting(
     name="Goodbye message",
+    description="The text of the message or the content of the embed. %s - server, %U - display name, %u - name of member, %m - mention of member",
     setting_type=SettingType.NORMAL,
     normal_view=setting_simple_string("Message of goodbye messages is set to `%s`"),
     normal_response=setting_simple_string("Message of goodbye messages was set to `%s`"),
@@ -95,6 +104,7 @@ goodbye_message_message = ServerSetting(
 
 goodbye_message_type = ServerSetting(
     name="Goodbye message type",
+    description="The type of the goodbye message. Can be one of `text` or `embed`.",
     setting_type=SettingType.NORMAL,
     normal_processor=validate_correct_type,
     normal_view=setting_simple_string("Message of goodbye messages is set to `%s`"),

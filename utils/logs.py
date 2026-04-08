@@ -22,6 +22,7 @@ from utils.server_settings import (
 
 logging_channel = ServerSetting(
     name="Logging channel",
+    description="Where should the bot log (channel)",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_text_channel,
     normal_response=setting_simple_string("Set logging channel to <#%s>"),
@@ -75,6 +76,7 @@ for i in [
             i[0],
             ServerSetting(
                 name=f"Logging: Log {i[1]}",
+                description=f"Whether the bot should log or not log {i[1]}",
                 setting_type=SettingType.NORMAL,
                 normal_processor=setting_to_boolean,
                 normal_response=setting_simple_string_boolean(

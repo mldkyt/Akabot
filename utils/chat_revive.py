@@ -70,6 +70,7 @@ def chat_revive_response_remove(c: Connection, m: Member, v: str) -> str:
 
 setting_chat_revive_channels = ServerSetting(
     name="Chat Revive Channels",
+    description="List of channels that should be in the chat revive. Syntax: \"channel, minutes\". Channel can be a mention, ID or name. Minutes is amount of minutes before a chat revive triggers.",
     setting_type=SettingType.LIST,
     list_add_processor=chat_revive_add,
     list_remove_processor=chat_revive_remove,
@@ -79,6 +80,7 @@ setting_chat_revive_channels = ServerSetting(
 )
 setting_chat_revive_role = ServerSetting(
     name="Chat Revive Role",
+    description="Role to ping when chat revive triggers.",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_to_role,
     normal_view=setting_simple_string("Chat revival ping role: <@&%s>"),
