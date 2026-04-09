@@ -1,9 +1,10 @@
 from datetime import date, timedelta
 
-from discord import Bot, Guild, Member, Message
+from discord import Bot, Guild, Member, Message, PartialMessageable, DMChannel, ForumChannel, CategoryChannel
 from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks, engine
+from logger import nekona_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import (
     ServerSetting,
@@ -188,26 +189,35 @@ def get_guild_link(g: Guild):
 
 async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None, bool]:
     """Handle send reply. Posts inside of bot channel or into the same channel. Returns true if posted into the same channel."""
-    assert msg.guild is not None
+    try:
+        assert msg.guild is not None
+        assert not isinstance(msg.channel, PartialMessageable) and not isinstance(msg.channel, DMChannel)
 
-    with engine.begin() as c:
-        bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
-        setting_response = server_response_setting.get_guild(c, msg.guild)
+        with engine.begin() as c:
+            bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
+            setting_response = server_response_setting.get_guild(c, msg.guild)
 
-    if setting_response == "off":
+        if setting_response == "off":
+            return None, False
+
+        bot_channel = msg.guild.get_channel(int(bot_channel_id))
+
+        if msg.channel.permissions_for(msg.guild.me).read_message_history:
+            if len(bot_channel_id.strip()) == 0:
+                if setting_response == "on":
+                    return await msg.reply(content), True
+                else:
+                    return None, False
+
+            if bot_channel is None:
+                if setting_response == "on":
+                    return await msg.reply(content), True
+                else:
+                    return None, False
+
+        assert not isinstance(bot_channel, ForumChannel) and not isinstance(bot_channel, CategoryChannel)
+        assert bot_channel is not None
+        return await bot_channel.send(f"{msg.author.mention} {content}"), False
+    except Exception as e:
+        nekona_logger.exception("handle_send_reply exception")
         return None, False
-
-    if len(bot_channel_id.strip()) == 0:
-        if setting_response == "on":
-            return await msg.reply(content), True
-        else:
-            return None, False
-
-    bot_channel = msg.guild.get_channel(int(bot_channel_id))
-    if bot_channel is None:
-        if setting_response == "on":
-            return await msg.reply(content), True
-        else:
-            return None, False
-
-    return await bot_channel.send(f"{msg.author.mention} {content}"), False
