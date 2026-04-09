@@ -6,6 +6,7 @@ from discord import AutocompleteContext, Guild, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import server_settings, server_settings_list
+from logger import nekona_logger
 from utils.conversion import convert_role, convert_text_channel, convert_voice_channel
 
 
@@ -320,10 +321,14 @@ class ServerSettings:
 
         for i in self.registered_settings:
             if i.setting_type == SettingType.NORMAL:
-                sets.append(i.get_formatted(c, member))
-            elif i.setting_type == SettingType.LIST:
-                sets.append(i.get_formatted(c, member))
-            # Add any other setting types here in the future
+                try:
+                    pretty_setting = i.get_formatted(c, member)
+                    if len(pretty_setting.strip()) == 0:
+                        nekona_logger.warning("Setting %s is empty when normal_view was called", i.name)
+
+                    sets.append(pretty_setting)
+                except Exception:
+                    nekona_logger.exception("An error occurred while getting setting %s", i.name)
 
         return sets
 

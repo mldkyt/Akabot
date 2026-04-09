@@ -185,11 +185,12 @@ class ServerSettings(discord.Cog):
 
         pages = []
         page = ""
-        for i in range(len(sets)):
-            page += f"- {sets[i]}\n"
-            if i % 5 == 4:
+        for i in sets:
+            if len(page) + len(i) + 3 > 1000:
                 pages.append(page)
                 page = ""
+
+            page += f"- {i}\n"
 
         if len(page) > 0:
             pages.append(page)
