@@ -1,11 +1,7 @@
 from datetime import date, datetime
 
-from discord import (
-    Guild,
-    Member,
-    Message,
-    TextChannel,
-)
+from fluxer import Channel, Guild, Message
+from fluxer import GuildMember as Member
 from sqlalchemy import Connection, delete, desc, insert, select, update
 
 from database import (
@@ -23,20 +19,20 @@ from utils.conversion import convert_text_channel
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_to_number,
     setting_simple_list_string,
     setting_simple_string,
     setting_simple_string_boolean,
     setting_to_boolean,
+    setting_to_number,
 )
 
 
 def chat_summary_add_processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     s = v.split(",")
     if len(s) == 2 and s[1].isnumeric():
-        chat_convert = convert_text_channel(m.guild, s[0], int(s[1]))
+        chat_convert = convert_text_channel(m.guild_id, s[0], int(s[1]))
     else:
-        chat_convert = convert_text_channel(m.guild, v)
+        chat_convert = convert_text_channel(m.guild_id, v)
 
     if chat_convert is None:
         return False, "Invalid channel"
@@ -128,15 +124,15 @@ def inc(c: Connection, m: Message):
         select(
             chat_summary_channels.c.messages, chat_summary_channels.c.last_member
         ).where(
-            (chat_summary_channels.c.gid == str(m.guild.id))
-            & (chat_summary_channels.c.cid == str(m.channel.id))
+            (chat_summary_channels.c.gid == str(m.guild_id))
+            & (chat_summary_channels.c.cid == str(m.channel_id))
         )
     ).fetchone()
     if a is None:
         c.execute(
             insert(chat_summary_channels).values(
-                gid=str(m.guild.id),
-                cid=str(m.channel.id),
+                gid=str(m.guild_id),
+                cid=str(m.channel),
                 messages=1,
                 last_member=str(m.author.id),
             )
@@ -147,7 +143,7 @@ def inc(c: Connection, m: Message):
                 update(chat_summary_channels)
                 .values(messages=a[0] + 1, last_member=str(m.author.id))
                 .where(
-                    (chat_summary_channels.c.gid == str(m.guild.id))
+                    (chat_summary_channels.c.gid == str(m.guild_id))
                     & (chat_summary_channels.c.cid == str(m.channel.id))
                 )
             )
@@ -157,7 +153,7 @@ def inc(c: Connection, m: Message):
     if a is None or a[1] != str(m.author.id):
         a = c.execute(
             select(chat_summary_members.c.messages).where(
-                (chat_summary_members.c.gid == str(m.guild.id))
+                (chat_summary_members.c.gid == str(m.guild_id))
                 & (chat_summary_members.c.cid == str(m.channel.id))
                 & (chat_summary_members.c.uid == str(m.author.id))
             )
@@ -165,7 +161,7 @@ def inc(c: Connection, m: Message):
         if a is None:
             c.execute(
                 insert(chat_summary_members).values(
-                    gid=str(m.guild.id),
+                    gid=str(m.guild_id),
                     cid=str(m.channel.id),
                     uid=str(m.author.id),
                     messages=1,
@@ -176,7 +172,7 @@ def inc(c: Connection, m: Message):
                 update(chat_summary_members)
                 .values(messages=a[0] + 1)
                 .where(
-                    (chat_summary_members.c.gid == str(m.guild.id))
+                    (chat_summary_members.c.gid == str(m.guild_id))
                     & (chat_summary_members.c.cid == str(m.channel.id))
                     & (chat_summary_members.c.uid == str(m.author.id))
                 )
@@ -191,14 +187,14 @@ def inc(c: Connection, m: Message):
             monthly_chat_summary_channels.c.messages,
             monthly_chat_summary_channels.c.last_member,
         ).where(
-            (monthly_chat_summary_channels.c.gid == str(m.guild.id))
+            (monthly_chat_summary_channels.c.gid == str(m.guild_id))
             & (monthly_chat_summary_channels.c.cid == str(m.channel.id))
         )
     ).fetchone()
     if a is None:
         c.execute(
             insert(monthly_chat_summary_channels).values(
-                gid=str(m.guild.id),
+                gid=str(m.guild_id),
                 cid=str(m.channel.id),
                 messages=1,
                 last_member=str(m.author.id),
@@ -210,7 +206,7 @@ def inc(c: Connection, m: Message):
                 update(monthly_chat_summary_channels)
                 .values(messages=a[0] + 1, last_member=str(m.author.id))
                 .where(
-                    (monthly_chat_summary_channels.c.gid == str(m.guild.id))
+                    (monthly_chat_summary_channels.c.gid == str(m.guild_id))
                     & (monthly_chat_summary_channels.c.cid == str(m.channel.id))
                 )
             )
@@ -220,7 +216,7 @@ def inc(c: Connection, m: Message):
     if a is None or a[1] != str(m.author.id):
         a = c.execute(
             select(monthly_chat_summary_members.c.messages).where(
-                (monthly_chat_summary_members.c.gid == str(m.guild.id))
+                (monthly_chat_summary_members.c.gid == str(m.guild_id))
                 & (monthly_chat_summary_members.c.cid == str(m.channel.id))
                 & (monthly_chat_summary_members.c.uid == str(m.author.id))
             )
@@ -228,7 +224,7 @@ def inc(c: Connection, m: Message):
         if a is None:
             c.execute(
                 insert(monthly_chat_summary_members).values(
-                    gid=str(m.guild.id),
+                    gid=str(m.guild_id),
                     cid=str(m.channel.id),
                     uid=str(m.author.id),
                     messages=1,
@@ -239,7 +235,7 @@ def inc(c: Connection, m: Message):
                 update(monthly_chat_summary_members)
                 .values(messages=a[0] + 1)
                 .where(
-                    (monthly_chat_summary_members.c.gid == str(m.guild.id))
+                    (monthly_chat_summary_members.c.gid == str(m.guild_id))
                     & (monthly_chat_summary_members.c.cid == str(m.channel.id))
                     & (monthly_chat_summary_members.c.uid == str(m.author.id))
                 )
@@ -254,14 +250,14 @@ def inc(c: Connection, m: Message):
             yearly_chat_summary_channels.c.messages,
             yearly_chat_summary_channels.c.last_member,
         ).where(
-            (yearly_chat_summary_channels.c.gid == str(m.guild.id))
+            (yearly_chat_summary_channels.c.gid == str(m.guild_id))
             & (yearly_chat_summary_channels.c.cid == str(m.channel.id))
         )
     ).fetchone()
     if a is None:
         c.execute(
             insert(yearly_chat_summary_channels).values(
-                gid=str(m.guild.id),
+                gid=str(m.guild_id),
                 cid=str(m.channel.id),
                 messages=1,
                 last_member=str(m.author.id),
@@ -273,7 +269,7 @@ def inc(c: Connection, m: Message):
                 update(yearly_chat_summary_channels)
                 .values(messages=a[0] + 1, last_member=str(m.author.id))
                 .where(
-                    (yearly_chat_summary_channels.c.gid == str(m.guild.id))
+                    (yearly_chat_summary_channels.c.gid == str(m.guild_id))
                     & (yearly_chat_summary_channels.c.cid == str(m.channel.id))
                 )
             )
@@ -283,7 +279,7 @@ def inc(c: Connection, m: Message):
     if a is None or a[1] != str(m.author.id):
         a = c.execute(
             select(yearly_chat_summary_members.c.messages).where(
-                (yearly_chat_summary_members.c.gid == str(m.guild.id))
+                (yearly_chat_summary_members.c.gid == str(m.guild_id))
                 & (yearly_chat_summary_members.c.cid == str(m.channel.id))
                 & (yearly_chat_summary_members.c.uid == str(m.author.id))
             )
@@ -291,7 +287,7 @@ def inc(c: Connection, m: Message):
         if a is None:
             c.execute(
                 insert(yearly_chat_summary_members).values(
-                    gid=str(m.guild.id),
+                    gid=str(m.guild_id),
                     cid=str(m.channel.id),
                     uid=str(m.author.id),
                     messages=1,
@@ -302,8 +298,8 @@ def inc(c: Connection, m: Message):
                 update(yearly_chat_summary_members)
                 .values(messages=a[0] + 1)
                 .where(
-                    (yearly_chat_summary_members.c.gid == str(m.guild.id))
-                    & (yearly_chat_summary_members.c.cid == str(m.channel.id))
+                    (yearly_chat_summary_members.c.gid == str(m.guild_id))
+                    & (yearly_chat_summary_members.c.cid == str(m.channel_id))
                     & (yearly_chat_summary_members.c.uid == str(m.author.id))
                 )
             )
@@ -451,345 +447,345 @@ async def summarize(c: Connection, g: Guild):
         )
 
 
-async def perform_backfill(guild: Guild, channel: TextChannel):
-    try:
-        nekona_logger.debug("[Chat Summary/Backfill: Backfilling channel %s in %s", channel.name, guild.name)
-        with engine.begin() as c:
-            # Clear the messages
-            c.execute(
-                delete(chat_summary_members).where(
-                    (chat_summary_members.c.gid == str(guild.id))
-                    & (chat_summary_members.c.cid == str(channel.id))
-                )
-            )
-            c.execute(
-                delete(chat_summary_channels).where(
-                    (chat_summary_channels.c.gid == str(guild.id))
-                    & (chat_summary_channels.c.cid == str(channel.id))
-                )
-            )
-            c.execute(
-                delete(monthly_chat_summary_members).where(
-                    (monthly_chat_summary_members.c.gid == str(guild.id))
-                    & (monthly_chat_summary_members.c.cid == str(channel.id))
-                )
-            )
-            c.execute(
-                delete(monthly_chat_summary_channels).where(
-                    (monthly_chat_summary_channels.c.gid == str(guild.id))
-                    & (monthly_chat_summary_channels.c.cid == str(channel.id))
-                )
-            )
-            c.execute(
-                delete(yearly_chat_summary_members).where(
-                    (yearly_chat_summary_members.c.gid == str(guild.id))
-                    & (yearly_chat_summary_members.c.cid == str(channel.id))
-                )
-            )
-            c.execute(
-                delete(yearly_chat_summary_channels).where(
-                    (yearly_chat_summary_channels.c.gid == str(guild.id))
-                    & (yearly_chat_summary_channels.c.cid == str(channel.id))
-                )
-            )
+# async def perform_backfill(guild: Guild, channel: TextChannel):
+#     try:
+#         nekona_logger.debug("[Chat Summary/Backfill: Backfilling channel %s in %s", channel.name, guild.name)
+#         with engine.begin() as c:
+#             # Clear the messages
+#             c.execute(
+#                 delete(chat_summary_members).where(
+#                     (chat_summary_members.c.gid == str(guild.id))
+#                     & (chat_summary_members.c.cid == str(channel.id))
+#                 )
+#             )
+#             c.execute(
+#                 delete(chat_summary_channels).where(
+#                     (chat_summary_channels.c.gid == str(guild.id))
+#                     & (chat_summary_channels.c.cid == str(channel.id))
+#                 )
+#             )
+#             c.execute(
+#                 delete(monthly_chat_summary_members).where(
+#                     (monthly_chat_summary_members.c.gid == str(guild.id))
+#                     & (monthly_chat_summary_members.c.cid == str(channel.id))
+#                 )
+#             )
+#             c.execute(
+#                 delete(monthly_chat_summary_channels).where(
+#                     (monthly_chat_summary_channels.c.gid == str(guild.id))
+#                     & (monthly_chat_summary_channels.c.cid == str(channel.id))
+#                 )
+#             )
+#             c.execute(
+#                 delete(yearly_chat_summary_members).where(
+#                     (yearly_chat_summary_members.c.gid == str(guild.id))
+#                     & (yearly_chat_summary_members.c.cid == str(channel.id))
+#                 )
+#             )
+#             c.execute(
+#                 delete(yearly_chat_summary_channels).where(
+#                     (yearly_chat_summary_channels.c.gid == str(guild.id))
+#                     & (yearly_chat_summary_channels.c.cid == str(channel.id))
+#                 )
+#             )
 
-            i = 0
+#             i = 0
 
-            day_messages = 0
-            month_messages = 0
-            year_messages = 0
+#             day_messages = 0
+#             month_messages = 0
+#             year_messages = 0
 
-            today = date.today()
-            async for message in channel.history(limit=None):
-                if message.author.bot:
-                    continue
+#             today = date.today()
+#             async for message in channel.history(limit=None):
+#                 if message.author.bot:
+#                     continue
 
-                # Add each message into each group
-                if (
-                    message.created_at.day == today.day
-                    and message.created_at.month == today.month
-                ):
-                    # Increment for channel
+#                 # Add each message into each group
+#                 if (
+#                     message.created_at.day == today.day
+#                     and message.created_at.month == today.month
+#                 ):
+#                     # Increment for channel
 
-                    a = c.execute(
-                        select(
-                            chat_summary_channels.c.messages,
-                            chat_summary_channels.c.last_member,
-                        ).where(
-                            (chat_summary_channels.c.gid == str(message.guild.id))
-                            & (chat_summary_channels.c.cid == str(message.channel.id))
-                        )
-                    ).fetchone()
-                    if a is None:
-                        c.execute(
-                            insert(chat_summary_channels).values(
-                                gid=str(message.guild.id),
-                                cid=str(message.channel.id),
-                                messages=1,
-                                last_member=str(message.author.id),
-                            )
-                        )
-                    else:
-                        if a[1] != str(message.author.id):
-                            c.execute(
-                                update(chat_summary_channels)
-                                .values(
-                                    messages=a[0] + 1,
-                                    last_member=str(message.author.id),
-                                )
-                                .where(
-                                    (
-                                        chat_summary_channels.c.gid
-                                        == str(message.guild.id)
-                                    )
-                                    & (
-                                        chat_summary_channels.c.cid
-                                        == str(message.channel.id)
-                                    )
-                                )
-                            )
+#                     a = c.execute(
+#                         select(
+#                             chat_summary_channels.c.messages,
+#                             chat_summary_channels.c.last_member,
+#                         ).where(
+#                             (chat_summary_channels.c.gid == str(message.guild.id))
+#                             & (chat_summary_channels.c.cid == str(message.channel.id))
+#                         )
+#                     ).fetchone()
+#                     if a is None:
+#                         c.execute(
+#                             insert(chat_summary_channels).values(
+#                                 gid=str(message.guild.id),
+#                                 cid=str(message.channel.id),
+#                                 messages=1,
+#                                 last_member=str(message.author.id),
+#                             )
+#                         )
+#                     else:
+#                         if a[1] != str(message.author.id):
+#                             c.execute(
+#                                 update(chat_summary_channels)
+#                                 .values(
+#                                     messages=a[0] + 1,
+#                                     last_member=str(message.author.id),
+#                                 )
+#                                 .where(
+#                                     (
+#                                         chat_summary_channels.c.gid
+#                                         == str(message.guild.id)
+#                                     )
+#                                     & (
+#                                         chat_summary_channels.c.cid
+#                                         == str(message.channel.id)
+#                                     )
+#                                 )
+#                             )
 
-                    # Increment for user
+#                     # Increment for user
 
-                    if a is None or a[1] != str(message.author.id):
-                        a = c.execute(
-                            select(chat_summary_members.c.messages).where(
-                                (chat_summary_members.c.gid == str(message.guild.id))
-                                & (
-                                    chat_summary_members.c.cid
-                                    == str(message.channel.id)
-                                )
-                                & (chat_summary_members.c.uid == str(message.author.id))
-                            )
-                        ).fetchone()
-                        if a is None:
-                            c.execute(
-                                insert(chat_summary_members).values(
-                                    gid=str(message.guild.id),
-                                    cid=str(message.channel.id),
-                                    uid=str(message.author.id),
-                                    messages=1,
-                                )
-                            )
-                        else:
-                            c.execute(
-                                update(chat_summary_members)
-                                .values(messages=a[0] + 1)
-                                .where(
-                                    (
-                                        chat_summary_members.c.gid
-                                        == str(message.guild.id)
-                                    )
-                                    & (
-                                        chat_summary_members.c.cid
-                                        == str(message.channel.id)
-                                    )
-                                    & (
-                                        chat_summary_members.c.uid
-                                        == str(message.author.id)
-                                    )
-                                )
-                            )
+#                     if a is None or a[1] != str(message.author.id):
+#                         a = c.execute(
+#                             select(chat_summary_members.c.messages).where(
+#                                 (chat_summary_members.c.gid == str(message.guild.id))
+#                                 & (
+#                                     chat_summary_members.c.cid
+#                                     == str(message.channel.id)
+#                                 )
+#                                 & (chat_summary_members.c.uid == str(message.author.id))
+#                             )
+#                         ).fetchone()
+#                         if a is None:
+#                             c.execute(
+#                                 insert(chat_summary_members).values(
+#                                     gid=str(message.guild.id),
+#                                     cid=str(message.channel.id),
+#                                     uid=str(message.author.id),
+#                                     messages=1,
+#                                 )
+#                             )
+#                         else:
+#                             c.execute(
+#                                 update(chat_summary_members)
+#                                 .values(messages=a[0] + 1)
+#                                 .where(
+#                                     (
+#                                         chat_summary_members.c.gid
+#                                         == str(message.guild.id)
+#                                     )
+#                                     & (
+#                                         chat_summary_members.c.cid
+#                                         == str(message.channel.id)
+#                                     )
+#                                     & (
+#                                         chat_summary_members.c.uid
+#                                         == str(message.author.id)
+#                                     )
+#                                 )
+#                             )
 
-                    day_messages += 1
-                if message.created_at.month == today.month:
-                    # Increment for channel
+#                     day_messages += 1
+#                 if message.created_at.month == today.month:
+#                     # Increment for channel
 
-                    a = c.execute(
-                        select(
-                            monthly_chat_summary_channels.c.messages,
-                            monthly_chat_summary_channels.c.last_member,
-                        ).where(
-                            (
-                                monthly_chat_summary_channels.c.gid
-                                == str(message.guild.id)
-                            )
-                            & (
-                                monthly_chat_summary_channels.c.cid
-                                == str(message.channel.id)
-                            )
-                        )
-                    ).fetchone()
-                    if a is None:
-                        c.execute(
-                            insert(monthly_chat_summary_channels).values(
-                                gid=str(message.guild.id),
-                                cid=str(message.channel.id),
-                                messages=1,
-                                last_member=str(message.author.id),
-                            )
-                        )
-                    else:
-                        if a[1] != str(message.author.id):
-                            c.execute(
-                                update(monthly_chat_summary_channels)
-                                .values(
-                                    messages=a[0] + 1,
-                                    last_member=str(message.author.id),
-                                )
-                                .where(
-                                    (
-                                        monthly_chat_summary_channels.c.gid
-                                        == str(message.guild.id)
-                                    )
-                                    & (
-                                        monthly_chat_summary_channels.c.cid
-                                        == str(message.channel.id)
-                                    )
-                                )
-                            )
+#                     a = c.execute(
+#                         select(
+#                             monthly_chat_summary_channels.c.messages,
+#                             monthly_chat_summary_channels.c.last_member,
+#                         ).where(
+#                             (
+#                                 monthly_chat_summary_channels.c.gid
+#                                 == str(message.guild.id)
+#                             )
+#                             & (
+#                                 monthly_chat_summary_channels.c.cid
+#                                 == str(message.channel.id)
+#                             )
+#                         )
+#                     ).fetchone()
+#                     if a is None:
+#                         c.execute(
+#                             insert(monthly_chat_summary_channels).values(
+#                                 gid=str(message.guild.id),
+#                                 cid=str(message.channel.id),
+#                                 messages=1,
+#                                 last_member=str(message.author.id),
+#                             )
+#                         )
+#                     else:
+#                         if a[1] != str(message.author.id):
+#                             c.execute(
+#                                 update(monthly_chat_summary_channels)
+#                                 .values(
+#                                     messages=a[0] + 1,
+#                                     last_member=str(message.author.id),
+#                                 )
+#                                 .where(
+#                                     (
+#                                         monthly_chat_summary_channels.c.gid
+#                                         == str(message.guild.id)
+#                                     )
+#                                     & (
+#                                         monthly_chat_summary_channels.c.cid
+#                                         == str(message.channel.id)
+#                                     )
+#                                 )
+#                             )
 
-                    # Increment for user
+#                     # Increment for user
 
-                    if a is None or a[1] != str(message.author.id):
-                        a = c.execute(
-                            select(monthly_chat_summary_members.c.messages).where(
-                                (
-                                    monthly_chat_summary_members.c.gid
-                                    == str(message.guild.id)
-                                )
-                                & (
-                                    monthly_chat_summary_members.c.cid
-                                    == str(message.channel.id)
-                                )
-                                & (
-                                    monthly_chat_summary_members.c.uid
-                                    == str(message.author.id)
-                                )
-                            )
-                        ).fetchone()
-                        if a is None:
-                            c.execute(
-                                insert(monthly_chat_summary_members).values(
-                                    gid=str(message.guild.id),
-                                    cid=str(message.channel.id),
-                                    uid=str(message.author.id),
-                                    messages=1,
-                                )
-                            )
-                        else:
-                            c.execute(
-                                update(monthly_chat_summary_members)
-                                .values(messages=a[0] + 1)
-                                .where(
-                                    (
-                                        monthly_chat_summary_members.c.gid
-                                        == str(message.guild.id)
-                                    )
-                                    & (
-                                        monthly_chat_summary_members.c.cid
-                                        == str(message.channel.id)
-                                    )
-                                    & (
-                                        monthly_chat_summary_members.c.uid
-                                        == str(message.author.id)
-                                    )
-                                )
-                            )
+#                     if a is None or a[1] != str(message.author.id):
+#                         a = c.execute(
+#                             select(monthly_chat_summary_members.c.messages).where(
+#                                 (
+#                                     monthly_chat_summary_members.c.gid
+#                                     == str(message.guild.id)
+#                                 )
+#                                 & (
+#                                     monthly_chat_summary_members.c.cid
+#                                     == str(message.channel.id)
+#                                 )
+#                                 & (
+#                                     monthly_chat_summary_members.c.uid
+#                                     == str(message.author.id)
+#                                 )
+#                             )
+#                         ).fetchone()
+#                         if a is None:
+#                             c.execute(
+#                                 insert(monthly_chat_summary_members).values(
+#                                     gid=str(message.guild.id),
+#                                     cid=str(message.channel.id),
+#                                     uid=str(message.author.id),
+#                                     messages=1,
+#                                 )
+#                             )
+#                         else:
+#                             c.execute(
+#                                 update(monthly_chat_summary_members)
+#                                 .values(messages=a[0] + 1)
+#                                 .where(
+#                                     (
+#                                         monthly_chat_summary_members.c.gid
+#                                         == str(message.guild.id)
+#                                     )
+#                                     & (
+#                                         monthly_chat_summary_members.c.cid
+#                                         == str(message.channel.id)
+#                                     )
+#                                     & (
+#                                         monthly_chat_summary_members.c.uid
+#                                         == str(message.author.id)
+#                                     )
+#                                 )
+#                             )
 
-                    month_messages += 1
-                if message.created_at.year != today.year:
-                    break
+#                     month_messages += 1
+#                 if message.created_at.year != today.year:
+#                     break
 
-                # Increment for channel
+#                 # Increment for channel
 
-                a = c.execute(
-                    select(
-                        yearly_chat_summary_channels.c.messages,
-                        yearly_chat_summary_channels.c.last_member,
-                    ).where(
-                        (yearly_chat_summary_channels.c.gid == str(message.guild.id))
-                        & (
-                            yearly_chat_summary_channels.c.cid
-                            == str(message.channel.id)
-                        )
-                    )
-                ).fetchone()
-                if a is None:
-                    c.execute(
-                        insert(yearly_chat_summary_channels).values(
-                            gid=str(message.guild.id),
-                            cid=str(message.channel.id),
-                            messages=1,
-                            last_member=str(message.author.id),
-                        )
-                    )
-                else:
-                    if a[1] != str(message.author.id):
-                        c.execute(
-                            update(yearly_chat_summary_channels)
-                            .values(
-                                messages=a[0] + 1, last_member=str(message.author.id)
-                            )
-                            .where(
-                                (
-                                    yearly_chat_summary_channels.c.gid
-                                    == str(message.guild.id)
-                                )
-                                & (
-                                    yearly_chat_summary_channels.c.cid
-                                    == str(message.channel.id)
-                                )
-                            )
-                        )
+#                 a = c.execute(
+#                     select(
+#                         yearly_chat_summary_channels.c.messages,
+#                         yearly_chat_summary_channels.c.last_member,
+#                     ).where(
+#                         (yearly_chat_summary_channels.c.gid == str(message.guild.id))
+#                         & (
+#                             yearly_chat_summary_channels.c.cid
+#                             == str(message.channel.id)
+#                         )
+#                     )
+#                 ).fetchone()
+#                 if a is None:
+#                     c.execute(
+#                         insert(yearly_chat_summary_channels).values(
+#                             gid=str(message.guild.id),
+#                             cid=str(message.channel.id),
+#                             messages=1,
+#                             last_member=str(message.author.id),
+#                         )
+#                     )
+#                 else:
+#                     if a[1] != str(message.author.id):
+#                         c.execute(
+#                             update(yearly_chat_summary_channels)
+#                             .values(
+#                                 messages=a[0] + 1, last_member=str(message.author.id)
+#                             )
+#                             .where(
+#                                 (
+#                                     yearly_chat_summary_channels.c.gid
+#                                     == str(message.guild.id)
+#                                 )
+#                                 & (
+#                                     yearly_chat_summary_channels.c.cid
+#                                     == str(message.channel.id)
+#                                 )
+#                             )
+#                         )
 
-                # Increment for user
+#                 # Increment for user
 
-                if a is None or a[1] != str(message.author.id):
-                    a = c.execute(
-                        select(yearly_chat_summary_members.c.messages).where(
-                            (yearly_chat_summary_members.c.gid == str(message.guild.id))
-                            & (
-                                yearly_chat_summary_members.c.cid
-                                == str(message.channel.id)
-                            )
-                            & (
-                                yearly_chat_summary_members.c.uid
-                                == str(message.author.id)
-                            )
-                        )
-                    ).fetchone()
-                    if a is None:
-                        c.execute(
-                            insert(yearly_chat_summary_members).values(
-                                gid=str(message.guild.id),
-                                cid=str(message.channel.id),
-                                uid=str(message.author.id),
-                                messages=1,
-                            )
-                        )
-                    else:
-                        c.execute(
-                            update(yearly_chat_summary_members)
-                            .values(messages=a[0] + 1)
-                            .where(
-                                (
-                                    yearly_chat_summary_members.c.gid
-                                    == str(message.guild.id)
-                                )
-                                & (
-                                    yearly_chat_summary_members.c.cid
-                                    == str(message.channel.id)
-                                )
-                                & (
-                                    yearly_chat_summary_members.c.uid
-                                    == str(message.author.id)
-                                )
-                            )
-                        )
+#                 if a is None or a[1] != str(message.author.id):
+#                     a = c.execute(
+#                         select(yearly_chat_summary_members.c.messages).where(
+#                             (yearly_chat_summary_members.c.gid == str(message.guild.id))
+#                             & (
+#                                 yearly_chat_summary_members.c.cid
+#                                 == str(message.channel.id)
+#                             )
+#                             & (
+#                                 yearly_chat_summary_members.c.uid
+#                                 == str(message.author.id)
+#                             )
+#                         )
+#                     ).fetchone()
+#                     if a is None:
+#                         c.execute(
+#                             insert(yearly_chat_summary_members).values(
+#                                 gid=str(message.guild.id),
+#                                 cid=str(message.channel.id),
+#                                 uid=str(message.author.id),
+#                                 messages=1,
+#                             )
+#                         )
+#                     else:
+#                         c.execute(
+#                             update(yearly_chat_summary_members)
+#                             .values(messages=a[0] + 1)
+#                             .where(
+#                                 (
+#                                     yearly_chat_summary_members.c.gid
+#                                     == str(message.guild.id)
+#                                 )
+#                                 & (
+#                                     yearly_chat_summary_members.c.cid
+#                                     == str(message.channel.id)
+#                                 )
+#                                 & (
+#                                     yearly_chat_summary_members.c.uid
+#                                     == str(message.author.id)
+#                                 )
+#                             )
+#                         )
 
-                year_messages += 1
+#                 year_messages += 1
 
-                i += 1
-                if i % 500 == 0:
-                    # Update status message
-                    nekona_logger.debug(
-                        "[Chat Summary/Backfill: Processing... %d messages today, %d this month, %d this year",
-                        day_messages, month_messages, year_messages)
+#                 i += 1
+#                 if i % 500 == 0:
+#                     # Update status message
+#                     nekona_logger.debug(
+#                         "[Chat Summary/Backfill: Processing... %d messages today, %d this month, %d this year",
+#                         day_messages, month_messages, year_messages)
 
-            nekona_logger.debug(
-                "[Chat Summary/Backfill: OK: Task finished: %d messages today, %d messages this month, %d this year",
-                day_messages, month_messages, year_messages)
-    except Exception:
-        nekona_logger.exception("Chat Summary Backfill failed:")
-        nekona_logger.debug("[Chat Summary/Backfill: An error occurred")
+#             nekona_logger.debug(
+#                 "[Chat Summary/Backfill: OK: Task finished: %d messages today, %d messages this month, %d this year",
+#                 day_messages, month_messages, year_messages)
+#     except Exception:
+#         nekona_logger.exception("Chat Summary Backfill failed:")
+#         nekona_logger.debug("[Chat Summary/Backfill: An error occurred")

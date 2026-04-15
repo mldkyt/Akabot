@@ -1,14 +1,6 @@
 from datetime import datetime
 
-from discord import (
-    ApplicationContext,
-    Bot,
-    Cog,
-    Message,
-    SlashCommandGroup,
-    TextChannel,
-)
-from discord.ext.tasks import loop
+from fluxer import Bot, Cog, Message
 
 from database import engine
 from logger import nekona_logger
@@ -28,7 +20,6 @@ from utils.server_settings import settings
 
 class ChatSummary(Cog):
     def __init__(self, bot: Bot):
-        super().__init__()
         self.bot = bot
 
     has_init = False
@@ -36,21 +27,22 @@ class ChatSummary(Cog):
     @Cog.listener()
     async def on_ready(self):
         if not self.has_init:
-            self.task_summary.start()
+            # self.task_summary.start()
 
-            try:
-                with engine.begin() as c:
-                    async for i in self.bot.fetch_guilds(limit=None):
-                        for j in chat_summary.get_guild(c, i):
-                            channel = await i.fetch_channel(int(j))
-                            if not isinstance(channel, TextChannel):
-                                continue
+            # TODO: missing channels properties on guilds
+            # try:
+            #     with engine.begin() as c:
+            #         for i in self.bot.guilds:
+            #             for j in chat_summary.get_guild(c, i):
+            #                 channel = await i.fetch_channel(int(j))
+            #                 if not isinstance(channel, TextChannel):
+            #                     continue
 
-                            nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s", channel.name)
-                            await perform_backfill(i, channel)
-                            nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s finished", channel.name)
-            except Exception:
-                nekona_logger.exception("Error when backfilling channels on startup")
+            #                 nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s", channel.name)
+            #                 await perform_backfill(i, channel)
+            #                 nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s finished", channel.name)
+            # except Exception:
+            #     nekona_logger.exception("Error when backfilling channels on startup")
 
             self.has_init = True
 
@@ -72,36 +64,34 @@ class ChatSummary(Cog):
         except Exception as e:
             nekona_logger.exception(e)
 
-    @loop(minutes=1)
-    async def task_summary(self):
-        now = datetime.now()
+    # @loop(minutes=1)
+    # async def task_summary(self):
+    #     now = datetime.now()
 
-        if now.hour != 0 or now.minute != 0:
-            return
+    #     if now.hour != 0 or now.minute != 0:
+    #         return
 
-        for i in self.bot.guilds:
-            try:
-                with engine.begin() as c:
-                    await summarize(c, i)
-            except Exception:
-                nekona_logger.exception("Error during summarizing")
+    #     for i in self.bot.guilds:
+    #         try:
+    #             with engine.begin() as c:
+    #                 await summarize(c, i)
+    #         except Exception:
+    #             nekona_logger.exception("Error during summarizing")
 
-    chat_summary_commands = SlashCommandGroup(name="chat_summary")
+    # @Cog.command()
+    # async def backfill(self, ctx: ApplicationContext):
+    #     """Backfill a Chat Summary channel back to the start of the year"""
+    #     if not isinstance(ctx.channel, TextChannel):
+    #         await ctx.respond(
+    #             "This command is only applicable inside of a text channel",
+    #             ephemeral=True,
+    #         )
+    #         return
 
-    @chat_summary_commands.command()
-    async def backfill(self, ctx: ApplicationContext):
-        """Backfill a Chat Summary channel back to the start of the year"""
-        if not isinstance(ctx.channel, TextChannel):
-            await ctx.respond(
-                "This command is only applicable inside of a text channel",
-                ephemeral=True,
-            )
-            return
-
-        status = await ctx.respond("Backfilling channel...")
-        await perform_backfill(ctx.guild, ctx.channel)
-        await status.message.edit(content="Backfilling complete!")
-        await status.message.delete(delay=5)
+    #     status = await ctx.respond("Backfilling channel...")
+    #     await perform_backfill(ctx.guild, ctx.channel)
+    #     await status.message.edit(content="Backfilling complete!")
+    #     await status.message.delete(delay=5)
 
 
 def setup(bot: Bot):
@@ -126,7 +116,7 @@ def docs():
                 chat_summary_rows,
                 chat_summary_extra,
                 chat_summary_rows_extra,
-                chat_summary_unique
+                chat_summary_unique,
             ],
         )
     )

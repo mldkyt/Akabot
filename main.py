@@ -1,88 +1,37 @@
+import asyncio
 import os
 
-import discord
-from discord.ext import commands as commands_ext
+import fluxer
 from dotenv import load_dotenv
 
 from logger import nekona_logger
 
-if not os.path.exists("logs"):
-    os.mkdir("logs")
-
-
-load_dotenv()
-
 BOT_VERSION = "@VERSION@"
 
-nekona_logger.info(f"Nekona {BOT_VERSION} is starting up")
 
-
-intents = discord.Intents.default()
-intents.members = True
-
-if os.getenv("MESSAGE_INTENT", "0") == "1":
-    intents.message_content = True
-
-bot = discord.Bot(intents=intents)
-
-for filename in os.listdir("cogs"):
-    if filename.endswith(".py"):
-        bot.load_extension(f"cogs.{filename[:-3]}")
-        nekona_logger.info(f"Loading cogs.{filename[:-3]}")
-
-nekona_logger.info("Cogs loaded")
+bot = fluxer.Bot()
 
 
 @bot.event
 async def on_ready():
-    nekona_logger.info(f"Ready as {bot.user.name}#{bot.user.discriminator}")
-
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.playing, name=f"Nekona {BOT_VERSION}"
-        )
-    )
+    nekona_logger.info(f"Ready as {bot.user.username}#{bot.user.discriminator}")
 
 
-@bot.event
-async def on_application_command_error(ctx: discord.ApplicationContext, error):
-    if isinstance(error, commands_ext.CommandOnCooldown):
-        minutes = int(error.retry_after / 60)
-        seconds = int(error.retry_after % 60)
-        if minutes > 0:
-            await ctx.respond(f"**Cooldown!** {minutes} minutes and {seconds} seconds remaining",
-                              ephemeral=True)
-        else:
-            await ctx.respond(f"**Cooldown!** {seconds} seconds remaining", ephemeral=True)
-        return
-
-    if isinstance(error, commands_ext.MissingPermissions):
-        await ctx.respond(
-            f"You do not have permission to use this command. Missing {', '.join(error.missing_permissions)}",
-            ephemeral=True)
-        return
-
-    if isinstance(error, commands_ext.NoPrivateMessage):
-        await ctx.respond("This command cannot be used in DMs", ephemeral=True)
-        return
-
-    if isinstance(error, commands_ext.BotMissingPermissions):
-        await ctx.respond(
-            f"The bot has missing permissions! Missing permissions: {', '.join(error.missing_permissions)}",
-            ephemeral=True)
-        return
-
-    if isinstance(error, commands_ext.PrivateMessageOnly):
-        await ctx.respond("This command can only be used in DMs.", ephemeral=True)
-        return
-
-    nekona_logger.exception("An error occurred:")
-    try:
-        # respond
-        await ctx.respond("An error occured", ephemeral=True)
-    except Exception as e:
-        nekona_logger.error("Failed to respond to message")
-    raise error
+async def load_extensions():
+    for filename in os.listdir("cogs"):
+        if filename.endswith(".py"):
+            nekona_logger.info(f"Loading cogs.{filename[:-3]}")
+            await bot.load_extension(f"cogs.{filename[:-3]}")
+    nekona_logger.info("Cogs loaded")
 
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+if __name__ == "__main__":
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
+
+    load_dotenv()
+
+    nekona_logger.info(f"Nekona {BOT_VERSION}-fluxer is starting up")
+
+    asyncio.run(load_extensions())
+    bot.run(os.getenv("FLUXER_TOKEN"))

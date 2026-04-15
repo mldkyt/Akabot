@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from discord import Bot, Guild, Member, Message, PartialMessageable, DMChannel, ForumChannel, CategoryChannel
+from fluxer import Bot, Guild, GuildMember, Message
 from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks, engine
@@ -9,15 +9,15 @@ from utils.bot_channel import setting_bot_channel
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_to_number,
+    setting_choice,
     setting_simple_string,
-    setting_choice
+    setting_to_number,
 )
 from utils.user_settings import UserSetting
 
 
 def server_message_delay_processor(
-    c: Connection, m: Member, v: str
+    c: Connection, m: GuildMember, v: str
 ) -> tuple[bool, str]:
     ok, err = setting_to_number(c, m, v)
     if not ok:
@@ -59,7 +59,7 @@ server_message_delay = ServerSetting(
 )
 
 
-def update_for_user(c: Connection, u: Member):
+def update_for_user(c: Connection, u: GuildMember):
     """Update chat streaks for a member"""
 
     now = date.today()
@@ -68,15 +68,16 @@ def update_for_user(c: Connection, u: Member):
     # Check if we have an existant chat streak
     a = c.execute(
         select(chat_streaks.c.start_date, chat_streaks.c.last_message_date).where(
-            (chat_streaks.c.uid == str(u.id)) & (chat_streaks.c.gid == str(u.guild.id))
+            (chat_streaks.c.uid == str(u.user.id))
+            & (chat_streaks.c.gid == str(u.guild_id))
         )
     ).fetchone()
 
     if a is None:
         c.execute(
             insert(chat_streaks).values(
-                gid=str(u.guild.id),
-                uid=str(u.id),
+                gid=str(u.guild_id),
+                uid=str(u.user.id),
                 start_date=yesterday,
                 last_message_date=now,
             )
@@ -91,8 +92,8 @@ def update_for_user(c: Connection, u: Member):
             c.execute(
                 update(chat_streaks)
                 .where(
-                    (chat_streaks.c.uid == str(u.id))
-                    & (chat_streaks.c.gid == str(u.guild.id))
+                    (chat_streaks.c.uid == str(u.user.id))
+                    & (chat_streaks.c.gid == str(u.guild_id))
                 )
                 .values(start_date=yesterday, last_message_date=now)
             )
@@ -101,21 +102,22 @@ def update_for_user(c: Connection, u: Member):
             c.execute(
                 update(chat_streaks)
                 .where(
-                    (chat_streaks.c.uid == str(u.id))
-                    & (chat_streaks.c.gid == str(u.guild.id))
+                    (chat_streaks.c.uid == str(u.user.id))
+                    & (chat_streaks.c.gid == str(u.guild_id))
                 )
                 .values(last_message_date=now)
             )
 
 
-def get_streak(c: Connection, u: Member):
+def get_streak(c: Connection, u: GuildMember):
     """Get streak"""
 
     now = date.today()
 
     a = c.execute(
         select(chat_streaks.c.start_date, chat_streaks.c.last_message_date).where(
-            (chat_streaks.c.uid == str(u.id)) & (chat_streaks.c.gid == str(u.guild.id))
+            (chat_streaks.c.uid == str(u.user.id))
+            & (chat_streaks.c.gid == str(u.guild_id))
         )
     ).fetchone()
 
@@ -131,11 +133,12 @@ def get_streak(c: Connection, u: Member):
     return (last_message_date - start_date).days
 
 
-def get_unexpired_streak(c: Connection, u: Member):
+def get_unexpired_streak(c: Connection, u: GuildMember):
     """Get streak"""
     a = c.execute(
         select(chat_streaks.c.start_date, chat_streaks.c.last_message_date).where(
-            (chat_streaks.c.uid == str(u.id)) & (chat_streaks.c.gid == str(u.guild.id))
+            (chat_streaks.c.uid == str(u.user.id))
+            & (chat_streaks.c.gid == str(u.guild_id))
         )
     ).fetchone()
 
@@ -148,7 +151,7 @@ def get_unexpired_streak(c: Connection, u: Member):
     return (last_message_date - start_date).days
 
 
-def get_leaderboard(c: Connection, u: Member):
+def get_leaderboard(c: Connection, u: GuildMember):
     """Leaderboard"""
 
     a = c.execute(
@@ -157,21 +160,21 @@ def get_leaderboard(c: Connection, u: Member):
             chat_streaks.c.start_date,
             chat_streaks.c.last_message_date,
         )
-        .where(chat_streaks.c.gid == str(u.guild.id))
+        .where(chat_streaks.c.gid == str(u.guild_id))
         .order_by(desc(chat_streaks.c.last_message_date - chat_streaks.c.start_date))
     ).fetchall()
 
     return a
 
 
-def get_all_streaks_for(c: Connection, b: Bot, m: Member):
+def get_all_streaks_for(c: Connection, b: Bot, m: GuildMember):
     a = c.execute(
         select(
             chat_streaks.c.gid,
             chat_streaks.c.start_date,
             chat_streaks.c.last_message_date,
         )
-        .where((chat_streaks.c.gid == str(m.guild.id)))
+        .where((chat_streaks.c.gid == str(m.guild_id)))
         .order_by(desc(chat_streaks.c.last_message_date - chat_streaks.c.start_date))
     ).fetchall()
 
@@ -179,10 +182,11 @@ def get_all_streaks_for(c: Connection, b: Bot, m: Member):
 
 
 def get_guild_link(g: Guild):
-    for i in g.text_channels:
-        p = i.permissions_for(g.default_role)
-        if p.view_channel and p.read_messages:
-            return i
+    # TODO
+    # for i in g.:
+    #     p = i.permissions_for(g.default_role)
+    #     if p.view_channel and p.read_messages:
+    #         return i
 
     return None
 
@@ -191,33 +195,37 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
     """Handle send reply. Posts inside of bot channel or into the same channel. Returns true if posted into the same channel."""
     try:
         assert msg.guild is not None
-        assert not isinstance(msg.channel, PartialMessageable) and not isinstance(msg.channel, DMChannel)
 
         with engine.begin() as c:
-            bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
+            # bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
             setting_response = server_response_setting.get_guild(c, msg.guild)
 
         if setting_response == "off":
             return None, False
 
-        bot_channel = msg.guild.get_channel(int(bot_channel_id))
+        await msg.reply(content)
 
-        if msg.channel.permissions_for(msg.guild.me).read_message_history:
-            if len(bot_channel_id.strip()) == 0:
-                if setting_response == "on":
-                    return await msg.reply(content), True
-                else:
-                    return None, False
+        # TODO: fix this because the bot library is
+        # bot_channel = msg.guild.get_channel(int(bot_channel_id))
 
-            if bot_channel is None:
-                if setting_response == "on":
-                    return await msg.reply(content), True
-                else:
-                    return None, False
+        # if msg.channel.permissions_for(msg.guild.me).read_message_history:
+        #     if len(bot_channel_id.strip()) == 0:
+        #         if setting_response == "on":
+        #             return await msg.reply(content), True
+        #         else:
+        #             return None, False
 
-        assert not isinstance(bot_channel, ForumChannel) and not isinstance(bot_channel, CategoryChannel)
-        assert bot_channel is not None
-        return await bot_channel.send(f"{msg.author.mention} {content}"), False
+        #     if bot_channel is None:
+        #         if setting_response == "on":
+        #             return await msg.reply(content), True
+        #         else:
+        #             return None, False
+
+        # assert not isinstance(bot_channel, ForumChannel) and not isinstance(
+        #     bot_channel, CategoryChannel
+        # )
+        # assert bot_channel is not None
+        # return await bot_channel.send(f"{msg.author.mention} {content}"), False
     except Exception as e:
         nekona_logger.exception("handle_send_reply exception")
         return None, False
