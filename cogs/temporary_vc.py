@@ -3,6 +3,7 @@ from sqlalchemy import select
 
 from database import engine, temporary_vcs
 from utils.docs import Docs
+from utils.message_appends import apply_appends
 from utils.server_settings import settings
 from utils.temporary_vc import handle_voice_update, setting_temporary_vcs
 
@@ -52,7 +53,7 @@ class TemporaryVC(Cog):
         else:
             await ctx.user.voice.channel.edit(overwrites={})
 
-        await ctx.respond("Updated private VC state successfully", ephemeral=True)
+        await ctx.respond(apply_appends(ctx.user.id, "Updated private VC state successfully"), ephemeral=True)
 
     @temporary_vc_commands.command()
     async def add_private(self, ctx: ApplicationContext, member: Member):
@@ -78,7 +79,8 @@ class TemporaryVC(Cog):
         await ctx.user.voice.channel.set_permissions(member,
                                                      overwrite=PermissionOverwrite(view_channel=True, connect=True,
                                                                                    speak=True, send_messages=True))
-        await ctx.respond(f"Added member {member.mention} to temporary VC successfully", ephemeral=True)
+        await ctx.respond(apply_appends(ctx.user.id, f"Added member {member.mention} to temporary VC successfully"),
+                          ephemeral=True)
 
     @temporary_vc_commands.command()
     async def remove_private(self, ctx: ApplicationContext, member: Member):
@@ -109,7 +111,8 @@ class TemporaryVC(Cog):
             await member.move_to(None)
 
         await ctx.user.voice.channel.set_permissions(member, overwrite=None)
-        await ctx.respond(f"Removed {member.mention} from temporary VC successfully", ephemeral=True)
+        await ctx.respond(apply_appends(ctx.user.id, f"Removed {member.mention} from temporary VC successfully"),
+                          ephemeral=True)
 
 def setup(bot: Bot):
     bot.add_cog(TemporaryVC(bot))

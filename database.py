@@ -2,7 +2,7 @@ import json
 import os.path
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, VARCHAR, UniqueConstraint, DATE, \
-    StaticPool, DateTime
+    StaticPool, DateTime, ForeignKey
 
 if not os.path.exists("data"):
     os.mkdir("data")
@@ -186,4 +186,30 @@ vc_notifications_channel = Table(
     Column("uid", VARCHAR, primary_key=True),
     Column("gid", VARCHAR, primary_key=True),
     Column("tid", VARCHAR, primary_key=True),
+)
+
+mail = Table(
+    "mail",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("text", VARCHAR, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("author", VARCHAR, nullable=False)
+)
+
+mail_read = Table(
+    "mail_read",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("mail_id", Integer, ForeignKey("mail.id"), index=True),
+    Column("user_id", VARCHAR, nullable=False),
+    Column("read_at", DateTime(timezone=True), nullable=False),
+)
+
+user = Table(
+    "user",
+    md_obj,
+    Column("id", VARCHAR, primary_key=True),
+    Column("firstseen", DateTime(timezone=True), nullable=False),
 )

@@ -23,6 +23,7 @@ from utils.chat_streaks import (
     handle_send_reply, user_response_setting, server_response_setting
 )
 from utils.docs import Docs, DocsCommand
+from utils.message_appends import apply_appends
 from utils.server_settings import settings
 from utils.user_settings import user_settings
 
@@ -54,7 +55,8 @@ class ChatStreaks(Cog):
 
                     if user_response_setting.get(c, msg.author) in ["expiry", "on"]:
                         the_reply, reply_in_same_channel = await handle_send_reply(
-                            msg, f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
+                            msg, apply_appends(msg.author.id,
+                                               f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.")
                         )
                         if the_reply is not None and reply_in_same_channel:
                             await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
@@ -63,7 +65,8 @@ class ChatStreaks(Cog):
                     if user_response_setting.get(c, msg.author) == "on":
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
-                            f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`."
+                            apply_appends(msg.author.id,
+                                          f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
                         )
                         if the_reply is not None and reply_in_same_channel:
                             await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
@@ -77,7 +80,7 @@ class ChatStreaks(Cog):
                 streak = get_streak(c, ctx.user)
 
                 await ctx.respond(
-                    f"Your current streak is {streak} days.", ephemeral=True
+                    apply_appends(ctx.user.id, f"Your current streak is {streak} days."), ephemeral=True
                 )
         except Exception as e:
             nekona_logger.exception(e)
