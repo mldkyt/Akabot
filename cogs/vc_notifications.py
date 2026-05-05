@@ -3,6 +3,7 @@ from sqlalchemy import select, delete, insert
 
 from database import engine, vc_notifications_all, vc_notifications_user, vc_notifications_channel
 from logger import nekona_logger
+from utils.message_appends import apply_appends
 
 
 class VCNotifications(Cog):
@@ -27,7 +28,7 @@ class VCNotifications(Cog):
                     .values(uid=str(ctx.user.id), gid=str(ctx.guild.id))
                 )
 
-                await ctx.respond("Subscribed to all notifications", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "Subscribed to all notifications"), ephemeral=True)
                 return
 
             if not subscribed and current_subscribed:
@@ -37,13 +38,15 @@ class VCNotifications(Cog):
                                 vc_notifications_all.c.gid == str(ctx.guild.id)))
                 )
 
-                await ctx.respond("Unsubscribed from all notifications", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "Unsubscribed from all notifications"), ephemeral=True)
                 return
 
             if subscribed and current_subscribed:
-                await ctx.respond("You are already subscribed to all notifications", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "You are already subscribed to all notifications"),
+                                  ephemeral=True)
             else:
-                await ctx.respond("You aren't subscribed to any notifications", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "You aren't subscribed to any notifications"),
+                                  ephemeral=True)
 
     @command_grp.command(name="sub_user", description="Subscribe to notifications from a specific user")
     async def sub_user(self, ctx: ApplicationContext, user: User):

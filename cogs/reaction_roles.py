@@ -4,6 +4,7 @@ from discord.ext import commands as commands_ext
 from discord.ui import Button, View, ActionRow
 
 from logger import nekona_logger
+from utils.message_appends import apply_appends
 
 
 def get_roles(msg: Message):
@@ -169,43 +170,51 @@ class ReactionRoles(Cog):
 
             if split[0] == "rrn":
                 if role in interaction.user.roles:
-                    await interaction.response.send_message(f"Role {role.mention} has been removed from you!",
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, f"Role {role.mention} has been removed from you!"),
                                                             ephemeral=True)
                     await interaction.user.remove_roles(role, reason="Reaction role")
                     return
                 if role not in interaction.user.roles:
-                    await interaction.response.send_message(f"Role {role.mention} has been added to you!",
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, f"Role {role.mention} has been added to you!"),
                                                             ephemeral=True)
                     await interaction.user.add_roles(role, reason="Reaction role")
                     return
 
             if split[0] == "rra":
                 if role in interaction.user.roles:
-                    await interaction.response.send_message("You already have this role!", ephemeral=True)
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, "You already have this role!"), ephemeral=True)
                     return
                 if role not in interaction.user.roles:
-                    await interaction.response.send_message(f"Role {role.mention} has been added to you!",
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, f"Role {role.mention} has been added to you!"),
                                                             ephemeral=True)
                     await interaction.user.add_roles(role, reason="Reaction role")
                     return
 
             if split[0] == "rrr":
                 if role not in interaction.user.roles:
-                    await interaction.response.send_message("You already don't have this role!", ephemeral=True)
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, "You already don't have this role!"), ephemeral=True)
                     return
                 if role in interaction.user.roles:
-                    await interaction.response.send_message(f"Role {role.mention} has been removed from you!",
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, f"Role {role.mention} has been removed from you!"),
                                                             ephemeral=True)
                     await interaction.user.remove_roles(role, reason="Reaction role")
                     return
 
             if split[0] == "rrs":
                 if role in interaction.user.roles:
-                    await interaction.response.send_message(f"You already have selected {role.mention}", ephemeral=True)
+                    await interaction.response.send_message(
+                        apply_appends(interaction.user.id, f"You already have selected {role.mention}"), ephemeral=True)
                     return
 
                 roles = get_roles(interaction.message)
-                await interaction.response.send_message(f"Role {role.mention} was selected out of a choice.",
+                await interaction.response.send_message(
+                    apply_appends(interaction.user.id, f"Role {role.mention} was selected out of a choice."),
                                                         ephemeral=True)
                 await interaction.user.remove_roles(*roles, reason="Reaction role")
                 await interaction.user.add_roles(role, reason="Reaction role")

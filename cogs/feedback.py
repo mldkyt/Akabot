@@ -5,6 +5,7 @@ from discord import InputTextStyle, Interaction, Cog, SlashCommandGroup, Applica
 from discord.ui import Modal, InputText
 
 from logger import nekona_logger
+from utils.message_appends import apply_appends
 
 
 class BugReportModal(Modal):
@@ -47,7 +48,7 @@ class BugReportModal(Modal):
                                     }) as r:
                 if r.ok:
                     await interaction.response.send_message(
-                        "The bug report was submitted successfully",
+                        apply_appends(interaction.user.id, "The bug report was submitted successfully"),
                         ephemeral=True)
                 else:
                     await interaction.response.send_message(f"Failed to submit bug report: {await r.text()}",
@@ -101,7 +102,7 @@ class FeatureModal(Modal):
                                     }) as r:
                 if r.ok:
                     await interaction.response.send_message(
-                        "Feature was submitted successfully",
+                        apply_appends(interaction.user.id, "Feature was submitted successfully"),
                         ephemeral=True)
                 else:
                     await interaction.response.send_message(f"Failed to submit feature request: {await r.text()}",

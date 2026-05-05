@@ -17,6 +17,7 @@ from utils.leveling import (
     setting_xp_per_message,
     xp_to_next_level, setting_level_up_message_text,
 )
+from utils.message_appends import apply_appends
 from utils.server_settings import settings
 
 
@@ -56,7 +57,7 @@ class Leveling(discord.Cog):
                         level_up_message = level_up_message.replace("{name}", message.author.display_name)
                         level_up_message = level_up_message.replace("{username}", message.author.name)
 
-                        level_up_message = await message.reply(level_up_message)
+                        level_up_message = await message.reply(apply_appends(message.author.id, level_up_message))
                         await level_up_message.delete(delay=5)
         except Exception as e:
             nekona_logger.exception(e)
@@ -72,8 +73,9 @@ class Leveling(discord.Cog):
                 xp_per_level = int(setting_xp_per_level.get(c, ctx.user))
 
                 await ctx.respond(
-                    f"You're on level {level}. {to_next_level}/{xp_per_level} ({(to_next_level / xp_per_level) * 100:.2f}%) XP for next level\n"
-                    f"The current multiplier is {get_multiplier(c, ctx.user)}x.",
+                    apply_appends(ctx.user.id,
+                                  f"You're on level {level}. {to_next_level}/{xp_per_level} ({(to_next_level / xp_per_level) * 100:.2f}%) XP for next level\n"
+                                  f"The current multiplier is {get_multiplier(c, ctx.user)}x."),
                     ephemeral=True,
                 )
         except Exception as e:
