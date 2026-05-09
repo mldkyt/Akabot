@@ -213,3 +213,13 @@ user = Table(
     Column("id", VARCHAR, primary_key=True),
     Column("firstseen", DateTime(timezone=True), nullable=False),
 )
+
+consent = Table(
+    "consent",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("uid1", VARCHAR, nullable=False),
+    Column("uid2", VARCHAR, nullable=False),
+    Column("consentlevel", Integer, nullable=False),
+    UniqueConstraint("uid1", "uid2")
+)

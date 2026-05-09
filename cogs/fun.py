@@ -1,6 +1,10 @@
-from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCommandGroup, Member
+from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCommandGroup, Member, Color, User, \
+    IntegrationType
 
-from utils.fun import yaoi_cache, yuri_cache, nb_embed
+from database import engine
+from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
+    setting_allow_rp_commands
+from utils.server_settings import settings
 
 
 class Fun(Cog):
@@ -37,10 +41,16 @@ class Fun(Cog):
 
         await ctx.respond(embed=embed, ephemeral=True)
 
-    rp_group = SlashCommandGroup(name="rp")
+    rp_group = SlashCommandGroup(name="rp",
+                                 integration_types=[IntegrationType.user_install, IntegrationType.guild_install])
 
     @rp_group.command()
     async def lurk(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         lurk = await nb_embed(ctx, "lurk")
         if lurk is None:
             return
@@ -49,6 +59,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def shrug(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         shrug = await nb_embed(ctx, "shrug")
         if shrug is None:
             return
@@ -57,6 +72,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def wave(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         wave = await nb_embed(ctx, "wave")
         if wave is None:
             return
@@ -65,6 +85,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def poke(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot poke yourself!", ephemeral=True)
             return
@@ -77,6 +105,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def smile(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         smile = await nb_embed(ctx, "smile")
         if smile is None:
             return
@@ -85,6 +118,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def wink(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         wink = await nb_embed(ctx, "wink")
         if wink is None:
             return
@@ -93,6 +131,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def blush(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         blush = await nb_embed(ctx, "blush")
         if blush is None:
             return
@@ -101,6 +144,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def smug(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         smug = await nb_embed(ctx, "smug")
         if smug is None:
             return
@@ -109,6 +157,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def tickle(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot tickle yourself!", ephemeral=True)
             return
@@ -121,6 +177,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def yeet(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 1):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot yeet yourself!", ephemeral=True)
             return
@@ -133,6 +197,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def highfive(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 1):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot give a highfive to yourself!", ephemeral=True)
             return
@@ -145,6 +217,11 @@ class Fun(Cog):
 
     @rp_group.command()
     async def wag(self, ctx: ApplicationContext):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
         wag = await nb_embed(ctx, "wag")
         if wag is None:
             return
@@ -153,6 +230,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def bite(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 3):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot bite yourself!", ephemeral=True)
             return
@@ -165,6 +250,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def cuddle(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot cuddle yourself!", ephemeral=True)
             return
@@ -177,6 +270,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def kick(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 1):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot kick yourself!", ephemeral=True)
             return
@@ -189,6 +290,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def carry(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 1):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot carry yourself!", ephemeral=True)
             return
@@ -201,6 +310,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def hug(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot hug yourself!", ephemeral=True)
             return
@@ -213,6 +330,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def bonk(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 1):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot bonk yourself!", ephemeral=True)
             return
@@ -225,6 +350,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def pat(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server")
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot pat yourself unfortunately :(", ephemeral=True)
             return
@@ -237,6 +370,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def kiss(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 3):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot kiss yourself", ephemeral=True)
             return
@@ -249,6 +390,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def slap(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot slap yourself", ephemeral=True)
             return
@@ -261,6 +410,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def lappillow(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 2):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot lie on your lap :(", ephemeral=True)
             return
@@ -273,6 +430,14 @@ class Fun(Cog):
 
     @rp_group.command()
     async def handhold(self, ctx: ApplicationContext, target: Member):
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if not await ensure_consent(ctx, target, 3):
+            return
+
         if target == ctx.user:
             await ctx.respond("You cannot handhold yourself", ephemeral=True)
             return
@@ -283,8 +448,58 @@ class Fun(Cog):
 
         await ctx.respond(embed=handhold)
 
+    @rp_group.command()
+    async def consent(self, ctx: ApplicationContext, target: User):
+        """Ask for consent with another member"""
+        with engine.begin() as c:
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                return
+
+        if ctx.user.id == target.id:
+            await ctx.respond(
+                "Unfortunately you cannot consent to yourself (the commands don't work on yourself either.)",
+                ephemeral=True)
+            return
+
+        await ctx.respond(f"{target.mention}", embed=Embed(
+            title="Consent",
+            description=f"{ctx.user.mention} has asked you to consent to using RP commands from this bot.\n"
+                        f"\n"
+                        f"You can choose the level of consent according to the levels below:\n"
+                        f"**Level 1** - Consent to only fun commands (yeet, highfive, kick, carry, bonk)\n"
+                        f"**Level 2** - Consent to commands with more interaction (pat, poke, tickle, cuddle, hug, pat, slap, lappillow)\n"
+                        f"**Level 3** - Consent to personal commands (kiss, bite, handhold)",
+            color=Color.green()
+        ), view=ConsentView(ctx.user, target))
+
+    @rp_group.command()
+    async def check_consent(self, ctx: ApplicationContext, target: User):
+        """Check if you have consented with somebody"""
+        if ctx.user.id == target.id:
+            await ctx.respond(
+                "Unfortunately you cannot consent to yourself (the commands don't work on yourself either.)",
+                ephemeral=True)
+            return
+
+        CONSENT_LEVELS = [
+            "nothing",
+            "yeet, highfive, kick, carry, bonk",
+            "pat, poke, tickle, cuddle, hug, pat, slap, lappillow",
+            "kiss, bite, handhold"
+        ]
+
+        consent_level = await get_consent(ctx.user, target)
+
+        await ctx.respond(f"You and {target} are on consent level {consent_level}: {CONSENT_LEVELS[consent_level]}",
+                          ephemeral=True)
+
 
 # to implement: consent!!!
 
 def setup(bot):
     bot.add_cog(Fun(bot))
+
+    settings.add_settings(
+        setting_allow_rp_commands
+    )
