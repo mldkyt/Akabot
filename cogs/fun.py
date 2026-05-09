@@ -1,6 +1,6 @@
-from discord import Cog, Bot, slash_command, ApplicationContext, Embed
+from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCommandGroup, Member
 
-from utils.fun import yaoi_cache, yuri_cache
+from utils.fun import yaoi_cache, yuri_cache, nb_embed
 
 
 class Fun(Cog):
@@ -37,6 +37,254 @@ class Fun(Cog):
 
         await ctx.respond(embed=embed, ephemeral=True)
 
+    rp_group = SlashCommandGroup(name="rp")
+
+    @rp_group.command()
+    async def lurk(self, ctx: ApplicationContext):
+        lurk = await nb_embed(ctx, "lurk")
+        if lurk is None:
+            return
+
+        await ctx.respond(embed=lurk)
+
+    @rp_group.command()
+    async def shrug(self, ctx: ApplicationContext):
+        shrug = await nb_embed(ctx, "shrug")
+        if shrug is None:
+            return
+
+        await ctx.respond(embed=shrug)
+
+    @rp_group.command()
+    async def wave(self, ctx: ApplicationContext):
+        wave = await nb_embed(ctx, "wave")
+        if wave is None:
+            return
+
+        await ctx.respond(embed=wave)
+
+    @rp_group.command()
+    async def poke(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot poke yourself!", ephemeral=True)
+            return
+
+        poke = await nb_embed(ctx, "poke", target=target)
+        if poke is None:
+            return
+
+        await ctx.respond(embed=poke)
+
+    @rp_group.command()
+    async def smile(self, ctx: ApplicationContext):
+        smile = await nb_embed(ctx, "smile")
+        if smile is None:
+            return
+
+        await ctx.respond(embed=smile)
+
+    @rp_group.command()
+    async def wink(self, ctx: ApplicationContext):
+        wink = await nb_embed(ctx, "wink")
+        if wink is None:
+            return
+
+        await ctx.respond(embed=wink)
+
+    @rp_group.command()
+    async def blush(self, ctx: ApplicationContext):
+        blush = await nb_embed(ctx, "blush")
+        if blush is None:
+            return
+
+        await ctx.respond(embed=blush)
+
+    @rp_group.command()
+    async def smug(self, ctx: ApplicationContext):
+        smug = await nb_embed(ctx, "smug")
+        if smug is None:
+            return
+
+        await ctx.respond(embed=smug)
+
+    @rp_group.command()
+    async def tickle(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot tickle yourself!", ephemeral=True)
+            return
+
+        tickle = await nb_embed(ctx, "tickle", target=target)
+        if tickle is None:
+            return
+
+        await ctx.respond(embed=tickle)
+
+    @rp_group.command()
+    async def yeet(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot yeet yourself!", ephemeral=True)
+            return
+
+        yeet = await nb_embed(ctx, "yeet", target=target)
+        if yeet is None:
+            return
+
+        await ctx.respond(embed=yeet)
+
+    @rp_group.command()
+    async def highfive(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot give a highfive to yourself!", ephemeral=True)
+            return
+
+        highfive = await nb_embed(ctx, "highfive", target=target)
+        if highfive is None:
+            return
+
+        await ctx.respond(embed=highfive)
+
+    @rp_group.command()
+    async def wag(self, ctx: ApplicationContext):
+        wag = await nb_embed(ctx, "wag")
+        if wag is None:
+            return
+
+        await ctx.respond(embed=wag)
+
+    @rp_group.command()
+    async def bite(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot bite yourself!", ephemeral=True)
+            return
+
+        bite = await nb_embed(ctx, "bite", target=target)
+        if bite is None:
+            return
+
+        await ctx.respond(embed=bite)
+
+    @rp_group.command()
+    async def cuddle(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot cuddle yourself!", ephemeral=True)
+            return
+
+        cuddle = await nb_embed(ctx, "cuddle", target=target)
+        if cuddle is None:
+            return
+
+        await ctx.respond(embed=cuddle)
+
+    @rp_group.command()
+    async def kick(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot kick yourself!", ephemeral=True)
+            return
+
+        kick = await nb_embed(ctx, "kick", target=target)
+        if kick is None:
+            return
+
+        await ctx.respond(embed=kick)
+
+    @rp_group.command()
+    async def carry(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot carry yourself!", ephemeral=True)
+            return
+
+        carry = await nb_embed(ctx, "carry", target=target)
+        if carry is None:
+            return
+
+        await ctx.respond(embed=carry)
+
+    @rp_group.command()
+    async def hug(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot hug yourself!", ephemeral=True)
+            return
+
+        hug = await nb_embed(ctx, "hug", target=target)
+        if hug is None:
+            return
+
+        await ctx.respond(embed=hug)
+
+    @rp_group.command()
+    async def bonk(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot bonk yourself!", ephemeral=True)
+            return
+
+        bonk = await nb_embed(ctx, "bonk", target=target)
+        if bonk is None:
+            return
+
+        await ctx.respond(embed=bonk)
+
+    @rp_group.command()
+    async def pat(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot pat yourself unfortunately :(", ephemeral=True)
+            return
+
+        pat = await nb_embed(ctx, "pat", target=target)
+        if pat is None:
+            return
+
+        await ctx.respond(embed=pat)
+
+    @rp_group.command()
+    async def kiss(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot kiss yourself", ephemeral=True)
+            return
+
+        kiss = await nb_embed(ctx, "kiss", target=target)
+        if kiss is None:
+            return
+
+        await ctx.respond(embed=kiss)
+
+    @rp_group.command()
+    async def slap(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot slap yourself", ephemeral=True)
+            return
+
+        slap = await nb_embed(ctx, "slap", target=target)
+        if slap is None:
+            return
+
+        await ctx.respond(embed=slap)
+
+    @rp_group.command()
+    async def lappillow(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot lie on your lap :(", ephemeral=True)
+            return
+
+        lappillow = await nb_embed(ctx, "lappillow", target=target)
+        if lappillow is None:
+            return
+
+        await ctx.respond(embed=lappillow)
+
+    @rp_group.command()
+    async def handhold(self, ctx: ApplicationContext, target: Member):
+        if target == ctx.user:
+            await ctx.respond("You cannot handhold yourself", ephemeral=True)
+            return
+
+        handhold = await nb_embed(ctx, "handhold", target=target)
+        if handhold is None:
+            return
+
+        await ctx.respond(embed=handhold)
+
+
+# to implement: consent!!!
 
 def setup(bot):
     bot.add_cog(Fun(bot))
