@@ -2,6 +2,7 @@ import os
 import random
 
 from aiohttp import ClientSession
+from discord import Embed, ApplicationContext, Color, EmbedAuthor, EmbedFooter, Member
 
 from logger import nekona_logger
 
@@ -96,6 +97,82 @@ class YuriCache:
 
         return random_post
 
+
+async def nb_api(category: str) -> dict | None:
+    """Nekos.best API call"""
+    async with ClientSession() as session:
+        async with session.get(f"https://nekos.best/api/v2/{category}") as req:
+            if not req.ok:
+                return None
+
+            req_json = await req.json()
+            return req_json["results"][0]
+
+
+NB_TITLES = {
+    "lurk": "$user is lurking...",
+    "sleep": "$user is sleepy...",
+    "clap": "$user is clapping...",
+    "shrug": "$user doesn't know...",
+    "stare": "$user is staring...",
+    "wave": "$user is waving...",
+    "poke": "$user poked $target :3",
+    "smile": "$user smiled...",
+    "wink": "$user winked...",
+    "sip": "$user sipped...",
+    "blush": "$user blushed...",
+    "smug": "$user smugged...",
+    "tickle": "$user tickles $target!",
+    "yeet": "$user yeeted $target!",
+    "highfive": "$user gave a high five to $target!",
+    "wag": "$user wags their tail :3",
+    "bite": "$user bit $target!",
+    "cuddle": "$user cuddles $target :3",
+    "kick": "$user kicked $target",
+    "carry": "$user carries $target",
+    "hug": "$user hugged $target",
+    "bonk": "$user bonked $target",
+    "pat": "$user patted $target",
+    "kiss": "$user kissed $target",
+    "slap": "$target got slapped by $user",
+    "lappillow": "$target is now $user's pillow :3",
+    "handhold": "$user is handholding with $target"
+}
+
+
+async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None = None) -> Embed | None:
+    nb = await nb_api(category)
+    if nb is None:
+        await ctx.respond(f"An error occured fetching {category} gif. Sorry", ephemeral=True)
+        return None
+
+    author = None
+    if "artist_name" in nb and "artist_href" in nb:
+        author = EmbedAuthor(name=nb["artist_name"], url=nb["artist_href"])
+
+    footer = EmbedFooter(text="Powered by Nekona")
+    if "source_url" in nb:
+        footer = EmbedFooter(text=f"Powered by Nekona | [Source]({nb['source_url']})")
+
+    if category in NB_TITLES:
+        title = NB_TITLES[category]
+
+        if target is not None:
+            title = title.replace("$target", target.display_name)
+
+        title = title.replace("$user", ctx.user.display_name)
+    else:
+        title = f"{ctx.user.display_name} is {category}ing..."
+
+    embed = Embed(
+        title=title,
+        image=nb["url"],
+        author=author,
+        footer=footer,
+        color=Color.nitro_pink()
+    )
+
+    return embed
 
 yaoi_cache = YaoiCache()
 yuri_cache = YuriCache()
