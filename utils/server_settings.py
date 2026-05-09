@@ -129,7 +129,7 @@ class ServerSetting:
         else:
             raise ValueError(f"Variable type {self.setting_type} is invalid")
 
-    def get_guild(self, c: Connection, g: Guild) -> str | list[str]:
+    def get_guild(self, c: Connection, g: Guild) -> str | None | list[str]:
         if self.setting_type == SettingType.NORMAL:
             setting = c.execute(
                 select(server_settings.c.value).where(
@@ -466,10 +466,10 @@ def setting_simple_list_string_item(fmt: str, sep: str, empty: str, item_fmt: st
     def formatter(c: Connection, m: Member, v: list[str]) -> str:
         if len(v) == 0:
             return fmt.replace("%s", empty)
-        
+
         items = [item_fmt.replace("%s", i) for i in v]
         return fmt.replace("%s", sep.join(items))
-        
+
     return formatter
 
 
