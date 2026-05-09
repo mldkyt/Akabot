@@ -12,7 +12,7 @@ class Mail(Cog):
     mail_group = SlashCommandGroup("mail")
 
     @mail_group.command()
-    async def read(self, ctx: ApplicationContext, mail: int = None):
+    async def read(self, ctx: ApplicationContext, mail: int | None = None):
         if mail is None:
             unread_mail = get_unread_mail(str(ctx.user.id))
             if len(unread_mail) == 0:
@@ -39,7 +39,7 @@ class Mail(Cog):
 
         default_page = "Do `/mail read [number]` in order to read a mail.\n\n"
 
-        pages = []
+        pages: list[str] = []
         current_page = default_page
 
         for i in mail:

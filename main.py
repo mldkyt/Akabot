@@ -9,7 +9,6 @@ from logger import nekona_logger
 if not os.path.exists("logs"):
     os.mkdir("logs")
 
-
 load_dotenv()
 
 BOT_VERSION = "@VERSION@"
