@@ -1,16 +1,29 @@
 import os
 import random
+from typing import Any
 
 from aiohttp import ClientSession
-from discord import Embed, ApplicationContext, Color, EmbedAuthor, EmbedFooter, Member
+from discord import Embed, ApplicationContext, Color, EmbedAuthor, EmbedFooter, Member, User, Interaction
+from discord.ui import View, button, Button
+from sqlalchemy import select, update, insert, Connection, Row
 
+from database import engine, consent
 from logger import nekona_logger
+from utils.server_settings import ServerSetting, setting_to_boolean, setting_simple_string_boolean
 
 FEDI_INSTANCE = os.getenv("FEDI_INSTANCE")
 
 YURIBOT_ID = os.getenv("YURIBOT_ID")
 YAOIBOT_ID = os.getenv("YAOIBOT_ID")
 
+setting_allow_rp_commands = ServerSetting(
+    name="Allow RP commands",
+    description="Allow roleplay commands in this server.",
+    normal_processor=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("Roleplay commands are now %s", "enabled", "disabled"),
+    normal_view=setting_simple_string_boolean("Roleplay commands are %s", "enabled", "disabled"),
+    default="true"
+)
 
 class YaoiCache:
     def __init__(self) -> None:
@@ -111,15 +124,12 @@ async def nb_api(category: str) -> dict | None:
 
 NB_TITLES = {
     "lurk": "$user is lurking...",
-    "sleep": "$user is sleepy...",
-    "clap": "$user is clapping...",
     "shrug": "$user doesn't know...",
     "stare": "$user is staring...",
     "wave": "$user is waving...",
     "poke": "$user poked $target :3",
     "smile": "$user smiled...",
     "wink": "$user winked...",
-    "sip": "$user sipped...",
     "blush": "$user blushed...",
     "smug": "$user smugged...",
     "tickle": "$user tickles $target!",
@@ -173,6 +183,114 @@ async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None
     )
 
     return embed
+
+
+class ConsentView(View):
+    def __init__(self, source: User, target: User):
+        super().__init__(timeout=600, disable_on_timeout=True)
+        self.source = source
+        self.target = target
+
+    @button(label="Set level 1")
+    async def consent_1(self, button: Button, interaction: Interaction):
+        if interaction.user is None:
+            return
+        if interaction.user.id == self.source.id:
+            await interaction.respond("The consent level has to be selected by the other user.", ephemeral=True)
+            return
+        if interaction.user.id != self.target.id:
+            await interaction.respond("This selection is not yours.", ephemeral=True)
+            return
+        await set_consent(self.source, self.target, 1)
+        await interaction.respond("Set consent level 1.", ephemeral=True)
+        self.stop()
+
+    @button(label="Set level 2")
+    async def consent_2(self, button: Button, interaction: Interaction):
+        if interaction.user is None:
+            return
+        if interaction.user.id == self.source.id:
+            await interaction.respond("The consent level has to be selected by the other user.", ephemeral=True)
+            return
+        if interaction.user.id != self.target.id:
+            await interaction.respond("This selection is not yours.", ephemeral=True)
+            return
+        await set_consent(self.source, self.target, 2)
+        await interaction.respond("Set consent level 2.", ephemeral=True)
+        self.stop()
+
+    @button(label="Set level 3")
+    async def consent_3(self, button: Button, interaction: Interaction):
+        if interaction.user is None:
+            return
+        if interaction.user.id == self.source.id:
+            await interaction.respond("The consent level has to be selected by the other user.", ephemeral=True)
+            return
+        if interaction.user.id != self.target.id:
+            await interaction.respond("This selection is not yours.", ephemeral=True)
+            return
+        await set_consent(self.source, self.target, 3)
+        await interaction.respond("Set consent level 3.", ephemeral=True)
+        self.stop()
+
+    @button(label="Do not consent")
+    async def no_consent(self, button: Button, interaction: Interaction):
+        if interaction.user is None:
+            return
+        if interaction.user.id == self.source.id:
+            await interaction.respond("The consent level has to be selected by the other user.", ephemeral=True)
+            return
+        if interaction.user.id != self.target.id:
+            await interaction.respond("This selection is not yours.", ephemeral=True)
+            return
+        await set_consent(self.source, self.target, 0)
+        await interaction.respond("You did not consent", ephemeral=True)
+        self.stop()
+
+
+def _get_consent_data(c: Connection, user_1: Member | User, user_2: Member | User) -> Row[Any] | None:
+    # First check if the user IDs could be flipped in order to get le data
+    r1 = c.execute(select(consent.c.uid1, consent.c.uid2, consent.c.consentlevel).where(
+        (consent.c.uid1 == str(user_1.id)) & (consent.c.uid2 == str(user_2.id)))).fetchone()
+    r2 = c.execute(select(consent.c.uid1, consent.c.uid2, consent.c.consentlevel).where(
+        (consent.c.uid1 == str(user_2.id)) & (consent.c.uid2 == str(user_1.id)))).fetchone()
+    return r1 or r2
+
+
+async def get_consent(user_1: Member | User, user_2: Member | User):
+    """Get consent level between 2 people."""
+    with engine.begin() as c:
+        res = _get_consent_data(c, user_1, user_2)
+        if res is None:
+            return 0
+        return res[2]
+
+
+async def set_consent(user_1: Member | User, user_2: Member | User, consent_level: int):
+    with engine.begin() as c:
+        res = _get_consent_data(c, user_1, user_2)
+        if res is not None:
+            c.execute(
+                update(consent)
+                .where((consent.c.uid1 == res[0]) & (consent.c.uid2 == res[1]))
+                .values(consentlevel=consent_level)
+            )
+        else:
+            c.execute(
+                insert(consent)
+                .values(uid1=str(user_1.id), uid2=str(user_2.id), consentlevel=consent_level)
+            )
+
+
+async def ensure_consent(ctx: ApplicationContext, target: Member | None, required_consent: int) -> bool:
+    if ctx.user is None or target is None:
+        await ctx.respond("The user couldn't be determined therefore the verification failed.", ephemeral=True)
+        return False
+    consent_level = await get_consent(ctx.user, target) or 0
+    if consent_level >= required_consent:
+        return True
+    await ctx.respond("Please get enough consent before you can use this command against that user", ephemeral=True)
+    return False
 
 yaoi_cache = YaoiCache()
 yuri_cache = YuriCache()
