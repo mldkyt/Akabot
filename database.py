@@ -223,3 +223,23 @@ consent = Table(
     Column("consentlevel", Integer, nullable=False),
     UniqueConstraint("uid1", "uid2")
 )
+
+giveaways = Table(
+    "giveaways",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    Column("mid", VARCHAR, nullable=False),
+    Column("winners", Integer, nullable=False, default=1),
+    Column("end", DateTime(timezone=True)),
+    Column("expiry", DateTime(timezone=True), nullable=False)
+)
+
+giveaway_joins = Table(
+    "giveaway_joins",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", Integer, ForeignKey("giveaways.id"), nullable=False, comment="Giveaway ID"),
+    Column("uid", VARCHAR, nullable=False)
+)
