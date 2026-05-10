@@ -284,11 +284,11 @@ class ServerSetting:
     def __str__(self):
         if self.setting_type == SettingType.NORMAL:
             return (
-                f"- Setting `{self.name}`\n\n\t{self.description}\n\n\tThis setting is a list, items can be added using /server_settings add_list_setting and removed using /server_settings remove_list_setting\n\n"
+                f"- Setting `{self.name}`\n\n\t{self.description}\n\n\tThe setting can be changed using `/server_settings set_setting`\n\n"
             )
         elif self.setting_type == SettingType.LIST:
             return (
-                f"- Setting `{self.name}`\n\n\t{self.description}\n\n\tThe setting can be changed using /server_settings set_setting\n\n"
+                f"- Setting `{self.name}`\n\n\t{self.description}\n\n\tThis setting is a list, items can be added using `/server_settings add_list_setting` and removed using `/server_settings remove_list_setting`\n\n"
             )
 
         return f"- {self.name}\n\n\tThe setting type for this setting is unrecognized."
