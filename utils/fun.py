@@ -26,6 +26,24 @@ setting_allow_rp_commands = ServerSetting(
     default="true"
 )
 
+setting_disable_yaoi_command = ServerSetting(
+    name="Disable yaoi command",
+    description="Whether the yaoi command should be disabled",
+    normal_processor=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("The yaoi command is now %s", "disabled", "enabled"),
+    normal_view=setting_simple_string_boolean("The yaoi command is %s", "disabled", "enabled"),
+    default="false"
+)
+
+setting_disable_yuri_command = ServerSetting(
+    name="Disable yuri command",
+    description="Whether the yuri command should be disabled",
+    normal_processor=setting_to_boolean,
+    normal_response=setting_simple_string_boolean("The yuri command is now %s", "disabled", "enabled"),
+    normal_view=setting_simple_string_boolean("The yuri command is %s", "disabled", "enabled"),
+    default="false"
+)
+
 class YaoiCache:
     def __init__(self) -> None:
         pass
