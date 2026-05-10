@@ -3,6 +3,7 @@ from discord import ApplicationContext, Message
 
 from database import engine
 from logger import nekona_logger
+from utils.chat_streaks import handle_send_reply
 from utils.docs import Docs, DocsCommand
 from utils.leveling import (
     add_xp,
@@ -57,8 +58,10 @@ class Leveling(discord.Cog):
                         level_up_message = level_up_message.replace("{name}", message.author.display_name)
                         level_up_message = level_up_message.replace("{username}", message.author.name)
 
-                        level_up_message = await message.reply(apply_appends(message.author.id, level_up_message))
-                        await level_up_message.delete(delay=5)
+                        level_up_message, reply_in_same_channel = await handle_send_reply(message, apply_appends(
+                            message.author.id, level_up_message))
+                        if level_up_message is not None and reply_in_same_channel:
+                            await level_up_message.delete(delay=5)
         except Exception as e:
             nekona_logger.exception(e)
 
