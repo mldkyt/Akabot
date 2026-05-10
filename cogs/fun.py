@@ -3,7 +3,7 @@ from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCom
 
 from database import engine
 from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
-    setting_allow_rp_commands
+    setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command
 from utils.message_appends import apply_appends
 from utils.server_settings import settings
 
@@ -16,6 +16,13 @@ class Fun(Cog):
 
     @slash_command()
     async def yaoi(self, ctx: ApplicationContext):
+        if ctx.guild is not None:
+            with engine.begin() as c:
+                disable_yaoi = setting_disable_yaoi_command.get_guild(c, ctx.guild)
+                if disable_yaoi == "true":
+                    await ctx.respond("The yaoi command is disabled in this server", ephemeral=True)
+                    return
+
         yaoi_post = await yaoi_cache.get_yaoibot_post()
         if yaoi_post is None:
             await ctx.respond("Yaoi is unavailable.", ephemeral=True)
@@ -30,6 +37,13 @@ class Fun(Cog):
 
     @slash_command()
     async def yuri(self, ctx: ApplicationContext):
+        if ctx.guild is not None:
+            with engine.begin() as c:
+                disable_yuri = setting_disable_yuri_command.get_guild(c, ctx.guild)
+                if disable_yuri == "true":
+                    await ctx.respond("The yuri command is disabled in this server", ephemeral=True)
+                    return
+
         yuri_post = await yuri_cache.get_yuribot_post()
         if yuri_post is None:
             await ctx.respond("Yuri is unavailable.", ephemeral=True)
@@ -499,11 +513,11 @@ class Fun(Cog):
                           ephemeral=True)
 
 
-# to implement: consent!!!
-
 def setup(bot):
     bot.add_cog(Fun(bot))
 
     settings.add_settings(
-        setting_allow_rp_commands
+        setting_allow_rp_commands,
+        setting_disable_yaoi_command,
+        setting_disable_yuri_command
     )
