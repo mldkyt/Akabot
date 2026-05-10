@@ -4,6 +4,7 @@ from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCom
 from database import engine
 from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
     setting_allow_rp_commands
+from utils.message_appends import apply_appends
 from utils.server_settings import settings
 
 
@@ -48,7 +49,7 @@ class Fun(Cog):
     async def lurk(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         lurk = await nb_embed(ctx, "lurk")
@@ -61,7 +62,7 @@ class Fun(Cog):
     async def shrug(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         shrug = await nb_embed(ctx, "shrug")
@@ -74,7 +75,7 @@ class Fun(Cog):
     async def wave(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         wave = await nb_embed(ctx, "wave")
@@ -87,14 +88,14 @@ class Fun(Cog):
     async def poke(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
             return
 
         if target == ctx.user:
-            await ctx.respond("You cannot poke yourself!", ephemeral=True)
+            await ctx.respond(apply_appends(ctx.user.id, "You cannot poke yourself!"), ephemeral=True)
             return
 
         poke = await nb_embed(ctx, "poke", target=target)
@@ -107,7 +108,7 @@ class Fun(Cog):
     async def smile(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         smile = await nb_embed(ctx, "smile")
@@ -120,7 +121,7 @@ class Fun(Cog):
     async def wink(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         wink = await nb_embed(ctx, "wink")
@@ -133,7 +134,7 @@ class Fun(Cog):
     async def blush(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         blush = await nb_embed(ctx, "blush")
@@ -146,7 +147,7 @@ class Fun(Cog):
     async def smug(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         smug = await nb_embed(ctx, "smug")
@@ -159,7 +160,7 @@ class Fun(Cog):
     async def tickle(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
@@ -179,7 +180,7 @@ class Fun(Cog):
     async def yeet(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 1):
@@ -199,7 +200,7 @@ class Fun(Cog):
     async def highfive(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 1):
@@ -219,7 +220,7 @@ class Fun(Cog):
     async def wag(self, ctx: ApplicationContext):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         wag = await nb_embed(ctx, "wag")
@@ -232,7 +233,7 @@ class Fun(Cog):
     async def bite(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 3):
@@ -252,7 +253,7 @@ class Fun(Cog):
     async def cuddle(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
@@ -272,7 +273,7 @@ class Fun(Cog):
     async def kick(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 1):
@@ -292,7 +293,7 @@ class Fun(Cog):
     async def carry(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 1):
@@ -312,7 +313,7 @@ class Fun(Cog):
     async def hug(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
@@ -332,7 +333,7 @@ class Fun(Cog):
     async def bonk(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 1):
@@ -352,7 +353,7 @@ class Fun(Cog):
     async def pat(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server")
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
@@ -372,7 +373,7 @@ class Fun(Cog):
     async def kiss(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 3):
@@ -392,7 +393,7 @@ class Fun(Cog):
     async def slap(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
@@ -412,7 +413,7 @@ class Fun(Cog):
     async def lappillow(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 2):
@@ -432,7 +433,7 @@ class Fun(Cog):
     async def handhold(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if not await ensure_consent(ctx, target, 3):
@@ -453,12 +454,13 @@ class Fun(Cog):
         """Ask for consent with another member"""
         with engine.begin() as c:
             if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
-                await ctx.respond("RP commands are disabled in this server", ephemeral=True)
+                await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
         if ctx.user.id == target.id:
             await ctx.respond(
-                "Unfortunately you cannot consent to yourself (the commands don't work on yourself either.)",
+                apply_appends(ctx.user.id,
+                              "Unfortunately you cannot consent to yourself (the commands don't work on yourself either.)"),
                 ephemeral=True)
             return
 
@@ -478,7 +480,8 @@ class Fun(Cog):
         """Check if you have consented with somebody"""
         if ctx.user.id == target.id:
             await ctx.respond(
-                "Unfortunately you cannot consent to yourself (the commands don't work on yourself either.)",
+                apply_appends(ctx.user.id,
+                              "Unfortunately you cannot consent to yourself (the commands don't work on yourself either.)"),
                 ephemeral=True)
             return
 
@@ -491,7 +494,8 @@ class Fun(Cog):
 
         consent_level = await get_consent(ctx.user, target)
 
-        await ctx.respond(f"You and {target} are on consent level {consent_level}: {CONSENT_LEVELS[consent_level]}",
+        await ctx.respond(apply_appends(ctx.user.id,
+                                        f"You and {target} are on consent level {consent_level}: {CONSENT_LEVELS[consent_level]}"),
                           ephemeral=True)
 
 

@@ -9,6 +9,7 @@ from sqlalchemy import select, update, insert, Connection, Row
 
 from database import engine, consent
 from logger import nekona_logger
+from utils.message_appends import apply_appends
 from utils.server_settings import ServerSetting, setting_to_boolean, setting_simple_string_boolean
 
 FEDI_INSTANCE = os.getenv("FEDI_INSTANCE")
@@ -153,7 +154,7 @@ NB_TITLES = {
 async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None = None) -> Embed | None:
     nb = await nb_api(category)
     if nb is None:
-        await ctx.respond(f"An error occured fetching {category} gif. Sorry", ephemeral=True)
+        await ctx.respond(f"An error occurred fetching {category} gif. Sorry", ephemeral=True)
         return None
 
     author = None
@@ -202,7 +203,7 @@ class ConsentView(View):
             await interaction.respond("This selection is not yours.", ephemeral=True)
             return
         await set_consent(self.source, self.target, 1)
-        await interaction.respond("Set consent level 1.", ephemeral=True)
+        await interaction.respond(apply_appends(interaction.user.id, "Set consent level 1."), ephemeral=True)
         self.stop()
 
     @button(label="Set level 2")
@@ -216,7 +217,7 @@ class ConsentView(View):
             await interaction.respond("This selection is not yours.", ephemeral=True)
             return
         await set_consent(self.source, self.target, 2)
-        await interaction.respond("Set consent level 2.", ephemeral=True)
+        await interaction.respond(apply_appends(interaction.user.id, "Set consent level 2."), ephemeral=True)
         self.stop()
 
     @button(label="Set level 3")
@@ -230,7 +231,7 @@ class ConsentView(View):
             await interaction.respond("This selection is not yours.", ephemeral=True)
             return
         await set_consent(self.source, self.target, 3)
-        await interaction.respond("Set consent level 3.", ephemeral=True)
+        await interaction.respond(apply_appends(interaction.user.id, "Set consent level 3."), ephemeral=True)
         self.stop()
 
     @button(label="Do not consent")
@@ -244,7 +245,7 @@ class ConsentView(View):
             await interaction.respond("This selection is not yours.", ephemeral=True)
             return
         await set_consent(self.source, self.target, 0)
-        await interaction.respond("You did not consent", ephemeral=True)
+        await interaction.respond(apply_appends(interaction.user.id, "You did not consent"), ephemeral=True)
         self.stop()
 
 
