@@ -2,10 +2,10 @@ import dateparser
 from discord import Cog, Bot, SlashCommandGroup, ApplicationContext, NotFound, default_permissions
 from discord.ext.tasks import loop
 
-from logger import nekona_logger
-from utils.docs import Docs
+from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.giveaways import create_giveaway, get_ending_giveaways, roll_winners, mark_giveaway_ended, GiveawayEndedView, \
-    GiveawayView, clear_expired_giveaways
+    GiveawayView, clear_expired_giveaways, get_giveaway_joins, get_giveaway_info_by_mid
+from utils.message_appends import apply_appends
 
 
 class Giveaways(Cog):
@@ -31,28 +31,73 @@ class Giveaways(Cog):
         message = await ctx.channel.send(f"**Giveaway**\n{item}", view=GiveawayView())
         create_giveaway(message, winner_count, end_date)
 
-        await ctx.respond("Giveaway created!", ephemeral=True)
+        await ctx.respond(apply_appends(ctx.user.id, "Giveaway created!"), ephemeral=True)
+
+    @giveaway_grp.command()
+    @default_permissions(manage_guild=True)
+    async def stats(self, ctx: ApplicationContext, message_id: str):
+        """Check the giveaway stats (joins)"""
+        joins = get_giveaway_joins(message_id)
+        if joins is None:
+            await ctx.respond("Giveaway not found!", ephemeral=True)
+            return
+
+        await ctx.respond(f"There are currently {joins} joined people in this giveaway", ephemeral=True)
+
+    @giveaway_grp.command()
+    @default_permissions(manage_guild=True)
+    async def close(self, ctx: ApplicationContext, message_id: str):
+        """Close the giveaway ahead of time and roll winners"""
+        giveaway = get_giveaway_info_by_mid(message_id)
+        if giveaway is None:
+            await ctx.respond("Giveaway not found!", ephemeral=True)
+            return
+
+        if giveaway[4]:
+            await ctx.respond("Cannot close a closed giveaway, please reroll instead", ephemeral=True)
+            return
+
+        guild = self.bot.get_guild(int(giveaway[1]))
+        if guild is None:
+            return
+
+        channel = guild.get_channel(int(giveaway[2]))
+        if channel is None:
+            return
+
+        try:
+            message = await channel.fetch_message(int(giveaway[3]))
+        except NotFound:
+            return
+
+        winners = roll_winners(message)
+        if len(winners) == 0:
+            await message.reply("No one won :(")
+        else:
+            await message.reply(
+                "The winners for this giveaway are " + ", ".join([f"<@{j}>" for j in winners]) + "!",
+                view=GiveawayEndedView(giveaway[0]))
+        mark_giveaway_ended(giveaway[0])
+
+        await ctx.respond("Giveaway successfully closed", ephemeral=True)
+
 
     @loop(minutes=1)
     async def giveaways_handler(self):
         ending_giveaways = get_ending_giveaways()
-        nekona_logger.debug("[Giveaways] %d ending giveaways", len(ending_giveaways))
         for i in ending_giveaways:
             # id, gid, cid, mid
             guild = self.bot.get_guild(int(i[1]))
             if guild is None:
-                nekona_logger.debug("[Giveaways] Skipping giveaway %d: guild is none", i[0])
                 continue
 
             channel = guild.get_channel(int(i[2]))
             if channel is None:
-                nekona_logger.debug("[Giveaways] Skipping giveaway %d: channel is none", i[0])
                 continue
 
             try:
                 message = await channel.fetch_message(int(i[3]))
             except NotFound:
-                nekona_logger.debug("[Giveaways] Skipping giveaway %d: message not found", i[0])
                 continue
 
             winners = roll_winners(message)
@@ -63,7 +108,6 @@ class Giveaways(Cog):
                     "The winners for this giveaway are " + ", ".join([f"<@{j}>" for j in winners]) + "!",
                     view=GiveawayEndedView(i[0]))
             mark_giveaway_ended(i[0])
-            nekona_logger.debug("[Giveaways] Marked %d as ended", i[0])
 
         clear_expired_giveaways()
 
@@ -76,6 +120,46 @@ def docs():
     return str(
         Docs(
             name="Giveaways",
-            description="Host giveaways in your server"
+            description="Host giveaways in your server. Giveaways can be joined by clicking the button on the message and they end on the end date.",
+            commands=[
+                DocsCommand(
+                    command="giveaways create",
+                    description="Create a new giveaway",
+                    parameters=[
+                        DocsCommandParameter(
+                            name="item",
+                            description="Item to give away. This is said in the message from the bot, make sure not to put the reward in there!"
+                        ),
+                        DocsCommandParameter(
+                            name="winner_count",
+                            description="The amount of winners that can win this giveaway."
+                        ),
+                        DocsCommandParameter(
+                            name="end",
+                            description="Relative or absolute date of end. You can enter relative dates (in 10 minutes) or full dates (11th May 2026)"
+                        )
+                    ]
+                ),
+                DocsCommand(
+                    command="giveaways stats",
+                    description="Get stats for a running giveaway. ",
+                    parameters=[
+                        DocsCommandParameter(
+                            name="message_id",
+                            description="Message ID of the giveaway message (the one with the join button.) The message ID can be gotten by right clicking a message and clicking the Copy ID button. If not present go to settings, advanced settings and turn on developer mode."
+                        )
+                    ]
+                ),
+                DocsCommand(
+                    command="giveaways close",
+                    description="Close a running a giveaway early.",
+                    parameters=[
+                        DocsCommandParameter(
+                            name="message_id",
+                            description="Message ID of the giveaway message (the one with the join button.) The message ID can be gotten by right clicking a message and clicking the Copy ID button. If not present go to settings, advanced settings and turn on developer mode."
+                        )
+                    ]
+                )
+            ]
         )
     )
