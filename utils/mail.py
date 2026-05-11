@@ -25,7 +25,7 @@ def get_unread_mail(user_id: str) -> list[tuple[int, str, str, datetime.datetime
     with engine.begin() as c:
         mai = c.execute(
             text(
-                "SELECT id, text, author, created_at FROM mail WHERE id NOT IN (SELECT mail_id FROM mail_read WHERE user_id = :user_id) AND mail.created_at > :first_seen ORDER BY created_at DESC"),
+                "SELECT id, text, author, created_at FROM mail WHERE id NOT IN (SELECT mail_read.mail_id FROM mail_read WHERE mail_read.user_id = :user_id) AND mail.created_at > :first_seen ORDER BY created_at DESC"),
             {"user_id": user_id, "first_seen": first_seen}
         ).fetchall()
 
@@ -38,7 +38,7 @@ def get_unread_mail_count(user_id: str):
     with engine.begin() as c:
         unread = c.execute(
             text("SELECT COUNT(id) FROM mail "
-                 "WHERE mail.created_at > (SELECT firstseen FROM user WHERE id = :user_id) AND NOT EXISTS(SELECT 1 FROM mail_read WHERE mail_read.mail_id = mail.id AND mail_read.user_id = :user_id)"),
+                 "WHERE mail.created_at > (SELECT user.firstseen FROM user WHERE id = :user_id) AND NOT EXISTS(SELECT 1 FROM mail_read WHERE mail_read.mail_id = mail.id AND mail_read.user_id = :user_id)"),
             {"user_id": user_id}
         ).fetchone()
 
