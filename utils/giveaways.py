@@ -231,3 +231,34 @@ def reroll_winner(gid: int) -> str | None:
         )
 
     return winner
+
+
+def get_giveaway_joins(msg_id: str):
+    with engine.begin() as c:
+        res = c.execute(
+            select(giveaways.c.id)
+            .where(giveaways.c.mid == msg_id)
+        ).fetchone()
+
+        if res is None:
+            return None
+
+        res = c.execute(
+            text("SELECT COUNT(*) FROM giveaway_joins WHERE giveaway_joins.gid = :id"),
+            {"id": res[0]}
+        ).fetchone()
+
+    return res[0]
+
+
+def get_giveaway_info_by_mid(mid: str) -> tuple[int, str, str, str, bool] | None:
+    with engine.begin() as c:
+        res = c.execute(
+            select(giveaways.c.id, giveaways.c.gid, giveaways.c.cid, giveaways.c.mid, giveaways.c.end)
+            .where(giveaways.c.mid == mid)
+        ).fetchone()
+
+        if res is None:
+            return None
+
+        return res[0], res[1], res[2], res[3], res[4] is None
