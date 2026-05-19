@@ -296,7 +296,7 @@ async def get_consent(user_1: Member | User, user_2: Member | User):
         return res[2]
 
 
-async def set_consent(user_1: Member | User, user_2: Member | User, consent_level: int):
+async def set_consent(user_1: Member | User, user_2: Member | User, consent_level: int, attempt_dm=True):
     with engine.begin() as c:
         res = _get_consent_data(c, user_1, user_2)
         if res is not None:
@@ -310,6 +310,30 @@ async def set_consent(user_1: Member | User, user_2: Member | User, consent_leve
                 insert(consent)
                 .values(uid1=str(user_1.id), uid2=str(user_2.id), consentlevel=consent_level)
             )
+
+    if attempt_dm:
+        CONSENT_LEVELS = [
+            "nothing",
+            "yeet, highfive, kick, carry, bonk",
+            "pat, poke, tickle, cuddle, hug, pat, slap, lappillow, bite",
+            "kiss, handhold"
+        ]
+
+        async def send_user_1():
+            try:
+                await user_1.send(
+                    f"You have asked {user_2.display_name} to consent and they consented level {consent_level}: {CONSENT_LEVELS[consent_level]}")
+            except Exception:
+                pass
+
+        async def send_user_2():
+            try:
+                await user_2.send(
+                    f"You and {user_1.display_name} have consented with level {consent_level}: {CONSENT_LEVELS[consent_level]}")
+            except Exception:
+                pass
+
+        await asyncio.gather(send_user_1(), send_user_2())
 
 
 async def ensure_consent(ctx: ApplicationContext, target: Member | None, required_consent: int) -> bool:
