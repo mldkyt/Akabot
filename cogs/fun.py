@@ -251,7 +251,7 @@ class Fun(Cog):
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
-        if not await ensure_consent(ctx, target, 3):
+        if not await ensure_consent(ctx, target, 2):
             return
 
         if target == ctx.user:
@@ -485,8 +485,8 @@ class Fun(Cog):
                         f"\n"
                         f"You can choose the level of consent according to the levels below:\n"
                         f"**Level 1** - Consent to only fun commands (yeet, highfive, kick, carry, bonk)\n"
-                        f"**Level 2** - Consent to commands with more interaction (pat, poke, tickle, cuddle, hug, pat, slap, lappillow)\n"
-                        f"**Level 3** - Consent to personal commands (kiss, bite, handhold)",
+                        f"**Level 2** - Consent to commands with more interaction (pat, poke, tickle, cuddle, hug, pat, slap, lappillow, bite)\n"
+                        f"**Level 3** - Consent to personal commands (kiss, handhold)",
             color=Color.green()
         ), view=ConsentView(ctx.user, target))
 
