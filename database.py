@@ -243,3 +243,12 @@ giveaway_joins = Table(
     Column("gid", Integer, ForeignKey("giveaways.id"), nullable=False, comment="Giveaway ID"),
     Column("uid", VARCHAR, nullable=False)
 )
+
+rp_counters = Table(
+    "rp_counters",
+    md_obj,
+    Column("uid1", VARCHAR, primary_key=True),
+    Column("uid2", VARCHAR, primary_key=True),
+    Column("counter", VARCHAR, primary_key=True),
+    Column("count", Integer, server_default="0", nullable=False)
+)

@@ -4,7 +4,7 @@ from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCom
 from database import engine
 from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
-    setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command
+    setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command, tick_counter
 from utils.message_appends import apply_appends
 from utils.server_settings import settings
 
@@ -113,7 +113,9 @@ class Fun(Cog):
             await ctx.respond(apply_appends(ctx.user.id, "You cannot poke yourself!"), ephemeral=True)
             return
 
-        poke = await nb_embed(ctx, "poke", target=target)
+        counter = await tick_counter(ctx, target, "poke")
+
+        poke = await nb_embed(ctx, "poke", target=target, counter=counter)
         if poke is None:
             return
 
@@ -185,7 +187,9 @@ class Fun(Cog):
             await ctx.respond("You cannot tickle yourself!", ephemeral=True)
             return
 
-        tickle = await nb_embed(ctx, "tickle", target=target)
+        counter = await tick_counter(ctx, target, "tickle")
+
+        tickle = await nb_embed(ctx, "tickle", target=target, counter=counter)
         if tickle is None:
             return
 
@@ -205,7 +209,9 @@ class Fun(Cog):
             await ctx.respond("You cannot yeet yourself!", ephemeral=True)
             return
 
-        yeet = await nb_embed(ctx, "yeet", target=target)
+        counter = await tick_counter(ctx, target, "yeet")
+
+        yeet = await nb_embed(ctx, "yeet", target=target, counter=counter)
         if yeet is None:
             return
 
@@ -225,7 +231,9 @@ class Fun(Cog):
             await ctx.respond("You cannot give a highfive to yourself!", ephemeral=True)
             return
 
-        highfive = await nb_embed(ctx, "highfive", target=target)
+        counter = await tick_counter(ctx, target, "highfive")
+
+        highfive = await nb_embed(ctx, "highfive", target=target, counter=counter)
         if highfive is None:
             return
 
@@ -255,10 +263,12 @@ class Fun(Cog):
             return
 
         if target == ctx.user:
-            await ctx.respond("You cannot bite yourself!", ephemeral=True)
+            await ctx.respond("You cannot bite yourself :(", ephemeral=True)
             return
 
-        bite = await nb_embed(ctx, "bite", target=target)
+        counter = await tick_counter(ctx, target, "bite")
+
+        bite = await nb_embed(ctx, "bite", target=target, counter=counter)
         if bite is None:
             return
 
@@ -278,7 +288,9 @@ class Fun(Cog):
             await ctx.respond("You cannot cuddle yourself!", ephemeral=True)
             return
 
-        cuddle = await nb_embed(ctx, "cuddle", target=target)
+        counter = await tick_counter(ctx, target, "cuddle")
+
+        cuddle = await nb_embed(ctx, "cuddle", target=target, counter=counter)
         if cuddle is None:
             return
 
@@ -298,7 +310,9 @@ class Fun(Cog):
             await ctx.respond("You cannot kick yourself!", ephemeral=True)
             return
 
-        kick = await nb_embed(ctx, "kick", target=target)
+        counter = await tick_counter(ctx, target, "kick")
+
+        kick = await nb_embed(ctx, "kick", target=target, counter=counter)
         if kick is None:
             return
 
@@ -318,7 +332,9 @@ class Fun(Cog):
             await ctx.respond("You cannot carry yourself!", ephemeral=True)
             return
 
-        carry = await nb_embed(ctx, "carry", target=target)
+        counter = await tick_counter(ctx, target, "carry")
+
+        carry = await nb_embed(ctx, "carry", target=target, counter=counter)
         if carry is None:
             return
 
@@ -338,7 +354,9 @@ class Fun(Cog):
             await ctx.respond("You cannot hug yourself!", ephemeral=True)
             return
 
-        hug = await nb_embed(ctx, "hug", target=target)
+        counter = await tick_counter(ctx, target, "hug")
+
+        hug = await nb_embed(ctx, "hug", target=target, counter=counter)
         if hug is None:
             return
 
@@ -358,7 +376,9 @@ class Fun(Cog):
             await ctx.respond("You cannot bonk yourself!", ephemeral=True)
             return
 
-        bonk = await nb_embed(ctx, "bonk", target=target)
+        counter = await tick_counter(ctx, target, "bonk")
+
+        bonk = await nb_embed(ctx, "bonk", target=target, counter=counter)
         if bonk is None:
             return
 
@@ -378,7 +398,9 @@ class Fun(Cog):
             await ctx.respond("You cannot pat yourself unfortunately :(", ephemeral=True)
             return
 
-        pat = await nb_embed(ctx, "pat", target=target)
+        counter = await tick_counter(ctx, target, "pat")
+
+        pat = await nb_embed(ctx, "pat", target=target, counter=counter)
         if pat is None:
             return
 
@@ -398,7 +420,9 @@ class Fun(Cog):
             await ctx.respond("You cannot kiss yourself", ephemeral=True)
             return
 
-        kiss = await nb_embed(ctx, "kiss", target=target)
+        counter = await tick_counter(ctx, target, "kiss")
+
+        kiss = await nb_embed(ctx, "kiss", target=target, counter=counter)
         if kiss is None:
             return
 
@@ -418,7 +442,9 @@ class Fun(Cog):
             await ctx.respond("You cannot slap yourself", ephemeral=True)
             return
 
-        slap = await nb_embed(ctx, "slap", target=target)
+        counter = await tick_counter(ctx, target, "slap")
+
+        slap = await nb_embed(ctx, "slap", target=target, counter=counter)
         if slap is None:
             return
 
@@ -438,7 +464,9 @@ class Fun(Cog):
             await ctx.respond("You cannot lie on your lap :(", ephemeral=True)
             return
 
-        lappillow = await nb_embed(ctx, "lappillow", target=target)
+        counter = await tick_counter(ctx, target, "lappillow")
+
+        lappillow = await nb_embed(ctx, "lappillow", target=target, counter=counter)
         if lappillow is None:
             return
 
@@ -458,7 +486,9 @@ class Fun(Cog):
             await ctx.respond("You cannot handhold yourself", ephemeral=True)
             return
 
-        handhold = await nb_embed(ctx, "handhold", target=target)
+        counter = await tick_counter(ctx, target, "handhold")
+
+        handhold = await nb_embed(ctx, "handhold", target=target, counter=counter)
         if handhold is None:
             return
 

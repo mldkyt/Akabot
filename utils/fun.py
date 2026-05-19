@@ -1,3 +1,4 @@
+import asyncio
 import os
 import random
 from typing import Any
@@ -7,7 +8,7 @@ from discord import Embed, ApplicationContext, Color, EmbedAuthor, EmbedFooter, 
 from discord.ui import View, button, Button
 from sqlalchemy import select, update, insert, Connection, Row
 
-from database import engine, consent
+from database import engine, consent, rp_counters
 from logger import nekona_logger
 from utils.message_appends import apply_appends
 from utils.server_settings import ServerSetting, setting_to_boolean, setting_simple_string_boolean, SettingType
@@ -171,8 +172,27 @@ NB_TITLES = {
     "handhold": "$user is handholding with $target"
 }
 
+COUNTER_MESSAGE = {
+    "poke": "You two have poked each-other {times} times.",
+    "tickle": "You two have tickled each-other {times} times.",
+    "yeet": "You two have yeeted each-other {times} times.",
+    "highfive": "You have done a high five {times} times.",
+    "bite": "You two have bitten each-other {times} times.",
+    "cuddle": "You two have cuddled each-other {times} times.",
+    "kick": "You two have kicked each-other {times} times.",
+    "carry": "You two have carried each-other {times} times.",
+    "hug": "You two have hugged each-other {times} times.",
+    "bonk": "You two have bonked each-other {times} times.",
+    "pat": "You two have patted each-other {times} times.",
+    "kiss": "You two have kissed each-other {times} times.",
+    "slap": "You two have slapped each-other {times} times.",
+    "lappillow": "You two have lied on each-others laps {times} times.",
+    "handhold": "You two have held each-others hands {times} times."
+}
 
-async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None = None) -> Embed | None:
+
+async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None = None,
+                   counter: int | None = None) -> Embed | None:
     nb = await nb_api(category)
     if nb is None:
         await ctx.respond(f"An error occurred fetching {category} gif. Sorry", ephemeral=True)
@@ -196,8 +216,13 @@ async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None
     else:
         title = f"{ctx.user.display_name} is {category}ing..."
 
+    description = ""
+    if counter is not None:
+        description = COUNTER_MESSAGE[category].replace("{times}", str(counter))
+
     embed = Embed(
         title=title,
+        description=description,
         image=nb["url"],
         author=author,
         footer=footer,
@@ -345,6 +370,35 @@ async def ensure_consent(ctx: ApplicationContext, target: Member | None, require
         return True
     await ctx.respond("Please get enough consent before you can use this command against that user", ephemeral=True)
     return False
+
+
+async def tick_counter(ctx: ApplicationContext, target: Member, counter: str) -> int:
+    with engine.begin() as c:
+        res = c.execute(
+            select(rp_counters.c.count)
+            .where((((rp_counters.c.uid1 == str(ctx.user.id)) & (rp_counters.c.uid2 == str(target.id))) |
+                    ((rp_counters.c.uid1 == str(target.id)) & (rp_counters.c.uid2 == str(ctx.user.id)))) &
+                   (rp_counters.c.counter == counter))
+        ).fetchone()
+
+        if res is None:
+            c.execute(
+                insert(rp_counters)
+                .values(uid1=str(ctx.user.id), uid2=str(target.id), counter=counter, count=1)
+            )
+
+            return 1
+
+        c.execute(
+            update(rp_counters)
+            .where((((rp_counters.c.uid1 == str(ctx.user.id)) & (rp_counters.c.uid2 == str(target.id))) |
+                    ((rp_counters.c.uid1 == str(target.id)) & (rp_counters.c.uid2 == str(ctx.user.id)))) &
+                   (rp_counters.c.counter == counter))
+            .values(count=res[0] + 1)
+        )
+
+        return res[0] + 1
+
 
 yaoi_cache = YaoiCache()
 yuri_cache = YuriCache()
