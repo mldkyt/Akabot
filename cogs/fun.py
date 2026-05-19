@@ -503,8 +503,8 @@ class Fun(Cog):
         CONSENT_LEVELS = [
             "nothing",
             "yeet, highfive, kick, carry, bonk",
-            "pat, poke, tickle, cuddle, hug, pat, slap, lappillow",
-            "kiss, bite, handhold"
+            "pat, poke, tickle, cuddle, hug, pat, slap, lappillow, bite",
+            "kiss, handhold"
         ]
 
         consent_level = await get_consent(ctx.user, target)
