@@ -226,6 +226,8 @@ class ConsentView(View):
         await set_consent(self.source, self.target, 1)
         await interaction.respond(apply_appends(interaction.user.id, "Set consent level 1."), ephemeral=True)
         self.stop()
+        self.disable_all_items()
+        await interaction.message.edit(view=self)
 
     @button(label="Set level 2")
     async def consent_2(self, button: Button, interaction: Interaction):
@@ -240,6 +242,8 @@ class ConsentView(View):
         await set_consent(self.source, self.target, 2)
         await interaction.respond(apply_appends(interaction.user.id, "Set consent level 2."), ephemeral=True)
         self.stop()
+        self.disable_all_items()
+        await interaction.message.edit(view=self)
 
     @button(label="Set level 3")
     async def consent_3(self, button: Button, interaction: Interaction):
@@ -254,6 +258,8 @@ class ConsentView(View):
         await set_consent(self.source, self.target, 3)
         await interaction.respond(apply_appends(interaction.user.id, "Set consent level 3."), ephemeral=True)
         self.stop()
+        self.disable_all_items()
+        await interaction.message.edit(view=self)
 
     @button(label="Do not consent")
     async def no_consent(self, button: Button, interaction: Interaction):
@@ -268,6 +274,8 @@ class ConsentView(View):
         await set_consent(self.source, self.target, 0)
         await interaction.respond(apply_appends(interaction.user.id, "You did not consent"), ephemeral=True)
         self.stop()
+        self.disable_all_items()
+        await interaction.message.edit(view=self)
 
 
 def _get_consent_data(c: Connection, user_1: Member | User, user_2: Member | User) -> Row[Any] | None:
