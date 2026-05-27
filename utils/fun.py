@@ -134,6 +134,44 @@ class YuriCache:
         return random_post
 
 
+class ActionBack(View):
+    LANGMAP = {
+        "lappillow": "Swap pillows :3",
+        "highfive": "high five back",
+        "yeet": "Revenge >:3"
+    }
+
+    def __init__(self, category: str, source: Member, target: Member):
+        self.category = category
+        super().__init__(timeout=300, disable_on_timeout=True)
+        self.button_label = self.LANGMAP[self.category] if self.category in self.LANGMAP else (
+                    self.category.title() + " Back")
+
+        self.button = Button(label=self.button_label)
+        self.button.callback = self.action_back
+        self.add_item(self.button)
+
+        self.source = source
+        self.target = target
+
+    async def action_back(self, interaction: Interaction):
+        if interaction.user.id == self.source.id:
+            await interaction.respond(f"The other person must {self.category} you back!", ephemeral=True)
+            return
+
+        if interaction.user.id != self.target.id:
+            await interaction.respond(
+                f"You cannot {self.category} that person, the {self.category} wasn't directed at you!", ephemeral=True)
+            return
+
+        counter = await tick_counter(interaction, self.source, self.category)
+
+        embed = await nb_embed(interaction, self.category, target=self.source, counter=counter)
+        await interaction.respond(embed=embed, view=ActionBack(self.category, self.target, self.source))
+        self.disable_all_items()
+        await interaction.message.edit(view=self)
+
+
 async def nb_api(category: str) -> dict | None:
     """Nekos.best API call"""
     async with ClientSession() as session:
@@ -191,7 +229,7 @@ COUNTER_MESSAGE = {
 }
 
 
-async def nb_embed(ctx: ApplicationContext, category: str, target: Member | None = None,
+async def nb_embed(ctx: ApplicationContext | Interaction, category: str, target: Member | None = None,
                    counter: int | None = None) -> Embed | None:
     nb = await nb_api(category)
     if nb is None:
@@ -372,7 +410,7 @@ async def ensure_consent(ctx: ApplicationContext, target: Member | None, require
     return False
 
 
-async def tick_counter(ctx: ApplicationContext, target: Member, counter: str) -> int:
+async def tick_counter(ctx: ApplicationContext | Interaction, target: Member, counter: str) -> int:
     with engine.begin() as c:
         res = c.execute(
             select(rp_counters.c.count)
