@@ -119,7 +119,7 @@ class Fun(Cog):
         if poke is None:
             return
 
-        await ctx.respond(embed=poke, view=ActionBack("poke", ctx.user, target))
+        await ctx.respond(target.mention, embed=poke, view=ActionBack("poke", ctx.user, target))
 
     @rp_group.command()
     async def smile(self, ctx: ApplicationContext):
@@ -193,7 +193,7 @@ class Fun(Cog):
         if tickle is None:
             return
 
-        await ctx.respond(embed=tickle, view=ActionBack("tickle", ctx.user, target))
+        await ctx.respond(target.mention, embed=tickle, view=ActionBack("tickle", ctx.user, target))
 
     @rp_group.command()
     async def yeet(self, ctx: ApplicationContext, target: Member):
@@ -215,7 +215,7 @@ class Fun(Cog):
         if yeet is None:
             return
 
-        await ctx.respond(embed=yeet, view=ActionBack("yeet", ctx.user, target))
+        await ctx.respond(target.mention, embed=yeet, view=ActionBack("yeet", ctx.user, target))
 
     @rp_group.command()
     async def highfive(self, ctx: ApplicationContext, target: Member):
@@ -237,7 +237,7 @@ class Fun(Cog):
         if highfive is None:
             return
 
-        await ctx.respond(embed=highfive, view=ActionBack("highfive", ctx.user, target))
+        await ctx.respond(target.mention, embed=highfive, view=ActionBack("highfive", ctx.user, target))
 
     @rp_group.command()
     async def wag(self, ctx: ApplicationContext):
@@ -272,7 +272,7 @@ class Fun(Cog):
         if bite is None:
             return
 
-        await ctx.respond(embed=bite, view=ActionBack("bite", ctx.user, target))
+        await ctx.respond(target.mention, embed=bite, view=ActionBack("bite", ctx.user, target))
 
     @rp_group.command()
     async def cuddle(self, ctx: ApplicationContext, target: Member):
@@ -294,7 +294,7 @@ class Fun(Cog):
         if cuddle is None:
             return
 
-        await ctx.respond(embed=cuddle, view=ActionBack("cuddle", ctx.user, target))
+        await ctx.respond(target.mention, embed=cuddle, view=ActionBack("cuddle", ctx.user, target))
 
     @rp_group.command()
     async def kick(self, ctx: ApplicationContext, target: Member):
@@ -316,7 +316,7 @@ class Fun(Cog):
         if kick is None:
             return
 
-        await ctx.respond(embed=kick, view=ActionBack("kick", ctx.user, target))
+        await ctx.respond(target.mention, embed=kick, view=ActionBack("kick", ctx.user, target))
 
     @rp_group.command()
     async def carry(self, ctx: ApplicationContext, target: Member):
@@ -338,7 +338,7 @@ class Fun(Cog):
         if carry is None:
             return
 
-        await ctx.respond(embed=carry)
+        await ctx.respond(target.mention, embed=carry)
 
     @rp_group.command()
     async def hug(self, ctx: ApplicationContext, target: Member):
@@ -360,7 +360,7 @@ class Fun(Cog):
         if hug is None:
             return
 
-        await ctx.respond(embed=hug, view=ActionBack("hug", ctx.user, target))
+        await ctx.respond(target.mention, embed=hug, view=ActionBack("hug", ctx.user, target))
 
     @rp_group.command()
     async def bonk(self, ctx: ApplicationContext, target: Member):
@@ -382,7 +382,7 @@ class Fun(Cog):
         if bonk is None:
             return
 
-        await ctx.respond(embed=bonk, view=ActionBack("bonk", ctx.user, target))
+        await ctx.respond(target.mention, embed=bonk, view=ActionBack("bonk", ctx.user, target))
 
     @rp_group.command()
     async def pat(self, ctx: ApplicationContext, target: Member):
@@ -404,7 +404,7 @@ class Fun(Cog):
         if pat is None:
             return
 
-        await ctx.respond(embed=pat, view=ActionBack("pat", ctx.user, target))
+        await ctx.respond(target.mention, embed=pat, view=ActionBack("pat", ctx.user, target))
 
     @rp_group.command()
     async def kiss(self, ctx: ApplicationContext, target: Member):
@@ -426,7 +426,7 @@ class Fun(Cog):
         if kiss is None:
             return
 
-        await ctx.respond(embed=kiss, view=ActionBack(category="kiss", source=ctx.user, target=target))
+        await ctx.respond(target.mention, embed=kiss, view=ActionBack(category="kiss", source=ctx.user, target=target))
 
     @rp_group.command()
     async def slap(self, ctx: ApplicationContext, target: Member):
@@ -448,7 +448,7 @@ class Fun(Cog):
         if slap is None:
             return
 
-        await ctx.respond(embed=slap, view=ActionBack("slap", ctx.user, target))
+        await ctx.respond(target.mention, embed=slap, view=ActionBack("slap", ctx.user, target))
 
     @rp_group.command()
     async def lappillow(self, ctx: ApplicationContext, target: Member):
@@ -470,7 +470,7 @@ class Fun(Cog):
         if lappillow is None:
             return
 
-        await ctx.respond(embed=lappillow, view=ActionBack("lappillow", ctx.user, target))
+        await ctx.respond(target.mention, embed=lappillow, view=ActionBack("lappillow", ctx.user, target))
 
     @rp_group.command()
     async def handhold(self, ctx: ApplicationContext, target: Member):
@@ -492,7 +492,7 @@ class Fun(Cog):
         if handhold is None:
             return
 
-        await ctx.respond(embed=handhold, view=ActionBack("handhold", ctx.user, target))
+        await ctx.respond(target.mention, embed=handhold, view=ActionBack("handhold", ctx.user, target))
 
     @rp_group.command()
     async def consent(self, ctx: ApplicationContext, target: User):
