@@ -167,7 +167,8 @@ class ActionBack(View):
         counter = await tick_counter(interaction, self.source, self.category)
 
         embed = await nb_embed(interaction, self.category, target=self.source, counter=counter)
-        await interaction.respond(embed=embed, view=ActionBack(self.category, self.target, self.source))
+        await interaction.respond(self.source.mention, embed=embed,
+                                  view=ActionBack(self.category, self.target, self.source))
         self.disable_all_items()
         await interaction.message.edit(view=self)
 
