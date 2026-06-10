@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Any
 
 import discord
 from discord import Member
@@ -286,6 +287,52 @@ def add_xp(c: Connection, member: Member):
         )
         .values(xp=(existing[0] or 0) + xp_per_msg)
     )
+
+
+def edit_xp(c: Connection, member: Member, xp: int, existing: Any | None = None):
+    """SET xp to a level"""
+
+    if existing is None:
+        existing = c.execute(
+            select(leveling.c.xp).where(
+                (leveling.c.uid == str(member.id)) &
+                (leveling.c.gid == str(member.guild.id))
+            )
+        ).fetchone()
+
+    if existing is None:
+        c.execute(
+            insert(leveling).values(
+                uid=str(member.id), gid=str(member.guild.id), xp=xp
+            )
+        )
+        return
+
+    c.execute(
+        update(leveling)
+        .where(
+            (leveling.c.uid == str(member.id))
+            & (leveling.c.gid == str(member.guild.id))
+        )
+        .values(xp=xp)
+    )
+
+
+def edit_xp_rel(c: Connection, member: Member, xp: int):
+    """ADD or REMOVE xp from a member"""
+    existing = c.execute(
+        select(leveling.c.xp).where(
+            (leveling.c.uid == str(member.id)) &
+            (leveling.c.gid == str(member.guild.id))
+        )
+    ).fetchone()
+
+    if existing is not None and existing[0] + xp < 0:
+        print("existing XP is", existing[0], "XP is", xp, "subtraction is", existing[0] + xp)
+        return False, "Unable to set XP to a negative number"
+
+    edit_xp(c, member, (existing[0] if existing is not None else 0) + xp, existing=existing)
+    return True, None
 
 
 def calculate_level(c: Connection, member: Member, xp: int) -> int:

@@ -1,5 +1,5 @@
 import discord
-from discord import ApplicationContext, Message
+from discord import ApplicationContext, Message, SlashCommandGroup, Member, Permissions
 
 from database import engine
 from logger import nekona_logger
@@ -16,7 +16,7 @@ from utils.leveling import (
     setting_leveling_rewards,
     setting_xp_per_level,
     setting_xp_per_message,
-    xp_to_next_level, setting_level_up_message_text,
+    xp_to_next_level, setting_level_up_message_text, edit_xp_rel, edit_xp,
 )
 from utils.message_appends import apply_appends
 from utils.server_settings import settings
@@ -84,6 +84,77 @@ class Leveling(discord.Cog):
         except Exception as e:
             nekona_logger.exception(e)
             await ctx.respond("Error", ephemeral=True)
+
+    admin_commands = SlashCommandGroup(name="leveling_admin", default_member_permissions=Permissions(manage_guild=True))
+
+    @admin_commands.command()
+    async def add_xp(self, ctx: ApplicationContext, user: Member, xp: int):
+        """Add XP to a member. Use responsibly."""
+
+        with engine.begin() as c:
+            edit_xp_rel(c, user, xp)
+
+        await ctx.respond(f"Added {xp} XP to {user.mention}", ephemeral=True)
+
+    @admin_commands.command()
+    async def add_levels(self, ctx: ApplicationContext, user: Member, levels: int):
+        """Add levels to a member. Use responsibly."""
+        with engine.begin() as c:
+            level_xp = int(setting_xp_per_level.get(c, user))
+            edit_xp_rel(c, user, level_xp * levels)
+
+        await ctx.respond(f"Added {levels} levels to {user.mention}", ephemeral=True)
+
+    @admin_commands.command()
+    async def remove_xp(self, ctx: ApplicationContext, user: Member, xp: int):
+        """Remove XP from a member. Use responsibly."""
+        with engine.begin() as c:
+            success, error = edit_xp_rel(c, user, -xp)
+
+        if not success:
+            await ctx.respond(error, ephemeral=True)
+            return
+
+        await ctx.respond(f"Removed {xp} XP from {user.mention}", ephemeral=True)
+
+    @admin_commands.command()
+    async def remove_levels(self, ctx: ApplicationContext, user: Member, levels: int):
+        """Remove levels from a member. Use responsibly."""
+        with engine.begin() as c:
+            level_xp = int(setting_xp_per_level.get(c, user))
+            success, error = edit_xp_rel(c, user, level_xp * -levels)
+
+        if not success:
+            await ctx.respond(error, ephemeral=True)
+            return
+
+        await ctx.respond(f"Removed {levels} levels from {user.mention}", ephemeral=True)
+
+    @admin_commands.command()
+    async def set_xp(self, ctx: ApplicationContext, user: Member, xp: int):
+        """Set member's XP to a value. Use responsibly."""
+        if xp < 0:
+            await ctx.respond("Unable to set XP to a negative number", ephemeral=True)
+            return
+
+        with engine.begin() as c:
+            edit_xp(c, user, xp)
+
+        await ctx.respond(f"Set {user.mention}'s XP to {xp} XP", ephemeral=True)
+
+    @admin_commands.command()
+    async def set_levels(self, ctx: ApplicationContext, user: Member, levels: int):
+        """Set member's levels to a value. Use responsibly."""
+        levels = levels + 1
+        if levels < 0:
+            await ctx.respond("Unable to set levels to a negative number", ephemeral=True)
+            return
+
+        with engine.begin() as c:
+            level_xp = int(setting_xp_per_level.get(c, user))
+            edit_xp(c, user, level_xp * levels)
+
+        await ctx.respond(f"Set {user.mention}'s level count to {levels - 1} levels", ephemeral=True)
 
 
 def setup(bot):
