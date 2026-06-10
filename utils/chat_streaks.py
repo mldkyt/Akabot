@@ -161,7 +161,7 @@ def get_leaderboard(c: Connection, u: Member):
         .order_by(desc(chat_streaks.c.last_message_date - chat_streaks.c.start_date))
     ).fetchall()
 
-    return a
+    return [i for i in a if (date.today() - i[2]).total_seconds() <= 86400]
 
 
 def get_all_streaks_for(c: Connection, b: Bot, m: Member):
