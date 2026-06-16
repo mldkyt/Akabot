@@ -1,7 +1,7 @@
 from discord import Member, Forbidden, HTTPException
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.server_settings import ServerSetting, setting_to_role, SettingType, setting_simple_string, \
     setting_simple_list_string_item
 
@@ -29,11 +29,11 @@ async def apply_roles(member: Member):
             except HTTPException:
                 pass
 
-        nekona_logger.debug("Adding %d roles on join to %s", len(roles), member.display_name)
+        akabot_logger.debug("Adding %d roles on join to %s", len(roles), member.display_name)
 
         try:
             await member.add_roles(*roles)
         except Forbidden:
             pass
         except Exception:
-            nekona_logger.exception("An error occured when applying roles for %s:", member.display_name)
+            akabot_logger.exception("An error occured when applying roles for %s:", member.display_name)

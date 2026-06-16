@@ -3,7 +3,7 @@ from discord import Cog, Interaction, InteractionType, Role, ApplicationContext,
 from discord.ext import commands as commands_ext
 from discord.ui import Button, View, ActionRow
 
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.message_appends import apply_appends
 
 
@@ -88,7 +88,7 @@ class ReactionRoles(Cog):
             await interaction.response.send_message("Reaction role has been created!",
                                                     ephemeral=True)
         except Exception as e:
-            nekona_logger.exception("An error occured:")
+            akabot_logger.exception("An error occured:")
             await interaction.response.send_message("An error occured", ephemeral=True)
 
     @reaction_roles_subcommand.command(name="edit", description="Edit a reaction role")
@@ -138,7 +138,7 @@ class ReactionRoles(Cog):
             await interaction.response.send_message("Reaction role has been edited!",
                                                     ephemeral=True)
         except Exception as e:
-            nekona_logger.exception("An error occured:")
+            akabot_logger.exception("An error occured:")
             await interaction.response.send_message("An error occured", ephemeral=True)
 
     @Cog.listener()
@@ -219,7 +219,7 @@ class ReactionRoles(Cog):
                 await interaction.user.remove_roles(*roles, reason="Reaction role")
                 await interaction.user.add_roles(role, reason="Reaction role")
         except Exception as e:
-            nekona_logger.exception("An error occured:")
+            akabot_logger.exception("An error occured:")
 
 
 def setup(bot: Bot):

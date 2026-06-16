@@ -11,7 +11,7 @@ from discord import (
 from discord.ext.pages import Paginator
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.chat_streaks import (
     get_all_streaks_for,
     get_guild_link,
@@ -71,7 +71,7 @@ class ChatStreaks(Cog):
                         if the_reply is not None and reply_in_same_channel:
                             await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
         except Exception as e:
-            nekona_logger.exception(e)
+            akabot_logger.exception(e)
 
     @chat_streaks.command()
     async def streak(self, ctx: ApplicationContext):
@@ -83,7 +83,7 @@ class ChatStreaks(Cog):
                     apply_appends(ctx.user.id, f"Your current streak is {streak} days."), ephemeral=True
                 )
         except Exception as e:
-            nekona_logger.exception(e)
+            akabot_logger.exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
@@ -111,7 +111,7 @@ class ChatStreaks(Cog):
                 paginator = Paginator(pages)
                 await paginator.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
-            nekona_logger.exception(e)
+            akabot_logger.exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
