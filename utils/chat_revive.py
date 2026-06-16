@@ -4,7 +4,7 @@ from discord import Message, Member, Bot, HTTPException
 from sqlalchemy import Connection, select, insert, update, delete
 
 from database import engine, chat_revive
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.server_settings import ServerSetting, SettingType, setting_to_text_channel, setting_to_number, \
     setting_simple_string, setting_to_role
 
@@ -96,7 +96,7 @@ async def update_chat_revive(message: Message):
         setting = [i for i in setting_chat_revive_channels.get(c, message.author) if
                    i.startswith(str(message.channel.id))]
         if len(setting) == 0:
-            nekona_logger.debug("[Chat Revive] Event cancelled for %s #%s, not in chat revive", message.guild.name,
+            akabot_logger.debug("[Chat Revive] Event cancelled for %s #%s, not in chat revive", message.guild.name,
                                 message.channel.name)
             return
 
@@ -115,14 +115,14 @@ async def update_chat_revive(message: Message):
                 .values(cid=str(message.channel.id), gid=str(message.guild.id),
                         notif_time=datetime.datetime.now() + datetime.timedelta(minutes=int(minutes)))
             )
-            nekona_logger.debug("[Chat Revive] Added chat revive for %s #%s", message.guild.name, message.channel.name)
+            akabot_logger.debug("[Chat Revive] Added chat revive for %s #%s", message.guild.name, message.channel.name)
         else:
             c.execute(
                 update(chat_revive)
                 .values(notif_time=datetime.datetime.now() + datetime.timedelta(minutes=int(minutes)))
                 .where((chat_revive.c.gid == str(message.guild.id)) & (chat_revive.c.cid == str(message.channel.id)))
             )
-            nekona_logger.debug("[Chat Revive] Update chat revive for %s #%s", message.guild.name, message.channel.name)
+            akabot_logger.debug("[Chat Revive] Update chat revive for %s #%s", message.guild.name, message.channel.name)
 
 
 async def notifications(bot: Bot):
@@ -132,14 +132,14 @@ async def notifications(bot: Bot):
             .where(chat_revive.c.notif_time < datetime.datetime.now())
         ).fetchall()
 
-        nekona_logger.debug("[Chat Revive] Sending %d notifications...", len(notifications))
+        akabot_logger.debug("[Chat Revive] Sending %d notifications...", len(notifications))
         for i in notifications:
             try:
                 guild = bot.get_guild(int(i[0]))
                 channel = await bot.fetch_channel(int(i[1]))
                 chat_revival_role = setting_chat_revive_role.get(c, guild.me)
 
-                nekona_logger.debug("[Chat Revive] Sending in %s #%s...", guild.name, channel.name)
+                akabot_logger.debug("[Chat Revive] Sending in %s #%s...", guild.name, channel.name)
                 if chat_revival_role is None:
                     await channel.send("Chat Revive!")
                 else:

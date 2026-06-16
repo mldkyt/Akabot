@@ -2,7 +2,7 @@ from discord import Cog, Bot, SlashCommandGroup, ApplicationContext, User, Voice
 from sqlalchemy import select, delete, insert
 
 from database import engine, vc_notifications_all, vc_notifications_user, vc_notifications_channel
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.message_appends import apply_appends
 
 
@@ -132,7 +132,7 @@ class VCNotifications(Cog):
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         with engine.begin() as c:
             if before.channel is None and after.channel is not None:
-                nekona_logger.debug("[VC notifications] %s joined %s", member.display_name, after.channel.name)
+                akabot_logger.debug("[VC notifications] %s joined %s", member.display_name, after.channel.name)
 
                 sent_to = []
 
@@ -144,7 +144,7 @@ class VCNotifications(Cog):
                     try:
                         dm_target = member.guild.get_member(int(i[0]))
                         if dm_target is not None:
-                            nekona_logger.debug(
+                            akabot_logger.debug(
                                 "[VC notifications] DMing %s about join in %s because of all notifications",
                                 dm_target.display_name, after.channel.name)
                             await dm_target.send(f"{member.mention} has joined {after.channel.mention}\n"
@@ -164,7 +164,7 @@ class VCNotifications(Cog):
 
                         dm_target = member.guild.get_member(int(i[0]))
                         if dm_target is not None:
-                            nekona_logger.debug(
+                            akabot_logger.debug(
                                 "[VC notifications] DMing %s about join in %s because of member notifications",
                                 dm_target.display_name, after.channel.name)
                             await dm_target.send(f"{member.mention} has joined {after.channel.mention}\n"
@@ -184,7 +184,7 @@ class VCNotifications(Cog):
 
                         dm_target = member.guild.get_member(int(i[0]))
                         if dm_target is not None:
-                            nekona_logger.debug(
+                            akabot_logger.debug(
                                 "[VC notifications] DMing %s about join in %s because of channel notifications",
                                 dm_target.display_name, after.channel.name)
                             await dm_target.send(f"{member.mention} has joined {after.channel.mention}\n"

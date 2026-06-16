@@ -2,7 +2,7 @@ import discord
 from discord import ApplicationContext, Message, SlashCommandGroup, Member, Permissions
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.chat_streaks import handle_send_reply
 from utils.docs import Docs, DocsCommand
 from utils.leveling import (
@@ -63,7 +63,7 @@ class Leveling(discord.Cog):
                         if level_up_message is not None and reply_in_same_channel:
                             await level_up_message.delete(delay=5)
         except Exception as e:
-            nekona_logger.exception(e)
+            akabot_logger.exception(e)
 
     @discord.slash_command()
     async def level(self, ctx: ApplicationContext):
@@ -82,7 +82,7 @@ class Leveling(discord.Cog):
                     ephemeral=True,
                 )
         except Exception as e:
-            nekona_logger.exception(e)
+            akabot_logger.exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     admin_commands = SlashCommandGroup(name="leveling_admin", default_member_permissions=Permissions(manage_guild=True))

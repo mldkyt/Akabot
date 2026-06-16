@@ -176,7 +176,7 @@ def docs():
     return str(
         Docs(
             name="User Settings",
-            description="User settings help you adjust the Nekona settings for yourself. There are 2 types of settings: normal settings and list settings. Available settings for each module of Nekona can be read under the respective page. Use the sidebar.",
+            description="User settings help you adjust the Akabot settings for yourself. There are 2 types of settings: normal settings and list settings. Available settings for each module of Akabot can be read under the respective page. Use the sidebar.",
             commands=[
                 DocsCommand(
                     command="set_setting",
@@ -204,7 +204,7 @@ def docs():
                 ),
                 DocsCommand(
                     command="list_settings",
-                    description="List all settings available in Nekona and their current values.",
+                    description="List all settings available in Akabot and their current values.",
                 ),
                 DocsCommand(
                     command="add_list_setting",

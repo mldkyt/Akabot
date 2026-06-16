@@ -6,7 +6,7 @@ from discord import AutocompleteContext, Guild, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import server_settings, server_settings_list
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.conversion import convert_role, convert_text_channel, convert_voice_channel
 
 
@@ -324,11 +324,11 @@ class ServerSettings:
                 try:
                     pretty_setting = i.get_formatted(c, member)
                     if len(pretty_setting.strip()) == 0:
-                        nekona_logger.warning("Setting %s is empty when normal_view was called", i.name)
+                        akabot_logger.warning("Setting %s is empty when normal_view was called", i.name)
 
                     sets.append(pretty_setting)
                 except Exception:
-                    nekona_logger.exception("An error occurred while getting setting %s", i.name)
+                    akabot_logger.exception("An error occurred while getting setting %s", i.name)
 
         return sets
 

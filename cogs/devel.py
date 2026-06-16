@@ -5,7 +5,7 @@ from discord import Bot, Cog, SlashCommandGroup, ApplicationContext, option, gui
 from sqlalchemy import select, insert, update
 
 from database import engine, chat_streaks
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.ads import get_ad
 
 
@@ -76,7 +76,7 @@ def setup(bot: Bot):
         return
 
     if len(os.getenv("DEVEL_GUILD_ID", "").strip()) == 0:
-        nekona_logger.warning("Devel mode is on, but commands were not loaded due to missing guild id.")
+        akabot_logger.warning("Devel mode is on, but commands were not loaded due to missing guild id.")
         return
 
     bot.add_cog(Devel(bot))

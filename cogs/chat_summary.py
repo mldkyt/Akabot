@@ -11,7 +11,7 @@ from discord import (
 from discord.ext.tasks import loop
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.chat_summary import (
     chat_summary,
     chat_summary_extra,
@@ -46,11 +46,11 @@ class ChatSummary(Cog):
                             if not isinstance(channel, TextChannel):
                                 continue
 
-                            nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s", channel.name)
+                            akabot_logger.debug("[Chat Summary/Backfill] Backfilling channel %s", channel.name)
                             await perform_backfill(i, channel)
-                            nekona_logger.debug("[Chat Summary/Backfill] Backfilling channel %s finished", channel.name)
+                            akabot_logger.debug("[Chat Summary/Backfill] Backfilling channel %s finished", channel.name)
             except Exception:
-                nekona_logger.exception("Error when backfilling channels on startup")
+                akabot_logger.exception("Error when backfilling channels on startup")
 
             self.has_init = True
 
@@ -70,7 +70,7 @@ class ChatSummary(Cog):
                 # Count into chat summary
                 inc(c, msg)
         except Exception as e:
-            nekona_logger.exception(e)
+            akabot_logger.exception(e)
 
     @loop(minutes=1)
     async def task_summary(self):
@@ -84,7 +84,7 @@ class ChatSummary(Cog):
                 with engine.begin() as c:
                     await summarize(c, i)
             except Exception:
-                nekona_logger.exception("Error during summarizing")
+                akabot_logger.exception("Error during summarizing")
 
     chat_summary_commands = SlashCommandGroup(name="chat_summary")
 

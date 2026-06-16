@@ -63,7 +63,7 @@ def run_migrations_online() -> None:
 
     """
     connectable = create_engine(
-        os.getenv("DB_URL", "sqlite:///data/nekona.db")
+        os.getenv("DB_URL", "sqlite:///data/akabot.db")
     )
 
     with connectable.connect() as connection:

@@ -8,7 +8,7 @@ if not os.path.exists("data"):
     os.mkdir("data")
 
 engine = create_engine(
-    os.getenv("DB_URL", "sqlite:///data/nekona.db"),
+    os.getenv("DB_URL", "sqlite:///data/akabot.db"),
     connect_args=json.loads(os.getenv("DB_ARGS") or "{}"),
     poolclass=StaticPool
 )
