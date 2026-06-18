@@ -1,8 +1,8 @@
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache postgresql17 postgresql17-dev bash git
+RUN apk add --no-cache gcc postgresql17 postgresql17-dev bash git
 
 COPY pyproject.toml .
 
