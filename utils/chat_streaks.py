@@ -4,7 +4,7 @@ from discord import Bot, Guild, Member, Message, PartialMessageable, DMChannel, 
 from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks, engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import (
     ServerSetting,
@@ -219,5 +219,5 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         assert bot_channel is not None
         return await bot_channel.send(f"{msg.author.mention} {content}"), False
     except Exception as e:
-        nekona_logger.exception("handle_send_reply exception")
+        akabot_logger.exception("handle_send_reply exception")
         return None, False

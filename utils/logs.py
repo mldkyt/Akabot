@@ -10,7 +10,7 @@ from discord import (
 )
 from sqlalchemy import Connection
 
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.server_settings import (
     ServerSetting,
     SettingType,
@@ -95,7 +95,7 @@ def is_logging_enabled(c: Connection, g: Guild, logging_type: str) -> bool:
         if i[0] == logging_type:
             return i[1].get_guild(c, g) == "true"
 
-    nekona_logger.warning("Unable to find %s logging type!", logging_type)
+    akabot_logger.warning("Unable to find %s logging type!", logging_type)
     return True
 
 

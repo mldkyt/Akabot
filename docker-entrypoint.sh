@@ -3,5 +3,5 @@
 echo "==> Running migrations"
 uv run alembic upgrade head
 
-echo "==> Starting Nekona"
+echo "==> Starting Akabot"
 uv run main.py

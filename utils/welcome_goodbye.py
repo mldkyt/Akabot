@@ -5,7 +5,7 @@ from discord import Member, Embed, EmbedFooter, Color
 from sqlalchemy import Connection
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.server_settings import ServerSetting, SettingType, setting_to_text_channel, \
     setting_simple_string, setting_number_within_range
 
@@ -152,7 +152,7 @@ async def send_welcome_message(c: Connection, member: Member):
             description=msg,
             color=Color.green(),
             footer=EmbedFooter(
-                text="Nekona welcomes you too!" # TODO: turn the "Nekona" to a link
+                text="Akabot welcomes you too!"  # TODO: turn the "Akabot" to a link
             )
         ))
         grace_period_second[uuid.uuid4()] ={
@@ -161,29 +161,31 @@ async def send_welcome_message(c: Connection, member: Member):
             'after': datetime.datetime.now() + datetime.timedelta(minutes=dur)
         }
     elif msg_type == "text":
-        message = await chan.send(msg + "\nNekona welcomes you too!") # TODO: turn the "Nekona" to a link
+        message = await chan.send(msg + "\nAkabot welcomes you too!")  # TODO: turn the "Akabot" to a link
         grace_period_second[uuid.uuid4()] ={
             'message': message,
             'member': member,
             'after': datetime.datetime.now() + datetime.timedelta(minutes=dur)
         }
     else:
-        nekona_logger.warning("Invalid message type %s when welcoming member!", msg_type)
+        akabot_logger.warning("Invalid message type %s when welcoming member!", msg_type)
 
 async def send_goodbye_message(c: Connection, member: Member):
     # Check first grace list
     for k, v in grace_period_first.items():
         if v['member'].id == member.id:
-            nekona_logger.debug("Not sending goodbye message for %s, member is in join grace period", member.display_name)
+            akabot_logger.debug("Not sending goodbye message for %s, member is in join grace period",
+                                member.display_name)
             del grace_period_first[k]
             return
 
     # Check second grace list
     for k, v in grace_period_second.items():
         if v['member'].id == member.id:
-            nekona_logger.debug("Deleting welcome message for %s", member.display_name)
+            akabot_logger.debug("Deleting welcome message for %s", member.display_name)
             await v['message'].delete()
-            nekona_logger.debug("Not sending goodbye message for %s, member is in second grace period", member.display_name)
+            akabot_logger.debug("Not sending goodbye message for %s, member is in second grace period",
+                                member.display_name)
 
             del grace_period_second[k]
             return
@@ -216,7 +218,7 @@ async def send_goodbye_message(c: Connection, member: Member):
     elif msg_type == "text":
         await chan.send(msg)
     else:
-        nekona_logger.warning("Invalid message type %s when saying goodbye to member!", msg_type)
+        akabot_logger.warning("Invalid message type %s when saying goodbye to member!", msg_type)
 
 
 async def handle_first_grace_period():
@@ -225,13 +227,13 @@ async def handle_first_grace_period():
 
     for k, v in grace_period_first.items():
         if v['after'] < datetime.datetime.now():
-            nekona_logger.debug("Sending welcome message for %s", v['member'].display_name)
+            akabot_logger.debug("Sending welcome message for %s", v['member'].display_name)
             discard_these.append(k)
             with engine.begin() as c:
                 try:
                     await send_welcome_message(c, v['member'])
                 except Exception:
-                    nekona_logger.exception("Failed to send welcome message")
+                    akabot_logger.exception("Failed to send welcome message")
 
     for i in discard_these:
         del grace_period_first[i]
@@ -243,7 +245,7 @@ def handle_second_grace_period():
 
     for k, v in grace_period_second.items():
         if v['after'] < datetime.datetime.now():
-            nekona_logger.debug("Discarding second grace period for %s", v['member'].display_name)
+            akabot_logger.debug("Discarding second grace period for %s", v['member'].display_name)
             discard_these.append(k)
 
     for i in discard_these:

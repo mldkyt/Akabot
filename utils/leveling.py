@@ -7,7 +7,7 @@ from discord import Member
 from sqlalchemy import Connection, insert, select, update
 
 from database import leveling, server_settings_list
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.conversion import convert_role
 from utils.server_settings import (
     ServerSetting,
@@ -347,11 +347,11 @@ def xp_to_next_level(c: Connection, member: Member, xp: int) -> int:
 
 async def apply_leveling_rewards(c: Connection, member: discord.Member):
     if member.guild.self_role is None:
-        nekona_logger.warning("TODO: unhandable error")
+        akabot_logger.warning("TODO: unhandable error")
         return
 
     if not member.guild.me.guild_permissions.manage_roles:
-        nekona_logger.warning(
+        akabot_logger.warning(
             "TODO: warn server owner about not able to give out roles"
         )
         return
@@ -378,14 +378,14 @@ async def apply_leveling_rewards(c: Connection, member: discord.Member):
             if i[0] < member.guild.self_role:
                 to_add.append(i[0])
             else:
-                nekona_logger.warning(
+                akabot_logger.warning(
                     "TODO: warn server owner about not able to give out roles"
                 )
         elif level < i[1] and i[0] in member.roles:
             if i[0] < member.guild.self_role:
                 to_remove.append(i[0])
             else:
-                nekona_logger.warning(
+                akabot_logger.warning(
                     "TODO: warn server owner about not able to give out roles"
                 )
 

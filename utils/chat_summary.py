@@ -17,7 +17,7 @@ from database import (
     yearly_chat_summary_channels,
     yearly_chat_summary_members,
 )
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.ads import get_ad
 from utils.conversion import convert_text_channel
 from utils.server_settings import (
@@ -453,7 +453,7 @@ async def summarize(c: Connection, g: Guild):
 
 async def perform_backfill(guild: Guild, channel: TextChannel):
     try:
-        nekona_logger.debug("[Chat Summary/Backfill: Backfilling channel %s in %s", channel.name, guild.name)
+        akabot_logger.debug("[Chat Summary/Backfill: Backfilling channel %s in %s", channel.name, guild.name)
         with engine.begin() as c:
             # Clear the messages
             c.execute(
@@ -783,13 +783,13 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                 i += 1
                 if i % 500 == 0:
                     # Update status message
-                    nekona_logger.debug(
+                    akabot_logger.debug(
                         "[Chat Summary/Backfill: Processing... %d messages today, %d this month, %d this year",
                         day_messages, month_messages, year_messages)
 
-            nekona_logger.debug(
+            akabot_logger.debug(
                 "[Chat Summary/Backfill: OK: Task finished: %d messages today, %d messages this month, %d this year",
                 day_messages, month_messages, year_messages)
     except Exception:
-        nekona_logger.exception("Chat Summary Backfill failed:")
-        nekona_logger.debug("[Chat Summary/Backfill: An error occurred")
+        akabot_logger.exception("Chat Summary Backfill failed:")
+        akabot_logger.debug("[Chat Summary/Backfill: An error occurred")

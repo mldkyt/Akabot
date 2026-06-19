@@ -2,7 +2,7 @@ from discord import Bot, Member, Forbidden
 from sqlalchemy import Connection
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.server_settings import ServerSetting, SettingType, setting_to_voice_channel
 
 
@@ -83,4 +83,4 @@ async def update(bot: Bot):
                 except Forbidden:
                     pass
                 except Exception:
-                    nekona_logger.exception("Error updating statistic channel in %s", guild.name)
+                    akabot_logger.exception("Error updating statistic channel in %s", guild.name)

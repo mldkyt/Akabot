@@ -9,7 +9,7 @@ from discord.ui import View, button, Button
 from sqlalchemy import select, update, insert, Connection, Row
 
 from database import engine, consent, rp_counters
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.message_appends import apply_appends
 from utils.server_settings import ServerSetting, setting_to_boolean, setting_simple_string_boolean, SettingType
 
@@ -67,7 +67,7 @@ class YaoiCache:
                     json={"userId": YAOIBOT_ID, "limit": 100, "withFiles": True},
             ) as req:
                 if not req.ok:
-                    nekona_logger.warning(
+                    akabot_logger.warning(
                         "Failed to fetch yaoi :( Status %d %s",
                         req.status,
                         await req.text(),
@@ -110,7 +110,7 @@ class YuriCache:
                     json={"userId": YURIBOT_ID, "limit": 100, "withFiles": True},
             ) as req:
                 if not req.ok:
-                    nekona_logger.warning(
+                    akabot_logger.warning(
                         "Failed to fetch yuri :( Status %d %s",
                         req.status,
                         await req.text(),
@@ -241,9 +241,9 @@ async def nb_embed(ctx: ApplicationContext | Interaction, category: str, target:
     if "artist_name" in nb and "artist_href" in nb:
         author = EmbedAuthor(name=nb["artist_name"], url=nb["artist_href"])
 
-    footer = EmbedFooter(text="Powered by Nekona")
+    footer = EmbedFooter(text="Powered by Akabot")
     if "source_url" in nb:
-        footer = EmbedFooter(text=f"Powered by Nekona | [Source]({nb['source_url']})")
+        footer = EmbedFooter(text=f"Powered by Akabot | [Source]({nb['source_url']})")
 
     if category in NB_TITLES:
         title = NB_TITLES[category]

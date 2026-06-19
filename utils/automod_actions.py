@@ -12,7 +12,7 @@ from discord import (
 from sqlalchemy import Connection
 
 from database import engine
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
 from utils.server_settings import ServerSetting, SettingType
 
@@ -224,7 +224,7 @@ async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEv
         await payload.member.kick(reason=reason)
         await send_message_to_log_channel(c, payload.guild, Embed(
             title='Automod has Kicked a Member!',
-            description='Nekona has kicked a member after AutoMod action execution',
+            description='Akabot has kicked a member after AutoMod action execution',
             fields=[
                 EmbedField(name="Member",
                            value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})"),
@@ -239,7 +239,7 @@ async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEv
         await payload.member.ban(reason=reason, delete_message_seconds=604800)
         await send_message_to_log_channel(c, payload.guild, Embed(
             title='Automod has Banned a Member!',
-            description='Nekona has banned a member after AutoMod action execution',
+            description='Akabot has banned a member after AutoMod action execution',
             fields=[
                 EmbedField(name="Member",
                            value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})"),
@@ -256,7 +256,7 @@ async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEv
         await payload.member.timeout_for(timedelta(seconds=time), reason=reason)
         await send_message_to_log_channel(c, payload.guild, Embed(
             title='Automod has Muted a Member!',
-            description='Nekona has muted a member after AutoMod action execution',
+            description='Akabot has muted a member after AutoMod action execution',
             fields=[
                 EmbedField(name="Member",
                            value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})"),
@@ -270,7 +270,7 @@ async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEv
         if payload.member.can_send(Message):
             await payload.member.send(content=message)
     else:
-        nekona_logger.warning(
+        akabot_logger.warning(
             f"Tried to perform action for {payload.rule_id}, but {args[1]} is an invalid action!"
         )
 
@@ -280,7 +280,7 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
     if guild is None:
         guild = await bot.fetch_guild(payload.guild_id)
         if guild is None:
-            nekona_logger.warning(
+            akabot_logger.warning(
                 "When executing AutoMod actions, guild with ID %s was not found",
                 str(payload.guild_id),
             )
@@ -290,7 +290,7 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
     if member is None:
         member = await guild.fetch_member(payload.user_id)
         if member is None:
-            nekona_logger.warning(
+            akabot_logger.warning(
                 "When executing AutoMod actions in %s, member with ID %s was not found!",
                 guild.name,
                 str(payload.user_id),
@@ -309,4 +309,4 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
                 with engine.begin() as c2:  # separate connection for running this call with as an exception will not allow writing
                     await handle_automod_action(c2, payload, i)
             except Exception:
-                nekona_logger.exception("AutoMod execution error occurred:")
+                akabot_logger.exception("AutoMod execution error occurred:")

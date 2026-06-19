@@ -1,6 +1,6 @@
 from discord import AutoModActionExecutionEvent, AutoModRule, Bot, Cog
 
-from logger import nekona_logger
+from logger import akabot_logger
 from utils.automod_actions import automod_actions, fetch_actions, handle_automod_actions
 from utils.docs import Docs
 from utils.server_settings import settings
@@ -30,7 +30,7 @@ class AutomodActions(Cog):
             await fetch_actions(payload.guild)
             await handle_automod_actions(self.bot, payload)
         except Exception:
-            nekona_logger.exception("Automod Action execution error:")
+            akabot_logger.exception("Automod Action execution error:")
 
     @Cog.listener()
     async def on_auto_moderation_rule_create(self, rule: AutoModRule):
