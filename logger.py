@@ -1,9 +1,13 @@
 import logging
+import os.path
 
 akabot_logger = logging.getLogger("akabot")
 akabot_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 akabot_logger.setLevel(logging.DEBUG)
+
+if not os.path.exists("logs"):
+    os.mkdir("logs")
 
 file_handler = logging.FileHandler(filename="logs/akabot.log", mode="a", encoding="utf-8")
 file_handler.setLevel(logging.INFO)
