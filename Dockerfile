@@ -13,6 +13,7 @@ COPY .git/ .git/.
 COPY docker/ docker/.
 COPY logger.py .
 COPY main.py .
+COPY webmain.py .
 COPY database.py .
 COPY cogs/ cogs/.
 COPY utils/ utils/.
