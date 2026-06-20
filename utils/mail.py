@@ -67,7 +67,6 @@ def get_all_mail(user_id: str) -> list[tuple[int, str, str, bool]]:
 
     return mai
 
-
 def mark_as_read(user_id: str, mail_id: int):
     with engine.begin() as c:
         c.execute(
