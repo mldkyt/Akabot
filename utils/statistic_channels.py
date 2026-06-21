@@ -25,7 +25,7 @@ def statistic_channel_add_response(c: Connection, m: Member, v: str) -> str:
 
 
 def statistic_channel_remove_processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    channels = setting_statistic_channels.get(c, m)
+    channels = setting_statistic_channels.get(c, m.guild.id)
     channel = [i for i in channels if channels.lower().startswith(v.lower())]
     if len(channel) == 0:
         return False, "Channel not found"
@@ -64,7 +64,7 @@ setting_statistic_channels = ServerSetting(
 async def update(bot: Bot):
     with engine.begin() as c:
         for guild in bot.guilds:
-            statistic_channels = setting_statistic_channels.get_guild(c, guild)
+            statistic_channels = setting_statistic_channels.get(c, guild.id)
             for i in statistic_channels:
 
                 params = i.split(";")

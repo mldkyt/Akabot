@@ -22,7 +22,7 @@ class VerificationModalSilly(Modal):
 
     async def callback(self, interaction: Interaction):
         with engine.begin() as c:
-            verification_role_id = setting_verification_role.get_guild(c, interaction.guild)
+            verification_role_id = setting_verification_role.get(c, interaction.guild_id)
 
         if verification_role_id is None:
             await interaction.respond("The owner has misconfigured the verification channel", ephemeral=True)
@@ -70,7 +70,7 @@ class VerificationModalMath(Modal):
             return
 
         with engine.begin() as c:
-            verification_role_id = setting_verification_role.get_guild(c, interaction.guild)
+            verification_role_id = setting_verification_role.get(c, interaction.guild_id)
 
         if verification_role_id is None:
             await interaction.respond("The owner has misconfigured the verification channel", ephemeral=True)
@@ -93,7 +93,7 @@ class VerificationView(View):
     @button(label="Verify", style=ButtonStyle.primary, custom_id="verification")
     async def verify(self, _: Button, interaction: Interaction):
         with engine.begin() as c:
-            verification_role_id = setting_verification_role.get_guild(c, interaction.guild)
+            verification_role_id = setting_verification_role.get(c, interaction.guild.id)
 
         if verification_role_id is None:
             await interaction.respond("The owner has misconfigured the verification channel", ephemeral=True)
@@ -110,7 +110,7 @@ class VerificationView(View):
             return
 
         with engine.begin() as c:
-            ver_guild = setting_verification_mode.get_guild(c, interaction.guild)
+            ver_guild = setting_verification_mode.get(c, interaction.guild.id)
             if ver_guild == "math":
                 await interaction.response.send_modal(VerificationModalMath())
             elif ver_guild == "silly":
@@ -135,7 +135,7 @@ class Verification(Cog):
     @default_permissions(manage_guild=True)
     async def send_verify_message(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            verification_role_id = setting_verification_role.get(c, ctx.user)
+            verification_role_id = setting_verification_role.get(c, ctx.guild.id)
 
         if verification_role_id is None or not verification_role_id.isnumeric():
             await ctx.respond("Please set a verification role first", ephemeral=True)

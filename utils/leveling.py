@@ -233,7 +233,7 @@ def get_xp(c: Connection, uid: int, gid: int) -> int:
 
 
 def get_multiplier(c: Connection, m: Member):
-    multipliers = setting_leveling_multipliers.get(c, m)
+    multipliers = setting_leveling_multipliers.get(c, m.guild.id)
 
     multiplier = 1
 
@@ -261,7 +261,7 @@ def get_multiplier(c: Connection, m: Member):
 
 
 def add_xp(c: Connection, member: Member):
-    xp_per_msg = int(setting_xp_per_message.get(c, member))
+    xp_per_msg = int(setting_xp_per_message.get(c, member.guild.id))
     xp_per_msg *= get_multiplier(c, member)
 
     existing = c.execute(
@@ -336,12 +336,12 @@ def edit_xp_rel(c: Connection, member: Member, xp: int):
 
 
 def calculate_level(c: Connection, member: Member, xp: int) -> int:
-    xp_per_level = int(setting_xp_per_level.get(c, member))
+    xp_per_level = int(setting_xp_per_level.get(c, member.guild.id))
     return (xp // xp_per_level) + 1
 
 
 def xp_to_next_level(c: Connection, member: Member, xp: int) -> int:
-    xp_per_level = int(setting_xp_per_level.get(c, member))
+    xp_per_level = int(setting_xp_per_level.get(c, member.guild.id))
     return xp - ((calculate_level(c, member, xp) - 1) * xp_per_level)
 
 
@@ -359,7 +359,7 @@ async def apply_leveling_rewards(c: Connection, member: discord.Member):
     xp = get_xp(c, member.id, member.guild.id)
     level = calculate_level(c, member, xp)
 
-    rewards = [i.split(";") for i in setting_leveling_rewards.get(c, member)]
+    rewards = [i.split(";") for i in setting_leveling_rewards.get(c, member.guild.id)]
     rewards = [[int(i[0]), int(i[1])] for i in rewards]
     rewards = [
         (member.guild.get_role(i[0]), i[1])

@@ -178,12 +178,12 @@ def meow_back_for_message(message: Message):
         return ""
 
     with engine.begin() as c:
-        meowing_enabled = meowing.get_guild(c, message.guild) == "true"
-        colon_3_enabled = colon_3.get_guild(c, message.guild) == "true"
-        owo_enabled = owo.get_guild(c, message.guild) == "true"
-        awawa_enabled = awawa.get_guild(c, message.guild) == "true"
-        barking_enabled = barking.get_guild(c, message.guild) == "true"
-        wafing_enabled = wafing.get_guild(c, message.guild) == "true"
+        meowing_enabled = meowing.get(c, message.guild.id) == "true"
+        colon_3_enabled = colon_3.get(c, message.guild.id) == "true"
+        owo_enabled = owo.get(c, message.guild.id) == "true"
+        awawa_enabled = awawa.get(c, message.guild.id) == "true"
+        barking_enabled = barking.get(c, message.guild.id) == "true"
+        wafing_enabled = wafing.get(c, message.guild.id) == "true"
 
     message_reply = " ".join(
         [

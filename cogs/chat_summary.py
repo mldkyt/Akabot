@@ -41,7 +41,7 @@ class ChatSummary(Cog):
             try:
                 with engine.begin() as c:
                     async for i in self.bot.fetch_guilds(limit=None):
-                        for j in chat_summary.get_guild(c, i):
+                        for j in chat_summary.get(c, i.id):
                             channel = await i.fetch_channel(int(j))
                             if not isinstance(channel, TextChannel):
                                 continue

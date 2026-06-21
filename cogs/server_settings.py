@@ -43,7 +43,7 @@ class ServerSettings(discord.Cog):
                 await ctx.respond(value, ephemeral=True)
                 return
 
-            setting.set(c, ctx.user, value)
+            setting.validate_and_set(c, ctx.user, value)
 
             response = setting.respond_add(c, ctx.user, value)
             await ctx.respond(response, ephemeral=True)
@@ -67,7 +67,7 @@ class ServerSettings(discord.Cog):
             return
 
         with engine.begin() as c:
-            value = setting.get(c, ctx.user)
+            value = setting.get(c, ctx.guild.id)
 
         await ctx.respond(f"{name} is currently {value}", ephemeral=True)
 

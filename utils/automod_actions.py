@@ -105,7 +105,7 @@ def process_add(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     if action in ["mute", "kick", "ban"]:
         check_action = ["mute", "kick", "ban"]
 
-    for i in automod_actions.get(c, m):
+    for i in automod_actions.get(c, m.guild.id):
         i_args = i.split(";")
         if i_args[0] == str(rule.id) and i_args[1] in check_action:
             return False, (
@@ -140,7 +140,7 @@ def process_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
             rule = i
 
     if len(args) == 1:
-        for i in automod_actions.get(c, m):
+        for i in automod_actions.get(c, m.guild.id):
             if i.startswith(str(rule.id)):
                 break
         else:
@@ -154,7 +154,7 @@ def process_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
         else:
             action = args[1]
 
-        for i in automod_actions.get(c, m):
+        for i in automod_actions.get(c, m.guild.id):
             args_db = i.split(";")
             if (
                     args_db[0].strip().lower() == str(rule.id).strip().lower()
@@ -173,7 +173,7 @@ def process_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
             rule = i
 
     if len(args) == 1:
-        for i in automod_actions.get(c, m):
+        for i in automod_actions.get(c, m.guild.id):
             if len(args) == 1:
                 if i.startswith(str(rule.id)):
                     return True, i
@@ -186,7 +186,7 @@ def process_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
         else:
             action = args[1]
 
-        for i in automod_actions.get(c, m):
+        for i in automod_actions.get(c, m.guild.id):
             args_db = i.split(";")
             if (
                     args_db[0].strip().lower() == str(rule.id).strip().lower()
@@ -301,7 +301,7 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
     payload.member = member
 
     with engine.begin() as c:
-        actions = automod_actions.get_guild(c, payload.guild)
+        actions = automod_actions.get(c, payload.guild.id)
 
     for i in actions:
         if i.startswith(str(payload.rule_id)):

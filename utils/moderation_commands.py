@@ -24,7 +24,7 @@ moderator_roles = ServerSetting(
 
 
 def is_user_moderator(c: Connection, m: Member):
-    moderators = moderator_roles.get(c, m)
+    moderators = moderator_roles.get(c, m.guild.id)
     for i in moderators:
         for j in m.roles:
             if int(i) == j.id:

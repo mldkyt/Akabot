@@ -311,8 +311,8 @@ def inc(c: Connection, m: Message):
 
 async def summarize(c: Connection, g: Guild):
     now = datetime.now()
-    chat_summaries = chat_summary.get_guild(c, g)
-    extra = chat_summary_extra.get_guild(c, g)
+    chat_summaries = chat_summary.get(c, g.id)
+    extra = chat_summary_extra.get(c, g.id)
     for i in chat_summaries:
         channel = g.get_channel(int(i))
 
@@ -338,7 +338,7 @@ async def summarize(c: Connection, g: Guild):
                 ).fetchall()
             ]
             msg_begin = "# Yearly Chat Summary"
-            rows = int(chat_summary_rows_extra.get_guild(c, g))
+            rows = int(chat_summary_rows_extra.get(c, g.id))
         elif extra == "true" and now.day == 1:
             total_messages = c.execute(
                 select(monthly_chat_summary_channels.c.messages).where(
@@ -361,7 +361,7 @@ async def summarize(c: Connection, g: Guild):
                 ).fetchall()
             ]
             msg_begin = "# Monthly Chat Summary"
-            rows = int(chat_summary_rows_extra.get_guild(c, g))
+            rows = int(chat_summary_rows_extra.get(c, g.id))
         else:
             total_messages = c.execute(
                 select(chat_summary_channels.c.messages).where(
@@ -381,7 +381,7 @@ async def summarize(c: Connection, g: Guild):
                 ).fetchall()
             ]
             msg_begin = "# Chat Summary"
-            rows = int(chat_summary_rows.get_guild(c, g))
+            rows = int(chat_summary_rows.get(c, g.id))
 
         if total_messages is None:
             total_messages = (0,)

@@ -2,7 +2,7 @@ from decimal import InvalidOperation
 from enum import Enum
 from typing import Callable
 
-from discord import AutocompleteContext, Guild, Member
+from discord import AutocompleteContext, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import server_settings, server_settings_list
@@ -101,11 +101,11 @@ class ServerSetting:
     def default(self) -> list | str:
         return self.default_value
 
-    def get(self, c: Connection, member: Member) -> str | list[str]:
+    def get(self, c: Connection, guild_id: int) -> str | list[str]:
         if self.setting_type == SettingType.NORMAL:
             setting = c.execute(
                 select(server_settings.c.value).where(
-                    (server_settings.c.uid == str(member.guild.id))
+                    (server_settings.c.uid == str(guild_id))
                     & (server_settings.c.name == self.name)
                 )
             ).fetchone()
@@ -117,35 +117,7 @@ class ServerSetting:
         elif self.setting_type == SettingType.LIST:
             setting = c.execute(
                 select(server_settings_list.c.value).where(
-                    (server_settings_list.c.uid == str(member.guild.id))
-                    & (server_settings_list.c.name == self.name)
-                )
-            ).fetchall()
-
-            if len(setting) == 0:
-                return []
-
-            return [i[0] for i in setting]
-        else:
-            raise ValueError(f"Variable type {self.setting_type} is invalid")
-
-    def get_guild(self, c: Connection, g: Guild) -> str | None | list[str]:
-        if self.setting_type == SettingType.NORMAL:
-            setting = c.execute(
-                select(server_settings.c.value).where(
-                    (server_settings.c.uid == str(g.id))
-                    & (server_settings.c.name == self.name)
-                )
-            ).fetchone()
-
-            if setting is None:
-                return self.default_value
-
-            return setting[0]
-        elif self.setting_type == SettingType.LIST:
-            setting = c.execute(
-                select(server_settings_list.c.value).where(
-                    (server_settings_list.c.uid == str(g.id))
+                    (server_settings_list.c.uid == str(guild_id))
                     & (server_settings_list.c.name == self.name)
                 )
             ).fetchall()
@@ -159,19 +131,19 @@ class ServerSetting:
 
     def get_formatted(self, c: Connection, m: Member):
         if self.setting_type == SettingType.NORMAL:
-            val = self.get(c, m)
+            val = self.get(c, m.guild.id)
             if self.normal_view is not None:
                 return self.normal_view(c, m, val)
             return f"Setting `{self.name}` has value `{val}`"
         elif self.setting_type == SettingType.LIST:
-            val = self.get(c, m)
+            val = self.get(c, m.guild.id)
             if self.list_view is not None:
                 return self.list_view(c, m, val)
             return f"Setting `{self.name}` has value `{', '.join(val)}`"
         else:
             raise ValueError(f"Variable type {self.setting_type} is invalid")
 
-    def set(self, c: Connection, member: Member, value: str):
+    def validate_and_set(self, c: Connection, member: Member, value: str):
         if self.setting_type != SettingType.NORMAL:
             raise InvalidOperation(
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
@@ -200,6 +172,35 @@ class ServerSetting:
                 .values(value=value)
                 .where(
                     (server_settings.c.uid == str(member.guild.id))
+                    & (server_settings.c.name == self.name)
+                )
+            )
+
+    def direct_set(self, c: Connection, guild_id: int, value: str):
+        if self.setting_type != SettingType.NORMAL:
+            raise InvalidOperation(
+                f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
+            )
+
+        setting = c.execute(
+            select(server_settings.c.value).where(
+                (server_settings.c.uid == str(guild_id))
+                & (server_settings.c.name == self.name)
+            )
+        ).fetchone()
+
+        if setting is None:
+            c.execute(
+                insert(server_settings).values(
+                    uid=str(guild_id), name=self.name, value=value
+                )
+            )
+        else:
+            c.execute(
+                update(server_settings)
+                .values(value=value)
+                .where(
+                    (server_settings.c.uid == str(guild_id))
                     & (server_settings.c.name == self.name)
                 )
             )
@@ -359,27 +360,6 @@ def setting_number_within_range(minimum: int, maximum: int):
         return True, value
 
     return wrapper
-
-BOOLEAN_VALUES = [
-    "true",
-    "yes",
-    "y",
-    "1",
-    "Y",
-    "Yes",
-    "On",
-    "ON",
-    "on",
-    "false",
-    "no",
-    "n",
-    "0",
-    "N",
-    "No",
-    "Off",
-    "OFF",
-    "off",
-]
 
 # noinspection PyUnusedLocal
 def setting_to_boolean(c: Connection, member: Member, value: str) -> tuple[bool, str]:

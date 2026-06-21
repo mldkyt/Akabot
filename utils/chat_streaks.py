@@ -194,8 +194,8 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         assert not isinstance(msg.channel, PartialMessageable) and not isinstance(msg.channel, DMChannel)
 
         with engine.begin() as c:
-            bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
-            setting_response = server_response_setting.get_guild(c, msg.guild)
+            bot_channel_id = setting_bot_channel.get(c, msg.guild.id)
+            setting_response = server_response_setting.get(c, msg.guild.id)
 
         if setting_response == "off":
             return None, False

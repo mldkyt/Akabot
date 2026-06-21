@@ -53,23 +53,23 @@ class ChatStreaks(Cog):
 
                 if unex_streak != prev_streak:
 
-                    if user_response_setting.get(c, msg.author) in ["expiry", "on"]:
+                    if user_response_setting.get(c, msg.guild.id) in ["expiry", "on"]:
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg, apply_appends(msg.author.id,
                                                f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.")
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
                     return
                 if next_streak > prev_streak:
-                    if user_response_setting.get(c, msg.author) == "on":
+                    if user_response_setting.get(c, msg.guild.id) == "on":
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
                             apply_appends(msg.author.id,
                                           f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
         except Exception as e:
             akabot_logger.exception(e)
 

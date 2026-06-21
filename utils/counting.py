@@ -105,7 +105,7 @@ any_count_mode_minimum_frequency = ServerSetting(
 
 
 def attempt_to_parse_number(c: Connection, m: Message) -> list[int]:
-    if any_count_mode.get(c, m.author) == "false":
+    if any_count_mode.get(c, m.guild.id) == "false":
         if not m.content.strip().isnumeric():
             return []
 
@@ -118,10 +118,10 @@ def attempt_to_parse_number(c: Connection, m: Message) -> list[int]:
         numbers_in_message.append(int(i.groups()[0]))
 
     # Count of words
-    if any_count_mode_count_words.get(c, m.author) == "true":
+    if any_count_mode_count_words.get(c, m.guild.id) == "true":
         numbers_in_message.append(len(m.content.strip().split(" ")))
 
-    if any_count_mode_count_frequency.get(c, m.author) == "true":
+    if any_count_mode_count_frequency.get(c, m.guild.id) == "true":
         # Count of words that repeat
         words = {}
         for i in m.content.strip().split(" "):
@@ -129,7 +129,7 @@ def attempt_to_parse_number(c: Connection, m: Message) -> list[int]:
                 words[i] = 0
             words[i] += 1
 
-        a = int(any_count_mode_minimum_frequency.get(c, m.author))
+        a = int(any_count_mode_minimum_frequency.get(c, m.guild.id))
         less_frequent_words = []
         for k in words.keys():
             if words[k] < a:
@@ -173,7 +173,7 @@ async def handle_counting_channel(c: Connection, msg: Message):
             await msg.add_reaction("❌")
     else:
         same_member = True
-        if same_member_counting_mode.get(c, msg.author) == "true":
+        if same_member_counting_mode.get(c, msg.guild.id) == "true":
             same_member = a[1] != str(msg.author.id)
 
         if a[0] in numbers and same_member:

@@ -19,7 +19,7 @@ class Fun(Cog):
     async def yaoi(self, ctx: ApplicationContext):
         if ctx.guild is not None:
             with engine.begin() as c:
-                disable_yaoi = setting_disable_yaoi_command.get_guild(c, ctx.guild)
+                disable_yaoi = setting_disable_yaoi_command.get(c, ctx.guild.id)
                 if disable_yaoi == "true":
                     await ctx.respond("The yaoi command is disabled in this server", ephemeral=True)
                     return
@@ -40,7 +40,7 @@ class Fun(Cog):
     async def yuri(self, ctx: ApplicationContext):
         if ctx.guild is not None:
             with engine.begin() as c:
-                disable_yuri = setting_disable_yuri_command.get_guild(c, ctx.guild)
+                disable_yuri = setting_disable_yuri_command.get(c, ctx.guild.id)
                 if disable_yuri == "true":
                     await ctx.respond("The yuri command is disabled in this server", ephemeral=True)
                     return
@@ -63,7 +63,7 @@ class Fun(Cog):
     @rp_group.command()
     async def lurk(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -76,7 +76,7 @@ class Fun(Cog):
     @rp_group.command()
     async def shrug(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -89,7 +89,7 @@ class Fun(Cog):
     @rp_group.command()
     async def wave(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -102,7 +102,7 @@ class Fun(Cog):
     @rp_group.command()
     async def poke(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -124,7 +124,7 @@ class Fun(Cog):
     @rp_group.command()
     async def smile(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -137,7 +137,7 @@ class Fun(Cog):
     @rp_group.command()
     async def wink(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -150,7 +150,7 @@ class Fun(Cog):
     @rp_group.command()
     async def blush(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -163,7 +163,7 @@ class Fun(Cog):
     @rp_group.command()
     async def smug(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -176,7 +176,7 @@ class Fun(Cog):
     @rp_group.command()
     async def tickle(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -198,7 +198,7 @@ class Fun(Cog):
     @rp_group.command()
     async def yeet(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -220,7 +220,7 @@ class Fun(Cog):
     @rp_group.command()
     async def highfive(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -242,7 +242,7 @@ class Fun(Cog):
     @rp_group.command()
     async def wag(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -255,7 +255,7 @@ class Fun(Cog):
     @rp_group.command()
     async def bite(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -277,7 +277,7 @@ class Fun(Cog):
     @rp_group.command()
     async def cuddle(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -299,7 +299,7 @@ class Fun(Cog):
     @rp_group.command()
     async def kick(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -321,7 +321,7 @@ class Fun(Cog):
     @rp_group.command()
     async def carry(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -343,7 +343,7 @@ class Fun(Cog):
     @rp_group.command()
     async def hug(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -365,7 +365,7 @@ class Fun(Cog):
     @rp_group.command()
     async def bonk(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -387,7 +387,7 @@ class Fun(Cog):
     @rp_group.command()
     async def pat(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -409,7 +409,7 @@ class Fun(Cog):
     @rp_group.command()
     async def kiss(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -431,7 +431,7 @@ class Fun(Cog):
     @rp_group.command()
     async def slap(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -453,7 +453,7 @@ class Fun(Cog):
     @rp_group.command()
     async def lappillow(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -475,7 +475,7 @@ class Fun(Cog):
     @rp_group.command()
     async def handhold(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -498,7 +498,7 @@ class Fun(Cog):
     async def consent(self, ctx: ApplicationContext, target: User):
         """Ask for consent with another member"""
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 

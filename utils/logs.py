@@ -93,7 +93,7 @@ for i in [
 def is_logging_enabled(c: Connection, g: Guild, logging_type: str) -> bool:
     for i in logging_settings:
         if i[0] == logging_type:
-            return i[1].get_guild(c, g) == "true"
+            return i[1].get(c, g.id) == "true"
 
     akabot_logger.warning("Unable to find %s logging type!", logging_type)
     return True
@@ -102,7 +102,7 @@ def is_logging_enabled(c: Connection, g: Guild, logging_type: str) -> bool:
 async def send_message_to_log_channel(
     c: Connection, guild: Guild, message: str | Embed
 ):
-    channel_id = logging_channel.get_guild(c, guild)
+    channel_id = logging_channel.get(c, guild.id)
     if not isinstance(channel_id, str):
         return
 

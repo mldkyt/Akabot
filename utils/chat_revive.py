@@ -21,7 +21,7 @@ def chat_revive_add(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     if not ok:
         return ok, channel_id
 
-    existing = [i for i in setting_chat_revive_channels.get(c, m) if i.startswith(channel_id)]
+    existing = [i for i in setting_chat_revive_channels.get(c, m.guild.id) if i.startswith(channel_id)]
     if len(existing) != 0:
         # TODO update list element inside of settings for this case
         return False, "This channel is already a chat revive channel, to update minutes count, please remove and re-add"
@@ -38,7 +38,7 @@ def chat_revive_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
     if not ok:
         return False, channel_id
 
-    existing = [i for i in setting_chat_revive_channels.get(c, m) if i.startswith(channel_id)]
+    existing = [i for i in setting_chat_revive_channels.get(c, m.guild.id) if i.startswith(channel_id)]
     if len(existing) == 0:
         return False, "This channel is not a chat revive channel"
 
@@ -93,7 +93,7 @@ async def update_chat_revive(message: Message):
         return
 
     with engine.begin() as c:
-        setting = [i for i in setting_chat_revive_channels.get(c, message.author) if
+        setting = [i for i in setting_chat_revive_channels.get(c, message.guild.id) if
                    i.startswith(str(message.channel.id))]
         if len(setting) == 0:
             akabot_logger.debug("[Chat Revive] Event cancelled for %s #%s, not in chat revive", message.guild.name,
@@ -137,7 +137,7 @@ async def notifications(bot: Bot):
             try:
                 guild = bot.get_guild(int(i[0]))
                 channel = await bot.fetch_channel(int(i[1]))
-                chat_revival_role = setting_chat_revive_role.get(c, guild.me)
+                chat_revival_role = setting_chat_revive_role.get(c, guild.id)
 
                 akabot_logger.debug("[Chat Revive] Sending in %s #%s...", guild.name, channel.name)
                 if chat_revival_role is None:

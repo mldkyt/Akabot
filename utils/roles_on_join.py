@@ -19,7 +19,7 @@ setting_roles_on_join = ServerSetting(
 
 async def apply_roles(member: Member):
     with engine.begin() as c:
-        roles_ids = setting_roles_on_join.get(c, member)
+        roles_ids = setting_roles_on_join.get(c, member.guild.id)
         roles = []
 
         for role_id in roles_ids:

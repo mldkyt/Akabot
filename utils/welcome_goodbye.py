@@ -117,7 +117,7 @@ grace_period_second = {}
 
 
 def add_member_to_grace_period(c: Connection, member: Member):
-    dur = int(welcome_grace_period_first.get(c, member))
+    dur = int(welcome_grace_period_first.get(c, member.guild.id))
 
     grace_period_first[uuid.uuid4()]= {
         'member': member,
@@ -126,14 +126,14 @@ def add_member_to_grace_period(c: Connection, member: Member):
 
 
 async def send_welcome_message(c: Connection, member: Member):
-    chan = welcome_channel.get(c, member)
+    chan = welcome_channel.get(c, member.guild.id)
     if chan == "":
         return
 
-    dur = int(welcome_grace_period_second.get(c, member))
-    msg_type = welcome_message_type.get(c, member)
-    title = welcome_message_title.get(c, member)
-    msg = welcome_message_message.get(c, member)
+    dur = int(welcome_grace_period_second.get(c, member.guild.id))
+    msg_type = welcome_message_type.get(c, member.guild.id)
+    title = welcome_message_title.get(c, member.guild.id)
+    msg = welcome_message_message.get(c, member.guild.id)
 
     title = title.replace("%m", member.mention)
     title = title.replace("%u", member.name)
@@ -190,13 +190,13 @@ async def send_goodbye_message(c: Connection, member: Member):
             del grace_period_second[k]
             return
 
-    chan = goodbye_channel.get(c, member)
+    chan = goodbye_channel.get(c, member.guild.id)
     if chan == "":
         return
 
-    msg_type = goodbye_message_type.get(c, member)
-    title = goodbye_message_title.get(c, member)
-    msg = goodbye_message_message.get(c, member)
+    msg_type = goodbye_message_type.get(c, member.guild.id)
+    title = goodbye_message_title.get(c, member.guild.id)
+    msg = goodbye_message_message.get(c, member.guild.id)
 
     title = title.replace("%m", member.mention)
     title = title.replace("%u", member.name)

@@ -24,7 +24,7 @@ async def h_join_channel(member: Member, after: VoiceState):
     # Handle joining creator channel
 
     with engine.begin() as c:
-        temporary_vcs_ids = setting_temporary_vcs.get(c, member)
+        temporary_vcs_ids = setting_temporary_vcs.get(c, member.guild.id)
 
     if str(after.channel.id) not in temporary_vcs_ids:
         return
