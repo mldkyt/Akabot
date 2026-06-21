@@ -3,4 +3,29 @@
 {% block main %}
 <h1>Akabot settings</h1>
 <p>Welcome to Akabot settings! On the left you can choose the features of Akabot and configure them.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Quick settings</h2>
+<form method="post">
+    <label for="botchannel">Bot channel</label>
+    <br>
+    <select id="botchannel" name="botchannel">
+        <option value="unset">-- Unset --</option>
+        {% for text_channel in text_channels %}
+        <option %} %}selected{% current_bot_channel== endif if text_channel.id value="{{text_channel.id}}" {%>
+            {{text_channel.name}}
+        </option>
+        {% endfor %}
+    </select>
+    <br>
+    <br>
+
+    <button type="submit">Save</button>
+</form>
+
 {% endblock %}

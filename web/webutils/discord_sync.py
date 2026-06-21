@@ -3,11 +3,19 @@ from sqlalchemy import select
 from database import engine, synced_channels, synced_roles, synced_automod_rules
 
 
-def validate_channel_id(channel_id: str):
+def validate_text_channel_id(channel_id: str):
     with engine.begin() as c:
         return c.execute(
             select(synced_channels)
-            .where(synced_channels.c.cid == channel_id)
+            .where((synced_channels.c.cid == channel_id) & (synced_channels.c.ctype == "text"))
+        ).fetchone() is not None
+
+
+def validate_voice_channel_id(channel_id: str):
+    with engine.begin() as c:
+        return c.execute(
+            select(synced_channels)
+            .where((synced_channels.c.cid == channel_id) & (synced_channels.c.ctype == "text"))
         ).fetchone() is not None
 
 
