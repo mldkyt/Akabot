@@ -15,7 +15,7 @@ def validate_role_id(role_id: str):
     with engine.begin() as c:
         return c.execute(
             select(synced_roles)
-            .where(synced_roles.c.cid == role_id)
+            .where(synced_roles.c.rid == role_id)
         ).fetchone() is not None
 
 
@@ -23,5 +23,5 @@ def validate_automod_rule_id(automod_rule_id: str):
     with engine.begin() as c:
         return c.execute(
             select(synced_automod_rules)
-            .where(synced_automod_rules.c.cid == automod_rule_id)
+            .where(synced_automod_rules.c.aid == automod_rule_id)
         ).fetchone() is not None

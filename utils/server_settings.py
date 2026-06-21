@@ -206,7 +206,7 @@ class ServerSetting:
             )
 
     def add_to_list(
-        self, c: Connection, member: Member, value: str, silent: bool = False
+            self, c: Connection, guild_id: int, value: str, silent: bool = False
     ):
         if self.setting_type != SettingType.LIST:
             raise InvalidOperation(
@@ -215,7 +215,7 @@ class ServerSetting:
 
         a = c.execute(
             select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )
@@ -229,12 +229,12 @@ class ServerSetting:
 
         c.execute(
             insert(server_settings_list).values(
-                uid=str(member.guild.id), name=self.name, value=value
+                uid=str(guild_id), name=self.name, value=value
             )
         )
 
     def remove_from_list(
-        self, c: Connection, member: Member, value: str, silent: bool = False
+            self, c: Connection, guild_id: int, value: str, silent: bool = False
     ):
         if self.setting_type != SettingType.LIST:
             raise InvalidOperation(
@@ -243,7 +243,7 @@ class ServerSetting:
 
         a = c.execute(
             select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )
@@ -257,7 +257,7 @@ class ServerSetting:
 
         c.execute(
             delete(server_settings_list).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )

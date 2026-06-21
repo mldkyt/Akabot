@@ -105,7 +105,7 @@ class ServerSettings(discord.Cog):
                 )
                 return
 
-            setting.add_to_list(c, ctx.user, value)
+            setting.add_to_list(c, ctx.guild.id, value)
 
             response = setting.respond_add(c, ctx.user, value)
             await ctx.respond(response, ephemeral=True)

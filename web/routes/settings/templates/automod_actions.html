@@ -1,0 +1,71 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Automod Actions</h1>
+<p>Here you can configure additional actions to perform when an Automod Rule gets triggered within Discord. </p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>New action</h2>
+
+<form action="/settings/automod_actions" method="post">
+    <label for="rule">Automod Rule</label>
+    <br>
+    <select id="rule" name="rule" required>
+        {% for automod_rule in automod_rules %}
+        <option value="{{automod_rule.id}}">{{automod_rule.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="type">Automod Action Type</label>
+    <br>
+    <select id="type" name="type" required>
+        <option value="ban">Ban</option>
+        <option value="kick">Kick</option>
+        <option value="dm">DM</option>
+        <option value="mute">Mute</option>
+    </select>
+    <br>
+    <label for="time">Mute Time (type must be mute)</label>
+    <br>
+    <input id="time" name="time" placeholder="1w" type="text">
+    <br>
+    <label for="message">DM Message (type must be DM)</label>
+    <br>
+    <textarea id="message" name="message" placeholder="Bad behaviour"></textarea>
+    <br>
+    <label for="reason">Reason (for audit logs)</label>
+    <br>
+    <textarea id="reason" name="reason" placeholder="Automod actions action"></textarea>
+
+    <br>
+    <button type="submit">Create automod action</button>
+</form>
+
+<h2>Existing actions</h2>
+
+{% for action in automod_actions %}
+<div style="border: 1px solid black; margin: 1px;">
+    <ul>
+        <li>Action: {{action.action}}</li>
+        <li>Rule name: {{action.name}}</li>
+        {% if "time" in action %}
+        <li>Mute time: {{action.time}}</li>
+        {% endif %}
+        {% if "message" in action %}
+        <li>DM message: {{action.message}}</li>
+        {% endif %}
+        {% if "reason" in action %}
+        <li>Reason used in audit logs: {{action.reason}}</li>
+        {% endif %}
+    </ul>
+    <a href="/settings/automod_actions/edit/{{action.id}}">Edit</a>
+    <a href="/settings/automod_actions/delete/{{action.id}}">Delete</a>
+</div>
+{% endfor %}
+
+{% endblock %}

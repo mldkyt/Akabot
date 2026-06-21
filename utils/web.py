@@ -107,14 +107,14 @@ async def sync_roles(c: Connection, guild: Guild):
 
 async def sync_automod_actions(c: Connection, guild: Guild):
     automod_rules = await guild.fetch_auto_moderation_rules()
-
+    automod_rule_ids = [i.id for i in automod_rules]
     db_automod_rules = [int(i[0]) for i in c.execute(
         select(synced_automod_rules.c.aid)
         .where((synced_automod_rules.c.gid == str(guild.id)))
     ).fetchall()]
 
-    to_remove = [i for i in automod_rules if i.id not in db_automod_rules]
-    akabot_logger.debug("Removing %d automod actions from DB", len(to_remove))
+    to_remove = [i for i in db_automod_rules if i not in automod_rule_ids]
+    akabot_logger.debug("Automod Rules Removing %d items from DB", len(to_remove))
 
     for rule in to_remove:
         c.execute(
@@ -122,10 +122,12 @@ async def sync_automod_actions(c: Connection, guild: Guild):
             .where((synced_automod_rules.c.gid == str(guild.id)) & (synced_automod_rules.c.aid == rule))
         )
 
+    akabot_logger.debug("Automod Rules updating %d items to DB", len(automod_rules))
     for rule in automod_rules:
         if c.execute(
                 select(synced_automod_rules)
-                        .where((synced_automod_rules.c.gid == str(guild.id)) & (synced_roles.c.aid == str(rule.id)))
+                        .where(
+                    (synced_automod_rules.c.gid == str(guild.id)) & (synced_automod_rules.c.aid == str(rule.id)))
         ).fetchone() is None:
             c.execute(
                 insert(synced_automod_rules)
@@ -149,9 +151,11 @@ async def sync_guild(guild: Guild):
             try:
                 await sync_automod_actions(c, guild)
             except Forbidden:
+                akabot_logger.debug("Syncing Automod Rules forbidden")
                 # ignore all errors regarding permissions
                 pass
-    except Exception:
+    except Exception as e:
+        akabot_logger.exception("Syncing error occured")
         pass
 
 
