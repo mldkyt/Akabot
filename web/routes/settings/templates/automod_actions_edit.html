@@ -11,7 +11,7 @@
 </div>
 {% endfor %}
 
-<form action="/settings/automod_actions" method="post">
+<form action="/settings/automod_actions/edit/{{action.id}}" method="post">
     <label for="rule">Automod Rule</label>
     <br>
     <select id="rule" name="rule" required>

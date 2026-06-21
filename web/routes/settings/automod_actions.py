@@ -141,7 +141,7 @@ def automod_actions_delete(index: str):
 
     with engine.begin() as c:
         the_list = automod_actions.get(c, auth["guild"])
-        if len(the_list) < int(index):
+        if len(the_list) <= int(index):
             flash("Can't delete item outside of range")
             return redirect("/settings/automod_actions", 302)
 
@@ -149,7 +149,6 @@ def automod_actions_delete(index: str):
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            the_list = automod_actions.get(c, auth["guild"])
             automod_actions.remove_from_list(c, auth["guild"], the_list[int(index)])
             return redirect("/settings/automod_actions", 302)
 
@@ -170,7 +169,7 @@ def automod_actions_edit(index: str):
 
     with engine.begin() as c:
         the_list = automod_actions.get(c, auth["guild"])
-        if len(the_list) < int(index):
+        if len(the_list) <= int(index):
             flash("Can't edit item outside of range")
             return redirect("/settings/automod_actions", 302)
 
@@ -182,6 +181,7 @@ def automod_actions_edit(index: str):
             the_list = automod_actions.get(c, auth["guild"])
             automod_actions.remove_from_list(c, auth["guild"], the_list[int(index)])
 
-        handle_create_automod_action()
+        handle_create_automod_action(is_edit=True)
+        return redirect("/settings/automod_actions", 302)
 
     return render_template("automod_actions_edit.html", action=parsed, automod_rules=automod_rules)

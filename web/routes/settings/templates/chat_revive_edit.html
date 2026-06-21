@@ -1,0 +1,32 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Edit chat revive</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You can edit chat revive settings below:</p>
+
+<form action="/settings/chat_revive/edit/{{chat_revive.index}}" method="post">
+    <label for="channel">Channel</label>
+    <br>
+    <select id="channel" name="channel" required>
+        {% for channel in channels %}
+        <option %} %}selected{% channel.id== chat_revive.cid endif if value="{{channel.id}}" {%>{{channel.name}}
+        </option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="minutes">Minutes to revive after</label>
+    <br>
+    <input id="minutes" name="minutes" type="number" value="{{chat_revive.minutes}}">
+    <br>
+
+    <button type="submit">Create chat revive</button>
+</form>
+
+{% endblock %}

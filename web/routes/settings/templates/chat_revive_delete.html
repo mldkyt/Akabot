@@ -1,0 +1,22 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Delete chat revive</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the following chat revive:</p>
+
+<ul>
+    <li>Channel: {{chat_revive.channel}}</li>
+    <li>Minutes: {{chat_revive.minutes}}</li>
+</ul>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/chat_revive">Cancel</a>
+
+{% endblock %}

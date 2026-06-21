@@ -66,6 +66,8 @@
     <a href="/settings/automod_actions/edit/{{action.id}}">Edit</a>
     <a href="/settings/automod_actions/delete/{{action.id}}">Delete</a>
 </div>
+{% else %}
+<p>No automod actions set up.</p>
 {% endfor %}
 
 {% endblock %}
