@@ -1,0 +1,21 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Delete counting channel</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the following counting channel:</p>
+
+<ul>
+    <li>Channel: {{channel}}</li>
+</ul>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/counting">Cancel</a>
+
+{% endblock %}

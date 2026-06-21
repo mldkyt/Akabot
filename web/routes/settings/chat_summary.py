@@ -10,6 +10,9 @@ from web.webutils.tokens import authorize, get_token_data
 chat_summary_bp = Blueprint("chat_summary", __name__)
 
 def handle_settings(auth):
+    if "channel" in request.form:
+        return
+
     with engine.begin() as c:
         if "row_count" in request.form and request.form["row_count"].isnumeric():
             if 10 >= int(request.form["row_count"]) >= 2:
