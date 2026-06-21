@@ -16,14 +16,13 @@
     <br>
     <select id="channel" name="channel" required>
         {% for channel in channels %}
-        <option %} %}selected{% channel.id== chat_revive.cid endif if value="{{channel.id}}" {%>{{channel.name}}
-        </option>
+        <option value="{{channel.id}}" {% if channel.id == chat_revive.cid %}selected{% endif %}>{{channel.name}}</option>
         {% endfor %}
     </select>
     <br>
     <label for="minutes">Minutes to revive after</label>
     <br>
-    <input id="minutes" name="minutes" type="number" value="{{chat_revive.minutes}}">
+    <input type="number" name="minutes" id="minutes" value="{{chat_revive.minutes}}">
     <br>
 
     <button type="submit">Create chat revive</button>

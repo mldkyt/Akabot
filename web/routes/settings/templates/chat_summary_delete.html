@@ -1,0 +1,21 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Delete chat summary</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the following chat summary:</p>
+
+<ul>
+    <li>Channel: {{channel}}</li>
+</ul>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/chat_summary">Cancel</a>
+
+{% endblock %}

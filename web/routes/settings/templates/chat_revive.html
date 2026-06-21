@@ -15,10 +15,10 @@
 <form action="/settings/chat_revive" method="post">
     <label for="revive_role">Revive Role</label>
     <br>
-    <select id="revive_role" name="revive_role">
+    <select name="revive_role" id="revive_role">
         <option value="unset">-- Unset --</option>
         {% for role in roles %}
-        <option %} %}selected{% chat_revive_role endif if role.id== value="{{role.id}}" {%>{{role.name}}</option>
+        <option value="{{role.id}}" {% if role.id == chat_revive_role %}selected{% endif %}>{{role.name}}</option>
         {% endfor %}
     </select>
     <br>
@@ -38,7 +38,7 @@
     <br>
     <label for="minutes">Minutes to revive after</label>
     <br>
-    <input id="minutes" name="minutes" type="number">
+    <input type="number" name="minutes" id="minutes">
     <br>
 
     <button type="submit">Create chat revive</button>

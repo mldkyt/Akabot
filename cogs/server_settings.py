@@ -98,7 +98,7 @@ class ServerSettings(discord.Cog):
                 return
 
             if setting.is_in_list(
-                    c, ctx.user, value
+                    c, ctx.guild.id, value
             ):
                 await ctx.respond(
                     f"The value {value} is already in the list {name}", ephemeral=True
@@ -137,7 +137,7 @@ class ServerSettings(discord.Cog):
                 return
 
             if not setting.is_in_list(
-                    c, ctx.user, value
+                    c, ctx.guild.id, value
             ):
                 await ctx.respond(
                     f"The value {value} is not in the list {name}", ephemeral=True

@@ -263,10 +263,10 @@ class ServerSetting:
             )
         )
 
-    def is_in_list(self, c: Connection, member: Member, value: str) -> bool:
+    def is_in_list(self, c: Connection, guild_id: int, value: str) -> bool:
         a = c.execute(
             select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )

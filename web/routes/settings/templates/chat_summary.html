@@ -1,0 +1,69 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Chat Summary</h1>
+<p>Get a count of messages (summary) of who chatted the most. Per-day, per-month and per-year chat summaries!</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Settings</h2>
+
+<form action="/settings/chat_summary" method="post">
+    
+    <!-- Row count -->
+    <label for="row_count">Row count</label> 
+    <br>
+    <input type="number" name="row_count" id="row_count" value="{{row_count}}">
+    <br>
+
+    <!-- Count unique only -->
+    <input type="checkbox" name="unique_mode" id="unique_mode" {% if unique_mode %}checked{% endif %}>
+    <label for="unique_mode">Unique mode</label>
+    <br>
+
+    <!-- Extended summaries -->
+    <input type="checkbox" name="extra" id="extra" {% if extra %}checked{% endif %}>
+    <label for="extra">Extended summaries</label>   
+    <br>
+
+    <!-- Extended row count -->
+    <label for="row_count_extra">Extended summaries row count</label>
+    <br>
+    <input type="number" name="row_count_extra" id="row_count_extra" value="{{row_count_extra}}">
+    <br>
+
+    <button type="submit">Save settings</button>
+</form>
+
+<h2>New chat summary setting</h2>
+
+<form action="/settings/chat_summary" method="post">
+    <label for="channel">Channel</label>
+    <br>
+    <select id="channel" name="channel" required>
+        {% for channel in channels %}
+        <option value="{{channel.id}}">{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <button type="submit">Add chat summary</button>
+</form>
+
+<h2>Existing chat summaries</h2>
+
+{% for chat_summary in chat_summaries %}
+<div style="border: 1px solid black; margin: 1px;">
+    <ul>
+        <li>Channel: {{chat_summary.channel}}</li>
+    </ul>
+    <a href="/settings/chat_summary/delete/{{chat_summary.index}}">Delete</a>
+</div>
+{% else %}
+<p>No chat summaries set up.</p>
+{% endfor %}
+
+{% endblock %}

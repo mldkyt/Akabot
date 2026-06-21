@@ -1,0 +1,120 @@
+from flask import Blueprint, session, render_template, request, flash, redirect
+from sqlalchemy import select
+
+from database import engine, synced_channels
+from utils.chat_summary import chat_summary, chat_summary_extra, chat_summary_rows, chat_summary_rows_extra, \
+    chat_summary_unique
+from web.webutils.discord_sync import validate_text_channel_id
+from web.webutils.tokens import authorize, get_token_data
+
+chat_summary_bp = Blueprint("chat_summary", __name__)
+
+def handle_settings(auth):
+    with engine.begin() as c:
+        if "row_count" in request.form and request.form["row_count"].isnumeric():
+            if 10 >= int(request.form["row_count"]) >= 2:
+                chat_summary_rows.direct_set(c, auth["guild"], request.form["row_count"])
+            else:
+                flash("Row count must be between 2 and 10 rows")
+
+        if request.form.get("unique_mode") == "on":
+            chat_summary_unique.direct_set(c, auth["guild"], "true")
+        else:
+            chat_summary_unique.direct_set(c, auth["guild"], "false")
+
+        if request.form.get("extra") == "on":
+            chat_summary_extra.direct_set(c, auth["guild"], "true")
+        else:
+            chat_summary_extra.direct_set(c, auth["guild"], "false")
+
+        if "row_count_extra" in request.form and request.form["row_count_extra"].isnumeric():
+            if 10 >= int(request.form["row_count_extra"]) >= 2:
+                chat_summary_rows_extra.direct_set(c, auth["guild"], request.form["row_count_extra"])
+            else:
+                flash("Extended row count must be between 2 and 10 rows")
+
+def handle_adding_channels(auth):
+    with engine.begin() as c:
+        if "channel" in request.form and validate_text_channel_id(request.form["channel"]):
+            if chat_summary.is_in_list(c, auth["guild"], request.form["channel"]):
+                flash("This channel was already added")
+                return
+
+            chat_summary.add_to_list(c, auth["guild"], request.form["channel"])
+
+@chat_summary_bp.route("/settings/chat_summary", methods=["GET", "POST"])
+def chat_summary_index():
+    authorization = authorize("/settings/chat_summary")
+    if authorization is not None:
+        return authorization
+
+    auth = get_token_data(session["token"])
+    assert auth is not None
+
+    if request.method == "POST":
+        handle_settings(auth)
+        handle_adding_channels(auth)
+
+    with engine.begin() as c:
+        chans = [{
+            "id": i[0],
+            "name": i[1]
+        } for i in c.execute(
+            select(synced_channels.c.cid, synced_channels.c.cname)
+            .where((synced_channels.c.gid == str(auth["guild"])) & (synced_channels.c.ctype == "text"))
+        ).fetchall()]
+
+        chat_summaries = []
+        chs = chat_summary.get(c, auth["guild"])
+        for index in range(len(chs)):
+            channel = chs[index]
+            channel = c.execute(
+                select(synced_channels.c.cname)
+                .where((synced_channels.c.gid == str(auth["guild"])) & (synced_channels.c.cid == channel))
+            ).fetchone()
+
+            if channel is not None:
+                chat_summaries.append({
+                    "index": index,
+                    "channel": "#" + channel[0]
+                })
+
+        extra = chat_summary_extra.get(c, auth["guild"]) == "true"
+        row_count = chat_summary_rows.get(c, auth["guild"])
+        row_count_extra = chat_summary_rows_extra.get(c, auth["guild"])
+        unique_mode = chat_summary_unique.get(c, auth["guild"]) == "true"
+
+    return render_template("chat_summary.html", channels=chans,
+                           chat_summaries=chat_summaries, extra=extra,
+                           row_count=row_count, row_count_extra=row_count_extra,
+                           unique_mode=unique_mode)
+
+@chat_summary_bp.route("/settings/chat_summary/delete/<index>")
+def chat_summary_delete(index: str):
+    authorization = authorize("/settings/chat_summary")
+    if authorization is not None:
+        return authorization
+
+    auth = get_token_data(session["token"])
+    assert auth is not None
+
+    if not index.isnumeric():
+        return redirect("/settings/chat_summary", 302)
+
+    with engine.begin() as c:
+        chs = chat_summary.get(c, auth["guild"])
+        if len(chs) <= int(index):
+            return redirect("/settings/chat_summary", 302)
+
+        chs = chs[int(index)]
+        chs_parsed = c.execute(
+            select(synced_channels.c.cname)
+            .where((synced_channels.c.gid == auth["guild"]) & (synced_channels.c.cid == chs))
+        ).fetchone()
+
+        if "confirm" in request.args and request.args["confirm"] == "yes":
+            chat_summary.remove_from_list(c, auth["guild"], chs)
+            return redirect("/settings/chat_summary", 302)
+
+    return render_template("chat_summary_delete.html", channel=("#" + chs_parsed[0]) if chs_parsed is not None else chs)
+    
