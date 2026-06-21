@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Akabot Settings</title>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .sidebar {
+            width: 25vw;
+        }
+
+        .main {
+            width: 75vw;
+        }
+
+        .pfp {
+            width: 32px;
+            height: 32px;
+        }
+    </style>
+</head>
+<body>
+<h1>Settings page experimental</h1>
+<div class="container">
+    <div class="sidebar">
+        {% include 'sidebar.html' %}
+    </div>
+
+    <div class="main">
+        {% block main %}{% endblock %}
+    </div>
+</div>
+</body>
+</html>
