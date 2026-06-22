@@ -1,0 +1,32 @@
+{% extends 'page.html' %}
+
+{% block main %}
+
+<h1>Edit multiplier</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form action="/settings/leveling/edit/multiplier/{{index}}" method="post">
+    <label for="start">Start date</label>
+    <br>
+    <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5" value="{{start_date}}">
+    <br>
+
+    <label for="end">End date</label>
+    <br>
+    <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5" value="{{end_date}}">
+    <br>
+
+    <label for="multiplier">Multiplier</label>
+    <br>
+    <input type="number" name="multiplier" id="multiplier" value="{{multiplier}}">
+    <br>
+
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}

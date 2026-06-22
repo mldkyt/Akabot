@@ -1,0 +1,30 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Edit reward</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>Here you can configure rewards for level targets.</p>
+
+<form action="/settings/leveling/edit/reward/{{index}}" method="post">
+    <label for="reward_role">Role to add</label>
+    <br>
+    <select name="reward_role" id="reward_role">
+        {% for role in roles %}
+        <option value="{{role.id}}" {% if selected_role == role.id %}selected{% endif %}>{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="required_level">Required level</label>
+    <br>
+    <input type="number" name="required_level" id="required_level" value="{{level}}">
+    <br>
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}
