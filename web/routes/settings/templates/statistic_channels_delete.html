@@ -1,0 +1,17 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Remove statistic channel</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the statistich channel <strong>{{channel_name}}</strong></p>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/statistic_channels">Cancel</a>
+
+{% endblock %}
