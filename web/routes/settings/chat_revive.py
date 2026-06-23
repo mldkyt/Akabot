@@ -69,6 +69,7 @@ def chat_revive_index():
             chat_revives.append({
                 "index": i,
                 "channel": f"#{channel[0]}",
+                "channel_id": args[0],
                 "minutes": args[1]
             })
 
@@ -131,7 +132,7 @@ def chat_revive_delete(index: str):
     return render_template("chat_revive_delete.html", chat_revive=chat_revive_parsed)
 
 
-@chat_revive_bp.route("/settings/chat_revive/edit/<index>", methods=["GET", "POST"])
+@chat_revive_bp.route("/settings/chat_revive/edit/<index>", methods=["POST"])
 def chat_revive_edit(index: str):
     authorization = authorize("/settings/chat_revive")
     if authorization is not None:
@@ -145,36 +146,9 @@ def chat_revive_edit(index: str):
 
     with engine.begin() as c:
         chat_revives = setting_chat_revive_channels.get(c, auth["guild"])
-        chat_revive = chat_revives[int(index)].split(";")
+        if len(chat_revives) <= int(index):
+            return redirect("/settings/chat_revive", 302)
 
-        channel_info = c.execute(
-            select(synced_channels.c.cname)
-            .where((synced_channels.c.cid == chat_revive[0]) & (synced_channels.c.gid == str(auth["guild"])))
-        ).fetchone()
-
-        channels = [{
-            "id": i[0],
-            "name": i[1]
-        } for i in c.execute(
-            select(synced_channels.c.cid, synced_channels.c.cname)
-            .where((synced_channels.c.gid == str(auth["guild"])) & (synced_channels.c.ctype == "text"))
-        ).fetchall()]
-
-    if len(chat_revives) <= int(index):
-        return redirect("/settings/chat_revive", 302)
-
-    if request.method == "POST":
-        with engine.begin() as c:
-            setting_chat_revive_channels.remove_from_list(c, auth["guild"], chat_revives[int(index)])
-
+        setting_chat_revive_channels.remove_from_list(c, auth["guild"], chat_revives[int(index)])
         handle_post(auth, is_edit=True)
         return redirect("/settings/chat_revive", 303)
-
-    chat_revive_parsed = {
-        "index": int(index),
-        "cid": chat_revive[0],
-        "channel": channel_info[0],
-        "minutes": chat_revive[1]
-    }
-
-    return render_template("chat_revive_edit.html", chat_revive=chat_revive_parsed, channels=channels)

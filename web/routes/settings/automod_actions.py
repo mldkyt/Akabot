@@ -155,7 +155,7 @@ def automod_actions_delete(index: str):
     return render_template("automod_actions_delete.html", action=parsed)
 
 
-@automod_actions_bp.route("/settings/automod_actions/edit/<index>", methods=["GET", "POST"])
+@automod_actions_bp.route("/settings/automod_actions/edit/<index>", methods=["POST"])
 def automod_actions_edit(index: str):
     authorization = authorize("/settings/automod_actions")
     if authorization is not None:
@@ -173,15 +173,8 @@ def automod_actions_edit(index: str):
             flash("Can't edit item outside of range")
             return redirect("/settings/automod_actions", 302)
 
-        parsed = parse_automod_action(c, int(index), the_list[int(index)].split(";"))
-    automod_rules = get_automod_rules(auth['guild'])
+        the_list = automod_actions.get(c, auth["guild"])
+        automod_actions.remove_from_list(c, auth["guild"], the_list[int(index)])
 
-    if request.method == "POST":
-        with engine.begin() as c:
-            the_list = automod_actions.get(c, auth["guild"])
-            automod_actions.remove_from_list(c, auth["guild"], the_list[int(index)])
-
-        handle_create_automod_action(is_edit=True)
-        return redirect("/settings/automod_actions", 302)
-
-    return render_template("automod_actions_edit.html", action=parsed, automod_rules=automod_rules)
+    handle_create_automod_action(is_edit=True)
+    return redirect("/settings/automod_actions", 302)

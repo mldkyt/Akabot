@@ -47,12 +47,21 @@
 <h2>Existing chat revives</h2>
 
 {% for chat_revive in chat_revives %}
-<div style="border: 1px solid black; margin: 1px;">
-    <ul>
-        <li>Channel: {{chat_revive.channel}}</li>
-        <li>Revive minutes: {{chat_revive.minutes}}</li>
-    </ul>
-    <a href="/settings/chat_revive/edit/{{chat_revive.index}}">Edit</a>
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/chat_revive/edit/{{chat_revive.index}}" method="post">
+        <label for="channel">Channel</label>
+        <select id="channel" name="channel" required>
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if channel.id == chat_revive.channel_id %}selected{% endif %}>{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="minutes">Minutes to revive after</label>
+        <input type="number" name="minutes" id="minutes" value="{{chat_revive.minutes}}">
+        <br>
+
+        <button type="submit">Edit chat revive</button>
+    </form>
     <a href="/settings/chat_revive/delete/{{chat_revive.index}}">Delete</a>
 </div>
 {% else %}

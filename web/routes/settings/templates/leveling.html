@@ -41,7 +41,6 @@
 
 <form action="/settings/leveling" method="post">
     <label for="reward_role">Role to add</label>
-    <br>
     <select name="reward_role" id="reward_role">
         {% for role in roles %}
         <option value="{{role.id}}">{{role.name}}</option>
@@ -49,7 +48,6 @@
     </select>
     <br>
     <label for="required_level">Required level</label>
-    <br>
     <input type="number" name="required_level" id="required_level">
     <br>
     <button type="submit">Add</button>
@@ -58,12 +56,20 @@
 <hr>
 
 {% for reward in reward_roles %}
-<div style="border: 1px solid black; margin: 1px;">
-    <ul>
-        <li>Role name: {{reward.name}}</li>
-        <li>Required level: {{reward.level}}</li>
-    </ul>
-    <a href="/settings/leveling/edit/reward/{{reward.index}}">Edit</a>
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/leveling/edit/reward/{{reward.index}}" method="post">
+        <label for="reward_role">Role to add</label>
+        <select name="reward_role" id="reward_role">
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if reward.id == role.id %}selected{% endif %}>{{role.name}}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="required_level">Required level</label>
+        <input type="number" name="required_level" id="required_level" value="{{reward.level}}">
+        <br>
+        <button type="submit">Save</button>
+    </form>
     <a href="/settings/leveling/delete/reward/{{reward.index}}">Delete</a>
 </div>
 {% else %}
@@ -96,13 +102,22 @@
 <hr>
 
 {% for multiplier in multipliers %}
-<div style="border: 1px solid black; margin: 1px;">
-    <ul>
-        <li>Start: {{multiplier.start}} (MM-DD)</li>
-        <li>End: {{multiplier.end}} (MM-DD)</li>
-        <li>Multiplier: {{multiplier.multiplier}}x</li>
-    </ul>
-    <a href="/settings/leveling/edit/multiplier/{{multiplier.index}}">Edit</a>
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/leveling/edit/multiplier/{{multiplier.index}}" method="post">
+        <label for="start">Start date</label>
+        <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.start}}">
+        <br>
+
+        <label for="end">End date</label>
+        <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.end}}">
+        <br>
+
+        <label for="multiplier">Multiplier</label>
+        <input type="number" name="multiplier" id="multiplier" value="{{multiplier.multiplier}}">
+        <br>
+
+        <button type="submit">Edit multiplier</button>
+    </form>
     <a href="/settings/leveling/delete/multiplier/{{multiplier.index}}">Delete</a>
 </div>
 {% else %}

@@ -68,7 +68,7 @@ def handle_rewards(auth, is_edit: bool = False):
         else:
             flash("Added role reward successfully")
 
-def handle_multipliers(auth):
+def handle_multipliers(auth, is_edit: bool = True):
     start = request.form.get("start")
     end = request.form.get("end")
     multiplier = request.form.get("multiplier")
@@ -108,6 +108,10 @@ def handle_multipliers(auth):
 
     with engine.begin() as c:
         setting_leveling_multipliers.add_to_list(c, auth["guild"], f"{start_month:02}-{start_day:02};{end_month:02}-{end_day:02};{multiplier}")
+        if is_edit:
+            flash("Multiplier edited successfully")
+        else:
+            flash("Multiplier was created successfully")
 
 
 @leveling_bp.route('/settings/leveling', methods=["GET", "POST"])
@@ -170,7 +174,7 @@ def leveling_index():
                            xp_per_level=xp_per_level, reward_roles=reward_roles, multipliers=multipliers,
                            roles=roles)
 
-@leveling_bp.route("/settings/leveling/edit/reward/<index>", methods=["GET", "POST"])
+@leveling_bp.route("/settings/leveling/edit/reward/<index>", methods=["POST"])
 def edit_reward(index: str):
     if not index.isnumeric():
         return redirect("/settings/leveling", 302)
@@ -187,24 +191,10 @@ def edit_reward(index: str):
         if len(reward_role_ids) <= int(index):
             return redirect("/settings/leveling")
 
-        reward_role_id = reward_role_ids[int(index)]
-        roles = [{
-            "id": i[0],
-            "name": i[1]
-        } for i in c.execute(
-            select(synced_roles.c.rid, synced_roles.c.rname)
-            .where(synced_roles.c.gid == auth["guild"])
-        ).fetchall()]
+        setting_leveling_rewards.remove_from_list(c, auth["guild"], ";".join(reward_role_ids[int(index)]))
 
-    if request.method == "POST":
-        with engine.begin() as c:
-            setting_leveling_rewards.remove_from_list(c, auth["guild"], ";".join(reward_role_ids[int(index)]))
-
-            handle_rewards(auth, is_edit=True)
-            return redirect("/settings/leveling", 303)
-
-    return render_template("leveling_edit_reward.html",
-                           selected_role=reward_role_id[0], index=index, level=reward_role_id[1], roles=roles)
+    handle_rewards(auth, is_edit=True)
+    return redirect("/settings/leveling", 303)
 
 @leveling_bp.route("/settings/leveling/delete/reward/<index>")
 def remove_reward(index: str):
@@ -254,17 +244,11 @@ def edit_multiplier(index: str):
         if len(multiplier_ids) <= int(index):
             return redirect("/settings/leveling", 302)
 
-        multiplier = multiplier_ids[int(index)]
+        setting_leveling_multipliers.remove_from_list(c, auth["guild"], ";".join(multiplier_ids[int(index)]))
 
-    if request.method == "POST":
-        with engine.begin() as c:
-            setting_leveling_multipliers.remove_from_list(c, auth["guild"], ";".join(multiplier_ids[int(index)]))
+    handle_multipliers(auth, is_edit=True)
+    return redirect("/settings/leveling", 303)
 
-        handle_multipliers(auth)
-        return redirect("/settings/leveling", 303)
-
-    return render_template("leveling_edit_multiplier.html",
-                           index=index, start_date=multiplier[0], end_date=multiplier[1], multiplier=multiplier[2])
 
 @leveling_bp.route("/settings/leveling/delete/multiplier/<index>")
 def delete_multiplier(index: str):

@@ -17,7 +17,7 @@
     <select id="botchannel" name="botchannel">
         <option value="unset">-- Unset --</option>
         {% for text_channel in text_channels %}
-        <option %} %}selected{% current_bot_channel== endif if text_channel.id value="{{text_channel.id}}" {%>
+        <option value="{{text_channel.id}}" {% if text_channel.id == current_bot_channel %}selected{% endif %}>
             {{text_channel.name}}
         </option>
         {% endfor %}
