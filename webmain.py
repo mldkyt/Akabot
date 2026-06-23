@@ -9,6 +9,7 @@ from web.routes.settings.chat_summary import chat_summary_bp
 from web.routes.settings.counting import counting_bp
 from web.routes.settings.index import settings_index_bp
 from web.routes.settings.leveling import leveling_bp
+from web.routes.settings.logging import logging_bp
 
 app = Flask(__name__)
 
@@ -24,6 +25,7 @@ app.register_blueprint(chat_revive_bp)
 app.register_blueprint(chat_summary_bp)
 app.register_blueprint(counting_bp)
 app.register_blueprint(leveling_bp)
+app.register_blueprint(logging_bp)
 
 def main():
     app.run("::", 8080)

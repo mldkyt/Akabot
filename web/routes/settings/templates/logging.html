@@ -1,0 +1,33 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Logging</h1>
+<p>Here you can configure the logging channel and every single </p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form method="post" action="/settings/logging">
+    <label for="logging_channel">Logging channel</label>
+    <select id="logging_channel" name="logging_channel">
+        <option value="unset">-- Unset --</option>
+        {% for channel in channels %}
+        <option value="{{channel.id}}" {% if logging_channel == channel.id %}selected{% endif %}>#{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+
+    {% for setting in logging_settings %}
+    <input type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.value %}checked{% endif %}>
+    <label for="{{setting.key}}">{{setting.name}}</label>
+    <br>
+    {% endfor %}
+
+    <br>
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}
