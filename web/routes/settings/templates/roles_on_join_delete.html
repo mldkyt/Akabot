@@ -1,0 +1,17 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Remve role on join</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the role on join <strong>{{role_name}}</strong>. The role will no longer be added to new members.</p>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/roles_on_join">Cancel</a>
+
+{% endblock %}

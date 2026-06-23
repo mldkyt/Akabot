@@ -13,6 +13,7 @@ from web.routes.settings.logging import logging_bp
 from web.routes.settings.mail import settings_mail_bp
 from web.routes.settings.meow_back import meow_back_bp
 from web.routes.settings.moderation import moderation_bp
+from web.routes.settings.roles_on_join import roles_on_join_bp
 
 app = Flask(__name__)
 
@@ -32,6 +33,7 @@ app.register_blueprint(logging_bp)
 app.register_blueprint(settings_mail_bp)
 app.register_blueprint(meow_back_bp)
 app.register_blueprint(moderation_bp)
+app.register_blueprint(roles_on_join_bp)
 
 def main():
     app.run("::", 8080)
