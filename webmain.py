@@ -16,6 +16,7 @@ from web.routes.settings.moderation import moderation_bp
 from web.routes.settings.roles_on_join import roles_on_join_bp
 from web.routes.settings.statistic_channels import statistic_channels_bp
 from web.routes.settings.temporary_vcs import temporary_vcs_bp
+from web.routes.settings.verification import verification_bp
 
 app = Flask(__name__)
 
@@ -38,6 +39,7 @@ app.register_blueprint(moderation_bp)
 app.register_blueprint(roles_on_join_bp)
 app.register_blueprint(statistic_channels_bp)
 app.register_blueprint(temporary_vcs_bp)
+app.register_blueprint(verification_bp)
 
 def main():
     app.run("::", 8080)
