@@ -1,0 +1,33 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>You have {{unread}} unread mail</h1>
+<p>Here you can read all past and current mails.</p>
+
+{% for message in unread_messages %}
+<div style="font-weight: bolder; border: 1px solid black; padding: 3px; margin: 1px;">
+    <p>{{message.text|safe}}</p>
+    <p><small>Posted by {{message.author}} on {{message.created_at}}</small></p>
+</div>
+{% else %}
+<p>No unread messages</p>
+{% endfor %}
+
+{% if unread > 0 %}
+<a href="?read=1">Mark all mail as read</a>
+{% endif %}
+
+<hr>
+
+<h2>Past messages</h2>
+
+{% for message in past_messages %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <p>{{message.text|safe}}</p>
+    <p><small>Posted by {{message.author}} on {{message.created_at}}</small></p>
+</div>
+{% else %}
+<p>No past messages</p>
+{% endfor %}
+
+{% endblock %}
