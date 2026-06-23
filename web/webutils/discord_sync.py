@@ -15,7 +15,7 @@ def validate_voice_channel_id(channel_id: str):
     with engine.begin() as c:
         return c.execute(
             select(synced_channels)
-            .where((synced_channels.c.cid == channel_id) & (synced_channels.c.ctype == "text"))
+            .where((synced_channels.c.cid == channel_id) & (synced_channels.c.ctype == "voice"))
         ).fetchone() is not None
 
 

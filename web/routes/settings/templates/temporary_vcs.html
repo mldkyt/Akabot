@@ -1,0 +1,40 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Temporary VC creator channels</h1>
+<p>You can configure channels that make VCs when joined, and move people in. These channels are fully managed by Akabot afterwards.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Add channel</h2>
+
+<form action="/settings/temporary_vcs" method="post">
+    <label for="channel">Channel</label>
+    <select name="channel" id="channel">
+        {% for channel in channels %}
+        <option value="{{channel.id}}">{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    
+    <button type="submit">Add</button>
+</form>
+
+<h2>Existing channel</h2>
+
+{% for temporary_vc in temporary_vcs %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <ul>
+        <li>Channel: {{temporary_vc.name}}</li>
+    </ul>
+    <a href="/settings/temporary_vcs/delete/{{temporary_vc.index}}">Delete</a>
+</div>
+{% else %}
+<p>No temporary VC creators</p>
+{% endfor %}
+
+{% endblock %}
