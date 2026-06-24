@@ -14,12 +14,12 @@ def handle_save(auth):
     with engine.begin() as c:
         if "verification_role" in request.form:
             if request.form["verification_role"] == "unset":
-                setting_verification_role.direct_set(c, auth["guild"], "")
+                setting_verification_role.set(c, auth["guild"], "")
             elif validate_role_id(request.form["verification_role"]):
-                setting_verification_role.direct_set(c, auth["guild"], request.form["verification_role"])
+                setting_verification_role.set(c, auth["guild"], request.form["verification_role"])
 
         if "verification_mode" in request.form and request.form["verification_mode"] in ["none", "math", "silly"]:
-            setting_verification_mode.direct_set(c, auth["guild"], request.form["verification_mode"])
+            setting_verification_mode.set(c, auth["guild"], request.form["verification_mode"])
 
 
 @verification_bp.route("/settings/verification", methods=["GET", "POST"])

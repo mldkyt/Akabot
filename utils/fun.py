@@ -11,7 +11,7 @@ from sqlalchemy import select, update, insert, Connection, Row
 from database import engine, consent, rp_counters
 from logger import akabot_logger
 from utils.message_appends import apply_appends
-from utils.server_settings import ServerSetting, setting_to_boolean, setting_simple_string_boolean, SettingType
+from utils.server_settings import ServerSetting, SettingType
 
 FEDI_INSTANCE = os.getenv("FEDI_INSTANCE")
 
@@ -21,30 +21,18 @@ YAOIBOT_ID = os.getenv("YAOIBOT_ID")
 setting_allow_rp_commands = ServerSetting(
     name="Allow RP commands",
     setting_type=SettingType.NORMAL,
-    description="Allow roleplay commands in this server.",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("Roleplay commands are now %s", "enabled", "disabled"),
-    normal_view=setting_simple_string_boolean("Roleplay commands are %s", "enabled", "disabled"),
     default="true"
 )
 
 setting_disable_yaoi_command = ServerSetting(
     name="Disable yaoi command",
     setting_type=SettingType.NORMAL,
-    description="Whether the yaoi command should be disabled",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("The yaoi command is now %s", "disabled", "enabled"),
-    normal_view=setting_simple_string_boolean("The yaoi command is %s", "disabled", "enabled"),
     default="false"
 )
 
 setting_disable_yuri_command = ServerSetting(
     name="Disable yuri command",
     setting_type=SettingType.NORMAL,
-    description="Whether the yuri command should be disabled",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("The yuri command is now %s", "disabled", "enabled"),
-    normal_view=setting_simple_string_boolean("The yuri command is %s", "disabled", "enabled"),
     default="false"
 )
 

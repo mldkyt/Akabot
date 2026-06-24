@@ -1,9 +1,7 @@
 from discord import Cog, Bot, Message
 from discord.ext.tasks import loop
 
-from utils.chat_revive import update_chat_revive, notifications, setting_chat_revive_role, setting_chat_revive_channels
-from utils.docs import Docs
-from utils.server_settings import settings
+from utils.chat_revive import update_chat_revive, notifications
 
 
 class ChatRevive(Cog):
@@ -29,8 +27,3 @@ class ChatRevive(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(ChatRevive(bot))
-
-    settings.add_settings(
-        setting_chat_revive_role,
-        setting_chat_revive_channels
-    )

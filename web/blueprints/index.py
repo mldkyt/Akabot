@@ -17,10 +17,10 @@ def save_settings(auth):
     if "botchannel" in request.form:
         if request.form["botchannel"] == "unset":
             with engine.begin() as c:
-                setting_bot_channel.direct_set(c, auth["guild"], "")
+                setting_bot_channel.set(c, auth["guild"], "")
         elif validate_text_channel_id(request.form["botchannel"]):
             with engine.begin() as c:
-                setting_bot_channel.direct_set(c, auth["guild"], request.form["botchannel"])
+                setting_bot_channel.set(c, auth["guild"], request.form["botchannel"])
         else:
             flash("Bot channel property found but the value was invalid.")
 

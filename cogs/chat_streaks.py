@@ -20,11 +20,9 @@ from utils.chat_streaks import (
     get_unexpired_streak,
     server_message_delay,
     update_for_user,
-    handle_send_reply, user_response_setting, server_response_setting
+    handle_send_reply, user_response_setting
 )
-from utils.docs import Docs, DocsCommand
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
 from utils.user_settings import user_settings
 
 
@@ -159,7 +157,5 @@ class ChatStreaks(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(ChatStreaks(bot))
-
-    settings.add_settings(server_response_setting, server_message_delay)
 
     user_settings.add_settings(user_response_setting)

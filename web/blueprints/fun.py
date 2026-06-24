@@ -9,19 +9,19 @@ fun_commands_bp = Blueprint("fun", __name__)
 def handle_post(auth):
     with engine.begin() as c:
         if "yuri" in request.form:
-            setting_disable_yuri_command.direct_set(c, auth["guild"], "false")
+            setting_disable_yuri_command.set(c, auth["guild"], "false")
         else:
-            setting_disable_yuri_command.direct_set(c, auth["guild"], "true")
+            setting_disable_yuri_command.set(c, auth["guild"], "true")
 
         if "yaoi" in request.form:
-            setting_disable_yaoi_command.direct_set(c, auth["guild"], "false")
+            setting_disable_yaoi_command.set(c, auth["guild"], "false")
         else:
-            setting_disable_yaoi_command.direct_set(c, auth["guild"], "true")
+            setting_disable_yaoi_command.set(c, auth["guild"], "true")
 
         if "rp" in request.form:
-            setting_allow_rp_commands.direct_set(c, auth["guild"], "true")
+            setting_allow_rp_commands.set(c, auth["guild"], "true")
         else:
-            setting_allow_rp_commands.direct_set(c, auth["guild"], "false")
+            setting_allow_rp_commands.set(c, auth["guild"], "false")
 
 
 @fun_commands_bp.route("/settings/fun", methods=["GET", "POST"])

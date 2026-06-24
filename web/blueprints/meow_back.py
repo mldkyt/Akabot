@@ -9,34 +9,34 @@ meow_back_bp = Blueprint("meow_back", __name__)
 def handle_post(auth):
     with engine.begin() as c:
         if request.form.get("meow"):
-            meowing.direct_set(c, auth["guild"], "true")
+            meowing.set(c, auth["guild"], "true")
         else:
-            meowing.direct_set(c, auth["guild"], "false")
+            meowing.set(c, auth["guild"], "false")
 
         if request.form.get("waf"):
-            wafing.direct_set(c, auth["guild"], "true")
+            wafing.set(c, auth["guild"], "true")
         else:
-            wafing.direct_set(c, auth["guild"], "false")
+            wafing.set(c, auth["guild"], "false")
 
         if request.form.get("bark"):
-            barking.direct_set(c, auth["guild"], "true")
+            barking.set(c, auth["guild"], "true")
         else:
-            barking.direct_set(c, auth["guild"], "false")
+            barking.set(c, auth["guild"], "false")
 
         if request.form.get("colon_3"):
-            colon_3.direct_set(c, auth["guild"], "true")
+            colon_3.set(c, auth["guild"], "true")
         else:
-            colon_3.direct_set(c, auth["guild"], "false")
+            colon_3.set(c, auth["guild"], "false")
 
         if request.form.get("owo"):
-            owo.direct_set(c, auth["guild"], "true")
+            owo.set(c, auth["guild"], "true")
         else:
-            owo.direct_set(c, auth["guild"], "false")
+            owo.set(c, auth["guild"], "false")
 
         if request.form.get("awawa"):
-            awawa.direct_set(c, auth["guild"], "true")
+            awawa.set(c, auth["guild"], "true")
         else:
-            awawa.direct_set(c, auth["guild"], "false")
+            awawa.set(c, auth["guild"], "false")
 
 @meow_back_bp.route("/settings/meow_back", methods=["GET", "POST"])
 def meow_back_index():

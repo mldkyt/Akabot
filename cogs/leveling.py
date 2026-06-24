@@ -4,7 +4,6 @@ from discord import ApplicationContext, Message, SlashCommandGroup, Member, Perm
 from database import engine
 from logger import akabot_logger
 from utils.chat_streaks import handle_send_reply
-from utils.docs import Docs, DocsCommand
 from utils.leveling import (
     add_xp,
     apply_leveling_rewards,
@@ -12,14 +11,10 @@ from utils.leveling import (
     get_multiplier,
     get_xp,
     setting_level_up_message,
-    setting_leveling_multipliers,
-    setting_leveling_rewards,
     setting_xp_per_level,
-    setting_xp_per_message,
     xp_to_next_level, setting_level_up_message_text, edit_xp_rel, edit_xp,
 )
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
 
 
 class Leveling(discord.Cog):
@@ -159,12 +154,3 @@ class Leveling(discord.Cog):
 
 def setup(bot):
     bot.add_cog(Leveling(bot))
-
-    settings.add_settings(
-        setting_xp_per_message,
-        setting_level_up_message,
-        setting_level_up_message_text,
-        setting_xp_per_level,
-        setting_leveling_rewards,
-        setting_leveling_multipliers,
-    )

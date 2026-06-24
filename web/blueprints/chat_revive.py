@@ -14,9 +14,9 @@ def handle_settings(auth):
             validate_role_id(request.form["revive_role"]) or request.form["revive_role"] == "unset"):
         with engine.begin() as c:
             if request.form["revive_role"] == "unset":
-                setting_chat_revive_role.direct_set(c, auth["guild"], "")
+                setting_chat_revive_role.set(c, auth["guild"], "")
             else:
-                setting_chat_revive_role.direct_set(c, auth["guild"], request.form["revive_role"])
+                setting_chat_revive_role.set(c, auth["guild"], request.form["revive_role"])
 
 
 def handle_post(auth, is_edit: bool = False):

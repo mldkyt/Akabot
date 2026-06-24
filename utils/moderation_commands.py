@@ -4,22 +4,11 @@ from sqlalchemy import Connection
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_simple_list_string_item,
-    setting_simple_string,
-    setting_to_role,
 )
 
 moderator_roles = ServerSetting(
     name="Moderator roles",
-    description="Roles that should be considered as moderator roles. You can input a role name, ID or mention.",
     setting_type=SettingType.LIST,
-    list_add_processor=setting_to_role,
-    list_add_response=setting_simple_string("Added <@&%s> into moderator roles"),
-    list_remove_processor=setting_to_role,
-    list_remove_response=setting_simple_string("Removed <@&%s> from moderator roles"),
-    list_view=setting_simple_list_string_item(
-        "Moderator roles: %s", ", ", "None", "<@&%s>"
-    ),
 )
 
 

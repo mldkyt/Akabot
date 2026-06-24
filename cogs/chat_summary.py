@@ -14,16 +14,10 @@ from database import engine
 from logger import akabot_logger
 from utils.chat_summary import (
     chat_summary,
-    chat_summary_extra,
-    chat_summary_rows,
-    chat_summary_rows_extra,
-    chat_summary_unique,
     inc,
     perform_backfill,
     summarize,
 )
-from utils.docs import Docs
-from utils.server_settings import settings
 
 
 class ChatSummary(Cog):
@@ -106,11 +100,3 @@ class ChatSummary(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(ChatSummary(bot))
-
-    settings.add_settings(
-        chat_summary,
-        chat_summary_rows,
-        chat_summary_extra,
-        chat_summary_rows_extra,
-        chat_summary_unique,
-    )

@@ -6,7 +6,6 @@ from discord import (
     AutoModRule,
     Bot,
     Guild,
-    Member,
     Message, Embed, EmbedField,
 )
 from sqlalchemy import Connection
@@ -28,175 +27,6 @@ def time_str_to_time(time: str):
     else:
         return 604800 * int(time[:-1])
 
-
-def process_add(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    args = v.split(",")
-
-    if m.guild.id not in cached_automod_actions:
-        return False, "No permission, or unable to fetch AutoMod rules"
-
-    if len(args) < 2:
-        return False, "There must be at least 2 parameters; e.g. rule name, action"
-
-    rule = None
-    for i in cached_automod_actions[m.guild.id]:
-        if i.name == args[0].strip() and i.enabled:
-            rule = i
-            break
-    if rule is None:
-        return False, "The automod rule was not found"
-
-    if args[1].strip() not in [
-        "dm",
-        "direct message",
-        "pm",
-        "private message",
-        "kick",
-        "ban",
-        "mute",
-        "timeout",
-        "time out",
-    ]:
-        return False, "Action must be one of: dm, kick, ban, mute"
-
-    ok = False
-    err = ""
-
-    if len(args) == 4:
-        if args[1].strip() in ["timeout", "time out", "mute"]:
-            time = time_str_to_time(args[2].strip())
-            if time is None:
-                return False, "Invalid time format, must be e.g. 1w, 12h, 4d"
-            if time > 2419200:
-                return False, "Date is outside of range"
-            ok = True
-    elif len(args) == 3:
-        if args[1].strip() in [
-            "dm",
-            "direct message",
-            "pm",
-            "private message",
-            "kick",
-            "ban",
-        ]:
-            ok = True
-        elif args[1].strip() in ["timeout", "time out", "mute"]:
-            time = time_str_to_time(args[2].strip())
-            if time is None:
-                return False, "Invalid time format, must be e.g. 1w, 12h, 4d"
-            if time > 2419200:
-                return False, "Date is outside of range"
-            ok = True
-    elif len(args) == 2:
-        if args[1].strip() in ["kick", "ban"]:
-            ok = True
-
-    if not ok:
-        return False, f"Invalid amount of parameters for {args[1]}"
-
-    if args[1] in ["mute", "timeout", "time out"]:
-        action = "mute"
-    elif args[1] in ["dm", "direct message", "pm", "private message"]:
-        action = "dm"
-    else:
-        action = args[1]
-
-    check_action = ["dm"]
-    if action in ["mute", "kick", "ban"]:
-        check_action = ["mute", "kick", "ban"]
-
-    for i in automod_actions.get(c, m.guild.id):
-        i_args = i.split(";")
-        if i_args[0] == str(rule.id) and i_args[1] in check_action:
-            return False, (
-                    f"There's already a `{i_args[1]}` rule, please remove that rule to add one of "
-                    + ", ".join(check_action)
-            )
-
-    args = v.split(",")
-
-    rule = None
-    for i in cached_automod_actions[m.guild.id]:
-        if i.name == args[0].strip() and i.enabled:
-            rule = i
-            break
-
-    if args[1] in ["mute", "timeout", "time out"]:
-        action = "mute"
-    elif args[1] in ["dm", "direct message", "pm", "private message"]:
-        action = "dm"
-    else:
-        action = args[1]
-
-    return True, f"{rule.id};{action}" + (";" if len(args) > 2 else "") + ";".join(args[2:])
-
-
-def process_remove(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    args = v.split(",")
-
-    rule = None
-    for i in cached_automod_actions[m.guild.id]:
-        if args[0].strip().lower() in i.name.strip().lower():
-            rule = i
-
-    if len(args) == 1:
-        for i in automod_actions.get(c, m.guild.id):
-            if i.startswith(str(rule.id)):
-                break
-        else:
-            return False, "This rule was not found"
-    else:
-        # Transform action
-        if args[1] in ["mute", "timeout", "time out"]:
-            action = "mute"
-        elif args[1] in ["dm", "direct message", "pm", "private message"]:
-            action = "dm"
-        else:
-            action = args[1]
-
-        for i in automod_actions.get(c, m.guild.id):
-            args_db = i.split(";")
-            if (
-                    args_db[0].strip().lower() == str(rule.id).strip().lower()
-                    and args_db[1].strip().lower() == action
-            ):
-                break
-
-        else:
-            return False, "This rule was not found"
-
-    args = v.split(",")
-
-    rule = None
-    for i in cached_automod_actions[m.guild.id]:
-        if args[0].strip().lower() in i.name.strip().lower():
-            rule = i
-
-    if len(args) == 1:
-        for i in automod_actions.get(c, m.guild.id):
-            if len(args) == 1:
-                if i.startswith(str(rule.id)):
-                    return True, i
-    else:
-        # Transform action
-        if args[1] in ["mute", "timeout", "time out"]:
-            action = "mute"
-        elif args[1] in ["dm", "direct message", "pm", "private message"]:
-            action = "dm"
-        else:
-            action = args[1]
-
-        for i in automod_actions.get(c, m.guild.id):
-            args_db = i.split(";")
-            if (
-                    args_db[0].strip().lower() == str(rule.id).strip().lower()
-                    and args_db[1].strip().lower() == action
-            ):
-                return True, i
-
-    return True, v
-
-
 cached_automod_actions: dict[int, list[AutoModRule]] = {}
 
 
@@ -206,10 +36,7 @@ async def fetch_actions(g: Guild):
 
 automod_actions = ServerSetting(
     name="Automod actions",
-    description="A list of automod actions. Note that only one DM action and one kick/ban/mute action can be set at the same time. Format is usually `name of automod action, action to perform, action parameter(s) for adding to this setting, and `name of automod action, action to remove` for removing that action.",
-    setting_type=SettingType.LIST,
-    list_add_processor=process_add,
-    list_remove_processor=process_remove,
+    setting_type=SettingType.LIST
 )
 
 

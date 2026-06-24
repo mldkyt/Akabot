@@ -14,40 +14,40 @@ def handle_save(auth):
     with engine.begin() as c:
         if "welcome_channel" in request.form:
             if request.form["welcome_channel"] == "unset":
-                welcome_channel.direct_set(c, auth["guild"], "")
+                welcome_channel.set(c, auth["guild"], "")
             elif validate_text_channel_id(request.form["welcome_channel"]):
-                welcome_channel.direct_set(c, auth["guild"], request.form["welcome_channel"])
+                welcome_channel.set(c, auth["guild"], request.form["welcome_channel"])
 
         if "welcome_title" in request.form and 1 < len(request.form["welcome_title"]) < 100:
-            welcome_message_title.direct_set(c, auth["guild"], request.form["welcome_title"])
+            welcome_message_title.set(c, auth["guild"], request.form["welcome_title"])
 
         if "welcome_msg" in request.form and 1 < len(request.form["welcome_msg"]) < 1000:
-            welcome_message_message.direct_set(c, auth["guild"], request.form["welcome_msg"])
+            welcome_message_message.set(c, auth["guild"], request.form["welcome_msg"])
             
         if "welcome_type" in request.form and request.form["welcome_type"] in ["text", "embed"]:
-            welcome_message_type.direct_set(c, auth["guild"], request.form["welcome_type"])
+            welcome_message_type.set(c, auth["guild"], request.form["welcome_type"])
         
         if "welcome_first" in request.form and request.form["welcome_first"].isnumeric() and \
             0 < int(request.form["welcome_first"]) < 300:
-            welcome_grace_period_first.direct_set(c, auth["guild"], request.form["welcome_first"])
+            welcome_grace_period_first.set(c, auth["guild"], request.form["welcome_first"])
             
         if "welcome_second" in request.form and request.form["welcome_second"].isnumeric() and \
             0 < int(request.form["welcome_second"]) < 60:
-            welcome_grace_period_second.direct_set(c, auth["guild"], request.form["welcome_second"])
+            welcome_grace_period_second.set(c, auth["guild"], request.form["welcome_second"])
 
         if request.form["goodbye_channel"] == "unset":
-            goodbye_channel.direct_set(c, auth["guild"], "")
+            goodbye_channel.set(c, auth["guild"], "")
         elif validate_text_channel_id(request.form["goodbye_channel"]):
-            goodbye_channel.direct_set(c, auth["guild"], request.form["goodbye_channel"])
+            goodbye_channel.set(c, auth["guild"], request.form["goodbye_channel"])
                 
         if "goodbye_title" in request.form and 1 < len(request.form["goodbye_title"]) < 100:
-            goodbye_message_title.direct_set(c, auth["guild"], request.form["goodbye_title"])
+            goodbye_message_title.set(c, auth["guild"], request.form["goodbye_title"])
 
         if "goodbye_msg" in request.form and 1 < len(request.form["goodbye_msg"]) < 1000:
-            goodbye_message_message.direct_set(c, auth["guild"], request.form["goodbye_msg"])
+            goodbye_message_message.set(c, auth["guild"], request.form["goodbye_msg"])
             
         if "goodbye_type" in request.form and request.form["goodbye_type"] in ["text", "embed"]:
-            goodbye_message_type.direct_set(c, auth["guild"], request.form["goodbye_type"])
+            goodbye_message_type.set(c, auth["guild"], request.form["goodbye_type"])
 
 
 @welcome_goodbye_bp.route("/settings/welcome_goodbye", methods=["GET", "POST"])

@@ -12,17 +12,17 @@ def handle_saving_settings(auth):
     with engine.begin() as c:
         if "logging_channel" in request.form:
             if request.form["logging_channel"] == "unset":
-                logging_channel.direct_set(c, auth["guild"], "")
+                logging_channel.set(c, auth["guild"], "")
             elif validate_text_channel_id(request.form["logging_channel"]):
-                logging_channel.direct_set(c, auth["guild"], request.form["logging_channel"])
+                logging_channel.set(c, auth["guild"], request.form["logging_channel"])
             else:
                 flash("Invalid logging channel, not changing setting")
 
         for setting in logging_settings:
             if request.form.get(setting[0]):
-                setting[1].direct_set(c, auth["guild"], "true")
+                setting[1].set(c, auth["guild"], "true")
             else:
-                setting[1].direct_set(c, auth["guild"], "false")
+                setting[1].set(c, auth["guild"], "false")
 
 @logging_bp.route("/settings/logging", methods=["GET", "POST"])
 def logging_index():

@@ -5,8 +5,6 @@ from discord import Cog, Bot, ButtonStyle, Button, Interaction, slash_command, A
 from discord.ui import View, button, Modal, InputText
 
 from database import engine
-from utils.docs import Docs, DocsCommand
-from utils.server_settings import settings
 from utils.verification import setting_verification_mode, setting_verification_role
 
 
@@ -152,8 +150,3 @@ class Verification(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(Verification(bot))
-
-    settings.add_settings(
-        setting_verification_role,
-        setting_verification_mode
-    )

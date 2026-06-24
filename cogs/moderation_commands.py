@@ -17,13 +17,10 @@ from discord import (
 )
 
 from database import engine
-from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.moderation_commands import (
     is_user_moderator,
-    moderator_roles,
     perform_basic_checks,
 )
-from utils.server_settings import settings
 
 
 class ModerationCommands(Cog):
@@ -541,5 +538,3 @@ class ModerationCommands(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(ModerationCommands(bot))
-
-    settings.add_settings(moderator_roles)

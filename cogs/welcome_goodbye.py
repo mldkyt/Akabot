@@ -3,12 +3,7 @@ from discord.ext.tasks import loop
 
 from database import engine
 from logger import akabot_logger
-from utils.docs import Docs
-from utils.server_settings import settings
-from utils.welcome_goodbye import add_member_to_grace_period, handle_timed_events, welcome_channel, \
-    welcome_grace_period_first, welcome_grace_period_second, send_goodbye_message, goodbye_channel, \
-    welcome_message_title, welcome_message_message, welcome_message_type, goodbye_message_title, \
-    goodbye_message_message, goodbye_message_type
+from utils.welcome_goodbye import add_member_to_grace_period, handle_timed_events, send_goodbye_message
 
 
 class WelcomeGoodbye(Cog):
@@ -44,16 +39,3 @@ class WelcomeGoodbye(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(WelcomeGoodbye(bot))
-
-    settings.add_settings(
-        welcome_channel,
-        welcome_grace_period_first,
-        welcome_grace_period_second,
-        welcome_message_title,
-        welcome_message_message,
-        welcome_message_type,
-        goodbye_channel,
-        goodbye_message_title,
-        goodbye_message_message,
-        goodbye_message_type
-    )

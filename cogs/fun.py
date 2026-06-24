@@ -2,11 +2,9 @@ from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCom
     IntegrationType
 
 from database import engine
-from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
     setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command, tick_counter, ActionBack
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
 
 
 class Fun(Cog):
@@ -546,9 +544,3 @@ class Fun(Cog):
 
 def setup(bot):
     bot.add_cog(Fun(bot))
-
-    settings.add_settings(
-        setting_allow_rp_commands,
-        setting_disable_yaoi_command,
-        setting_disable_yuri_command
-    )

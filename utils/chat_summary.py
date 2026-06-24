@@ -2,7 +2,6 @@ from datetime import date, datetime
 
 from discord import (
     Guild,
-    Member,
     Message,
     TextChannel,
 )
@@ -19,104 +18,37 @@ from database import (
 )
 from logger import akabot_logger
 from utils.ads import get_ad
-from utils.conversion import convert_text_channel
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_to_number,
-    setting_simple_list_string,
-    setting_simple_string,
-    setting_simple_string_boolean,
-    setting_to_boolean,
 )
-
-
-def chat_summary_add_processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    s = v.split(",")
-    if len(s) == 2 and s[1].isnumeric():
-        chat_convert = convert_text_channel(m.guild, s[0], int(s[1]))
-    else:
-        chat_convert = convert_text_channel(m.guild, v)
-
-    if chat_convert is None:
-        return False, "Invalid channel"
-
-    return True, str(chat_convert.id)
-
-
-def chat_summary_rows_processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-    (ok, val) = setting_to_number(c, m, v)
-    if not ok:
-        return ok, val
-
-    v2 = int(v)
-    if v2 <= 0 or v2 > 10:
-        return False, "Invalid range"
-
-    return True, v
-
 
 chat_summary = ServerSetting(
     "Chat summary channels",
-    description="List of channels to include in the Chat Summary counting.",
     setting_type=SettingType.LIST,
-    list_add_processor=chat_summary_add_processor,
-    list_add_response=setting_simple_string("Channel <#%s> was added to Chat Summary."),
-    list_remove_processor=chat_summary_add_processor,
-    list_remove_response=setting_simple_string(
-        "Channel <#%s> was removed from Chat Summary."
-    ),
-    list_view=setting_simple_list_string("Chat summary channels: %s", ", ", "None"),
 )
 
 chat_summary_rows = ServerSetting(
     "Chat summary rows",
-    description="The amount of rows to show in the final Chat Summary message.",
     setting_type=SettingType.NORMAL,
-    normal_processor=chat_summary_rows_processor,
-    normal_response=setting_simple_string("Now showing %s rows in Chat Summaries"),
-    normal_view=setting_simple_string("Chat Summary shows %s rows per chat summary"),
     default="5",
 )
 
 chat_summary_extra = ServerSetting(
     "Chat summary extra summaries",
-    description="Enables monthly and yearly Chat Summaries. At every end of month and year, the bot will summarize the entire month/year instead of the day.",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean(
-        "%s extra summaries (yearly, monthly)", "Enabled", "Disabled"
-    ),
-    normal_view=setting_simple_string_boolean(
-        "Monthly and yearly chat summaries are %s", "enabled", "disabled"
-    ),
     default="true",
 )
 
 chat_summary_rows_extra = ServerSetting(
     "Chat summary rows (monthly, yearly)",
-    description="The amount of rows to show in the final monthly/yearly Chat Summary message.",
     setting_type=SettingType.NORMAL,
-    normal_processor=chat_summary_rows_processor,
-    normal_response=setting_simple_string(
-        "Chat summary shows %s rows per monthly or yearly chat summary"
-    ),
-    normal_view=setting_simple_string(
-        "Chat summary shows %s rows per monthly or yearly chat summary"
-    ),
     default="10",
 )
 
 chat_summary_unique = ServerSetting(
     "Chat summary unique mode",
-    description="Don't count messages sent consecutively by one member, only count conversations. For instance, the bot will count 5 messages sent right after each other by one members as 1 message.",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean(
-        "Chat Summary %s count messages sent consecutively by one member",
-        "won't",
-        "will",
-    ),
     default="false",
 )
 

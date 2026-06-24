@@ -38,7 +38,7 @@ class UserSettings(discord.Cog):
                 await ctx.respond(value, ephemeral=True)
                 return
 
-            setting.validate_and_set(c, ctx.user, value)
+            setting.set(c, ctx.user, value)
 
             response = setting.respond_add(c, ctx.user, value)
             await ctx.respond(response, ephemeral=True)

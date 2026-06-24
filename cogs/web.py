@@ -64,8 +64,7 @@ class Website(Cog):
 
     @slash_command()
     @default_permissions(manage_guild=True)
-    async def web_settings(self, ctx: ApplicationContext):
-        # TODO rename to just "settings"
+    async def settings(self, ctx: ApplicationContext):
         """Open the web settings"""
         token = generate_token(ctx.guild, ctx.user)
         await ctx.respond(f"https://{WEB_DOMAIN}/settings?token={token}")

@@ -1,9 +1,7 @@
 from discord import AutoModActionExecutionEvent, AutoModRule, Bot, Cog
 
 from logger import akabot_logger
-from utils.automod_actions import automod_actions, fetch_actions, handle_automod_actions
-from utils.docs import Docs
-from utils.server_settings import settings
+from utils.automod_actions import fetch_actions, handle_automod_actions
 
 
 class AutomodActions(Cog):
@@ -59,5 +57,3 @@ class AutomodActions(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(AutomodActions(bot))
-
-    settings.add_settings(automod_actions)

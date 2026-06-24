@@ -16,23 +16,23 @@ def handle_settings(auth):
     with engine.begin() as c:
         if "row_count" in request.form and request.form["row_count"].isnumeric():
             if 10 >= int(request.form["row_count"]) >= 2:
-                chat_summary_rows.direct_set(c, auth["guild"], request.form["row_count"])
+                chat_summary_rows.set(c, auth["guild"], request.form["row_count"])
             else:
                 flash("Row count must be between 2 and 10 rows")
 
         if request.form.get("unique_mode") == "on":
-            chat_summary_unique.direct_set(c, auth["guild"], "true")
+            chat_summary_unique.set(c, auth["guild"], "true")
         else:
-            chat_summary_unique.direct_set(c, auth["guild"], "false")
+            chat_summary_unique.set(c, auth["guild"], "false")
 
         if request.form.get("extra") == "on":
-            chat_summary_extra.direct_set(c, auth["guild"], "true")
+            chat_summary_extra.set(c, auth["guild"], "true")
         else:
-            chat_summary_extra.direct_set(c, auth["guild"], "false")
+            chat_summary_extra.set(c, auth["guild"], "false")
 
         if "row_count_extra" in request.form and request.form["row_count_extra"].isnumeric():
             if 10 >= int(request.form["row_count_extra"]) >= 2:
-                chat_summary_rows_extra.direct_set(c, auth["guild"], request.form["row_count_extra"])
+                chat_summary_rows_extra.set(c, auth["guild"], request.form["row_count_extra"])
             else:
                 flash("Extended row count must be between 2 and 10 rows")
 

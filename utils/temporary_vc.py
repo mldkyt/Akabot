@@ -4,19 +4,11 @@ from discord import Member, VoiceState
 from sqlalchemy import insert, select
 
 from database import engine, temporary_vcs
-from utils.server_settings import ServerSetting, SettingType, setting_simple_string, \
-    setting_simple_list_string_item, setting_to_voice_channel
+from utils.server_settings import ServerSetting, SettingType
 
 setting_temporary_vcs = ServerSetting(
     name="Temporary VCs",
-    description="List of temporary voice channels.",
     setting_type=SettingType.LIST,
-    list_add_processor=setting_to_voice_channel,
-    list_add_response=setting_simple_string(
-        "Added <#%s> to temporary VC creators, joining this channel will make temporary VC's"),
-    list_remove_processor=setting_to_voice_channel,
-    list_remove_response=setting_simple_string("Removed <#%s> from temporary VC creators"),
-    list_view=setting_simple_list_string_item("Temporary VC creators: %s", ", ", "None", "<#%s>")
 )
 
 

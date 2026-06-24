@@ -15,28 +15,28 @@ def set_settings(auth):
 
     with engine.begin() as c:
         if request.form.get("any_count"):
-            any_count_mode.direct_set(c, auth["guild"], "true")
+            any_count_mode.set(c, auth["guild"], "true")
         else:
-            any_count_mode.direct_set(c, auth["guild"], "false")
+            any_count_mode.set(c, auth["guild"], "false")
 
         if request.form.get("count_words"):
-            any_count_mode_count_words.direct_set(c, auth["guild"], "true")
+            any_count_mode_count_words.set(c, auth["guild"], "true")
         else:
-            any_count_mode_count_words.direct_set(c, auth["guild"], "false")
+            any_count_mode_count_words.set(c, auth["guild"], "false")
 
         if request.form.get("count_word_frequency"):
-            any_count_mode_count_frequency.direct_set(c, auth["guild"], "true")
+            any_count_mode_count_frequency.set(c, auth["guild"], "true")
         else:
-            any_count_mode_count_frequency.direct_set(c, auth["guild"], "false")
+            any_count_mode_count_frequency.set(c, auth["guild"], "false")
 
         if request.form.get("same_member"):
-            same_member_counting_mode.direct_set(c, auth["guild"], "true")
+            same_member_counting_mode.set(c, auth["guild"], "true")
         else:
-            same_member_counting_mode.direct_set(c, auth["guild"], "false")
+            same_member_counting_mode.set(c, auth["guild"], "false")
 
         if "count_frequency_min" in request.form and request.form["count_frequency_min"].isnumeric():
             if 0 < int(request.form["count_frequency_min"]) < 100:
-                any_count_mode_minimum_frequency.direct_set(c, auth["guild"], request.form["count_frequency_min"])
+                any_count_mode_minimum_frequency.set(c, auth["guild"], request.form["count_frequency_min"])
             else:
                 flash("Please set the count frequency minimum between 1 and 99")
 

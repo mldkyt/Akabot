@@ -20,29 +20,29 @@ def handle_settings(auth):
 
     with engine.begin() as c:
         if request.form.get("level_up_message"):
-            setting_level_up_message.direct_set(c, auth["guild"], "true")
+            setting_level_up_message.set(c, auth["guild"], "true")
         else:
-            setting_level_up_message.direct_set(c, auth["guild"], "false")
+            setting_level_up_message.set(c, auth["guild"], "false")
 
         level_up_message_text = request.form.get("level_up_message_text")
 
         if level_up_message_text:
             if 2 < len(level_up_message_text) < 250:
-                setting_level_up_message_text.direct_set(c, auth["guild"], level_up_message_text)
+                setting_level_up_message_text.set(c, auth["guild"], level_up_message_text)
             else:
                 flash("Invalid length of level up message text")
 
         xp_per_message = request.form.get("xp_per_message")
         if xp_per_message:
             if xp_per_message.isnumeric() and 1 <= int(xp_per_message) <= 100:
-                setting_xp_per_message.direct_set(c, auth["guild"], xp_per_message)
+                setting_xp_per_message.set(c, auth["guild"], xp_per_message)
             else:
                 flash("XP per message must be between 1 and 100")
 
         xp_per_level = request.form.get("xp_per_level")
         if xp_per_level:
             if xp_per_level.isnumeric() and 10 <= int(xp_per_level) <= 10000:
-                setting_xp_per_level.direct_set(c, auth["guild"], xp_per_level)
+                setting_xp_per_level.set(c, auth["guild"], xp_per_level)
             else:
                 flash("XP per level must be between 10 and 10000")
 
