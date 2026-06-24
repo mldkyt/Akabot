@@ -34,16 +34,3 @@ def setup(bot: Bot):
         setting_chat_revive_role,
         setting_chat_revive_channels
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Chat Revive",
-            description="Dead channels? With the help of Chat Revive, you can revive them after a set amount of minutes.",
-            settings=[
-                setting_chat_revive_role,
-                setting_chat_revive_channels
-            ]
-        )
-    )

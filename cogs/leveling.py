@@ -168,21 +168,3 @@ def setup(bot):
         setting_leveling_rewards,
         setting_leveling_multipliers,
     )
-
-
-def docs():
-    return str(
-        Docs(
-            "Leveling",
-            description="Adds levels, level-up rewards and more fun into your server.",
-            commands=[DocsCommand("level", description="Show user level")],
-            settings=[
-                setting_xp_per_message,
-                setting_level_up_message,
-                setting_level_up_message_text,
-                setting_xp_per_level,
-                setting_leveling_rewards,
-                setting_leveling_multipliers
-            ],
-        )
-    )

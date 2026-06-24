@@ -26,15 +26,3 @@ def setup(bot: Bot):
     settings.add_setting(
         setting_statistic_channels
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Statistic Channels",
-            description="You can set up channels that periodically update with the statistics of your server on the top of your server channel list. Create a voice channel and put it on top of the list, and ensure the bot has channel edit permissions.",
-            settings=[
-                setting_statistic_channels
-            ]
-        )
-    )

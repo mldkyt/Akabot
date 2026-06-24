@@ -1448,16 +1448,3 @@ def setup(bot: Bot):
     bot.add_cog(Logging(bot))
 
     settings.add_settings(logging_channel, *[i[1] for i in logging_settings])
-
-
-def docs():
-    return str(
-        Docs(
-            name="Logging",
-            description="This module logs events into the logs channel of your choosing.",
-            settings=[
-                logging_channel,
-                *[i[1] for i in logging_settings],
-            ],
-        )
-    )

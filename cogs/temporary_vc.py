@@ -118,15 +118,3 @@ def setup(bot: Bot):
     bot.add_cog(TemporaryVC(bot))
 
     settings.add_setting(setting_temporary_vcs)
-
-
-def docs():
-    return str(
-        Docs(
-            name="Temporary VC",
-            description="Temporary voice channels.",
-            settings=[
-                setting_temporary_vcs
-            ]
-        )
-    )

@@ -163,26 +163,3 @@ def setup(bot: Bot):
     settings.add_settings(server_response_setting, server_message_delay)
 
     user_settings.add_settings(user_response_setting)
-
-
-def docs():
-    return str(
-        Docs(
-            name="Chat Streaks",
-            description="Chat Streaks allow you to see how chronically online are your members. It counts consecutive days of chatting. A chat streak is lost when the member skips a day.",
-            commands=[
-                DocsCommand(
-                    command="chat_streaks leaderboard",
-                    description="View the leaderboard. The leaderboard has arrows to navigate back and forth.",
-                ),
-                DocsCommand(
-                    command="chat_streaks streak",
-                    description="View the amount of days on your streak.",
-                ),
-            ],
-            settings=[
-                server_response_setting,
-                server_message_delay
-            ],
-        )
-    )

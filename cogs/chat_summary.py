@@ -114,19 +114,3 @@ def setup(bot: Bot):
         chat_summary_rows_extra,
         chat_summary_unique,
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Chat Summary",
-            description="Chat Summary shows a summary of who sent how many messages at the end of the day.",
-            settings=[
-                chat_summary,
-                chat_summary_rows,
-                chat_summary_extra,
-                chat_summary_rows_extra,
-                chat_summary_unique
-            ],
-        )
-    )

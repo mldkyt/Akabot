@@ -21,15 +21,3 @@ def setup(bot: Bot):
     settings.add_setting(
         setting_roles_on_join
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Roles On Join",
-            description="Add roles to members who join the server",
-            settings=[
-                setting_roles_on_join
-            ]
-        )
-    )

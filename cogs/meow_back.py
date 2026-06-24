@@ -33,20 +33,3 @@ def setup(bot: Bot):
         owo,
         awawa
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Meowing Back :3",
-            description="This is a silly module (disabled by default) for cat friends, dog friends, fox friends, and any other friends, which makes the bot meow, bark, waf, awawa, owo or :3 back at users. It's purely silly :3",
-            settings=[
-                meowing,
-                wafing,
-                barking,
-                colon_3,
-                owo,
-                awawa
-            ]
-        )
-    )

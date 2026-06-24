@@ -57,22 +57,3 @@ def setup(bot: Bot):
         goodbye_message_message,
         goodbye_message_type
     )
-
-
-def docs():
-    return str(Docs(
-        name="Welcome & Goodbye Messages",
-        description="You can use Akabot to welcome new members and say goodbye to those who leave. There are two grace periods available, one for before the welcome message is sent, and one for when the welcome message gets deleted (when a member leaves too quickly). Both can be disabled",
-        settings=[
-            welcome_channel,
-            welcome_grace_period_first,
-            welcome_grace_period_second,
-            welcome_message_title,
-            welcome_message_message,
-            welcome_message_type,
-            goodbye_channel,
-            goodbye_message_title,
-            goodbye_message_message,
-            goodbye_message_type
-        ]
-    ))

@@ -157,22 +157,3 @@ def setup(bot: Bot):
         setting_verification_role,
         setting_verification_mode
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Verification",
-            description="You can set up verification for your server using the verification module. Members have to solve a simple math problem to verify.",
-            settings=[
-                setting_verification_role,
-                setting_verification_mode
-            ],
-            commands=[
-                DocsCommand(
-                    command="send_verify_message",
-                    description="Sends a verification message",
-                )
-            ]
-        )
-    )

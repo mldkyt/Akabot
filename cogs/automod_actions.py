@@ -61,15 +61,3 @@ def setup(bot: Bot):
     bot.add_cog(AutomodActions(bot))
 
     settings.add_settings(automod_actions)
-
-
-def docs():
-    return str(
-        Docs(
-            name="Automod Actions",
-            description="Automod Actions allow you to perform extra actions when an AutoMod rule is triggered.",
-            settings=[
-                automod_actions
-            ]
-        )
-    )

@@ -53,20 +53,3 @@ def setup(bot: Bot):
         any_count_mode_minimum_frequency,
         same_member_counting_mode,
     )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Counting",
-            description="Counting channels add a bit of fun into your server with channels purely for counting.",
-            settings=[
-                setting_counting_channels,
-                any_count_mode,
-                any_count_mode_count_words,
-                any_count_mode_count_frequency,
-                any_count_mode_minimum_frequency,
-                same_member_counting_mode
-            ],
-        )
-    )
