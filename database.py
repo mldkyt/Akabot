@@ -290,3 +290,9 @@ synced_automod_rules = Table(
     Column("aid", VARCHAR, primary_key=True),
     Column("aname", VARCHAR, nullable=False)
 )
+
+web_feedback_bans = Table(
+    "web_feedback_bans",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True)
+)

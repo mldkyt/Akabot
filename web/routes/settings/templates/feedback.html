@@ -1,0 +1,61 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Feedback</h1>
+<p>Here you can send feedback to the developer of the bot to improve it. </p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+{% if admin %}
+
+<h2>Admin actions</h2>
+
+<form action="/settings/feedback/ban" method="post">
+    <label for="user_b">User ID</label>
+    <input type="text" name="user" id="user_b" placeholder="{{owner_id}}">
+    <br>
+
+    <button type="submit">Add ban</button>
+</form>
+<br>
+
+<form action="/settings/feedback/unban" method="post">
+    <label for="user_u">User ID</label>
+    <input type="text" name="user" id="user_u" placeholder="{{owner_id}}">
+    <br>
+
+    <button type="submit">Remove ban</button>
+</form>
+
+{% endif %}
+
+{% if disabled %}
+<p>The feedback form is disabled because the maintainer didn't set up the feedback module.</p>
+{% else %}
+
+<p>You are sending feedback as <img alt="User avatar for {{session.user.name}}" class="pfp" src="{{session.user.avatar}}">
+    {{session.user.name}}.</p>
+
+<form action="/settings/feedback" method="post">
+    <label for="title">Issue title</label>
+    <input type="text" name="title" id="title" placeholder="Bug with..."
+    minlength="5" maxlength="50">
+    <br>
+
+    <label for="body">Detailed problem</label>
+    <textarea name="body" id="body" cols="60" rows="20" placeholder="Describe the problem in detail"
+    minlength="11" maxlength="1200"></textarea>
+    <br>
+
+    <button type="submit">Send feedback</button>
+</form>
+
+<p>Do not send any passwords or other secrets in this form as <strong>they will be public</strong>!</p>
+
+{% endif %}
+
+{% endblock %}

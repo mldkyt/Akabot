@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask
 
 from web.routes.admin.mail import mail_blueprint
@@ -7,6 +8,8 @@ from web.routes.settings.automod_actions import automod_actions_bp
 from web.routes.settings.chat_revive import chat_revive_bp
 from web.routes.settings.chat_summary import chat_summary_bp
 from web.routes.settings.counting import counting_bp
+from web.routes.settings.feedback import feedback_bp
+from web.routes.settings.fun import fun_commands_bp
 from web.routes.settings.index import settings_index_bp
 from web.routes.settings.leveling import leveling_bp
 from web.routes.settings.logging import logging_bp
@@ -18,6 +21,8 @@ from web.routes.settings.statistic_channels import statistic_channels_bp
 from web.routes.settings.temporary_vcs import temporary_vcs_bp
 from web.routes.settings.verification import verification_bp
 from web.routes.settings.welcome_goodbye import welcome_goodbye_bp
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -42,6 +47,8 @@ app.register_blueprint(statistic_channels_bp)
 app.register_blueprint(temporary_vcs_bp)
 app.register_blueprint(verification_bp)
 app.register_blueprint(welcome_goodbye_bp)
+app.register_blueprint(fun_commands_bp)
+app.register_blueprint(feedback_bp)
 
 def main():
     app.run("::", 8080)
