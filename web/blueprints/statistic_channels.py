@@ -11,7 +11,7 @@ statistic_channels_bp = Blueprint("statistic_channels", __name__)
 def handle_post(auth, is_edit: bool = False):
     if "channel" not in request.form or "template" not in request.form:
         return
-    if validate_voice_channel_id(request.form["channel"]):
+    if not validate_voice_channel_id(request.form["channel"]):
         flash("Invalid voice channel selected")
         return
     if 2 > len(request.form["template"]) > 50:
