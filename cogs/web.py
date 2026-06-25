@@ -5,7 +5,7 @@ from discord.abc import GuildChannel
 
 from utils.web import sync_guild, generate_token
 
-WEB_DOMAIN = os.getenv("WEB_DOMAIN", "akabot.mldchan.dev")
+WEB_DOMAIN = os.getenv("WEB_DOMAIN", "akabot.xyz")
 
 
 class Website(Cog):
@@ -67,7 +67,7 @@ class Website(Cog):
     async def settings(self, ctx: ApplicationContext):
         """Open the web settings"""
         token = generate_token(ctx.guild, ctx.user)
-        await ctx.respond(f"https://{WEB_DOMAIN}/settings?token={token}")
+        await ctx.respond(f"https://{WEB_DOMAIN}/settings?token={token}", ephemeral=True)
 
 
 def setup(bot: Bot):
