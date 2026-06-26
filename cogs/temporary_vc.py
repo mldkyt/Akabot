@@ -2,10 +2,8 @@ from discord import Cog, Bot, VoiceState, Member, SlashCommandGroup, Application
 from sqlalchemy import select
 
 from database import engine, temporary_vcs
-from utils.docs import Docs
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
-from utils.temporary_vc import handle_voice_update, setting_temporary_vcs
+from utils.temporary_vc import handle_voice_update
 
 
 class TemporaryVC(Cog):
@@ -116,17 +114,3 @@ class TemporaryVC(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(TemporaryVC(bot))
-
-    settings.add_setting(setting_temporary_vcs)
-
-
-def docs():
-    return str(
-        Docs(
-            name="Temporary VC",
-            description="Temporary voice channels.",
-            settings=[
-                setting_temporary_vcs
-            ]
-        )
-    )

@@ -57,7 +57,7 @@ class UserSettings(discord.Cog):
             return
 
         with engine.begin() as c:
-            value = setting.get(c, ctx.user)
+            value = setting.get(c, ctx.guild.id)
 
         await ctx.respond(f"{name} is currently {value}", ephemeral=True)
 
@@ -90,7 +90,7 @@ class UserSettings(discord.Cog):
                 )
                 return
 
-            setting.add_to_list(c, ctx.user, value)
+            setting.add_to_list(c, ctx.guild.id, value)
 
             response = setting.respond_add(c, ctx.user, value)
             await ctx.respond(response, ephemeral=True)
@@ -170,80 +170,3 @@ class UserSettings(discord.Cog):
 
 def setup(bot: discord.Bot):
     bot.add_cog(UserSettings(bot))
-
-
-def docs():
-    return str(
-        Docs(
-            name="User Settings",
-            description="User settings help you adjust the Akabot settings for yourself. There are 2 types of settings: normal settings and list settings. Available settings for each module of Akabot can be read under the respective page. Use the sidebar.",
-            commands=[
-                DocsCommand(
-                    command="set_setting",
-                    description="Sets a setting to a value",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="name",
-                            description="The name of the setting to set. Use the dropdown to choose",
-                        ),
-                        DocsCommandParameter(
-                            name="value",
-                            description="The value to set it to. In the case of an invalid value, the bot will tell you.",
-                        ),
-                    ],
-                ),
-                DocsCommand(
-                    command="get_setting",
-                    description="Get a setting's value",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="name",
-                            description="The name of the setting to get. Use the dropdown to choose.",
-                        )
-                    ],
-                ),
-                DocsCommand(
-                    command="list_settings",
-                    description="List all settings available in Akabot and their current values.",
-                ),
-                DocsCommand(
-                    command="add_list_setting",
-                    description="Add a value to a list setting.",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="name",
-                            description="The name of the list setting to add to. Use the dropdown to choose",
-                        ),
-                        DocsCommandParameter(
-                            name="value",
-                            description="The value to add. In the case of an invalid value, the bot will tell you.",
-                        ),
-                    ],
-                ),
-                DocsCommand(
-                    command="remove_list_setting",
-                    description="Remove a value from a list setting.",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="name",
-                            description="The name of the list setting to remove from. Use the dropdown to choose",
-                        ),
-                        DocsCommandParameter(
-                            name="value",
-                            description="The value to remove. In the case of an invalid value, the bot will tell you.",
-                        ),
-                    ],
-                ),
-                DocsCommand(
-                    command="clear_list_setting",
-                    description="Remove all values from a list setting.",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="name",
-                            description="The name of the list setting to remove from. Use the dropdown to choose",
-                        )
-                    ],
-                ),
-            ],
-        )
-    )

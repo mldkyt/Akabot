@@ -4,7 +4,6 @@ from discord import ApplicationContext, Message, SlashCommandGroup, Member, Perm
 from database import engine
 from logger import akabot_logger
 from utils.chat_streaks import handle_send_reply
-from utils.docs import Docs, DocsCommand
 from utils.leveling import (
     add_xp,
     apply_leveling_rewards,
@@ -12,14 +11,10 @@ from utils.leveling import (
     get_multiplier,
     get_xp,
     setting_level_up_message,
-    setting_leveling_multipliers,
-    setting_leveling_rewards,
     setting_xp_per_level,
-    setting_xp_per_message,
     xp_to_next_level, setting_level_up_message_text, edit_xp_rel, edit_xp,
 )
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
 
 
 class Leveling(discord.Cog):
@@ -45,11 +40,11 @@ class Leveling(discord.Cog):
                 old_level = calculate_level(c, message.author, old_xp)
                 new_level = calculate_level(c, message.author, new_xp)
 
-                if setting_level_up_message.get(c, message.author) == "true":
+                if setting_level_up_message.get(c, message.guild.id) == "true":
                     if old_level != new_level:
                         await apply_leveling_rewards(c, message.author)
 
-                        level_up_message = setting_level_up_message_text.get(c, message.author)
+                        level_up_message = setting_level_up_message_text.get(c, message.guild.id)
 
                         level_up_message = level_up_message.replace("{old}", str(old_level))
                         level_up_message = level_up_message.replace("{new}", str(new_level))
@@ -73,7 +68,7 @@ class Leveling(discord.Cog):
                 xp = get_xp(c, ctx.user.id, ctx.guild.id)
                 level = calculate_level(c, ctx.user, xp)
                 to_next_level = xp_to_next_level(c, ctx.user, xp)
-                xp_per_level = int(setting_xp_per_level.get(c, ctx.user))
+                xp_per_level = int(setting_xp_per_level.get(c, ctx.guild.id))
 
                 await ctx.respond(
                     apply_appends(ctx.user.id,
@@ -100,7 +95,7 @@ class Leveling(discord.Cog):
     async def add_levels(self, ctx: ApplicationContext, user: Member, levels: int):
         """Add levels to a member. Use responsibly."""
         with engine.begin() as c:
-            level_xp = int(setting_xp_per_level.get(c, user))
+            level_xp = int(setting_xp_per_level.get(c, user.guild.id))
             edit_xp_rel(c, user, level_xp * levels)
 
         await ctx.respond(f"Added {levels} levels to {user.mention}", ephemeral=True)
@@ -121,7 +116,7 @@ class Leveling(discord.Cog):
     async def remove_levels(self, ctx: ApplicationContext, user: Member, levels: int):
         """Remove levels from a member. Use responsibly."""
         with engine.begin() as c:
-            level_xp = int(setting_xp_per_level.get(c, user))
+            level_xp = int(setting_xp_per_level.get(c, user.guild.id))
             success, error = edit_xp_rel(c, user, level_xp * -levels)
 
         if not success:
@@ -151,7 +146,7 @@ class Leveling(discord.Cog):
             return
 
         with engine.begin() as c:
-            level_xp = int(setting_xp_per_level.get(c, user))
+            level_xp = int(setting_xp_per_level.get(c, user.guild.id))
             edit_xp(c, user, level_xp * levels)
 
         await ctx.respond(f"Set {user.mention}'s level count to {levels - 1} levels", ephemeral=True)
@@ -159,30 +154,3 @@ class Leveling(discord.Cog):
 
 def setup(bot):
     bot.add_cog(Leveling(bot))
-
-    settings.add_settings(
-        setting_xp_per_message,
-        setting_level_up_message,
-        setting_level_up_message_text,
-        setting_xp_per_level,
-        setting_leveling_rewards,
-        setting_leveling_multipliers,
-    )
-
-
-def docs():
-    return str(
-        Docs(
-            "Leveling",
-            description="Adds levels, level-up rewards and more fun into your server.",
-            commands=[DocsCommand("level", description="Show user level")],
-            settings=[
-                setting_xp_per_message,
-                setting_level_up_message,
-                setting_level_up_message_text,
-                setting_xp_per_level,
-                setting_leveling_rewards,
-                setting_leveling_multipliers
-            ],
-        )
-    )

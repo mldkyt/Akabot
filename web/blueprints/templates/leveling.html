@@ -1,0 +1,121 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Leveling</h1>
+<p>Make chatting more fun using leveling. Set rewards for active chatters, and set event multipliers here.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Settings</h2>
+
+<form action="/settings/leveling" method="post">
+    <input type="checkbox" name="level_up_message" id="level_up_message" {% if level_up_message %}checked{% endif %}>
+    <label for="level_up_message">Enable level up message</label>
+    <br>
+
+    <label for="level_up_message_text">Level up message text</label>
+    <input type="text" name="level_up_message_text" id="level_up_message_text" value="{{level_up_message_text}}">
+    <br>
+
+    <label for="xp_per_message">XP per message</label>
+    <input type="number" name="xp_per_message" id="xp_per_message" value="{{xp_per_message}}">
+    <br>
+
+    <label for="xp_per_level">XP per level</label>
+    <input type="number" name="xp_per_level" id="xp_per_level" value="{{xp_per_level}}">
+    <br>
+
+    <button type="submit">Save</button>
+</form>
+
+<h2>Rewards</h2>
+
+<p>Here you can configure rewards for level targets.</p>
+
+<form action="/settings/leveling" method="post">
+    <label for="reward_role">Role to add</label>
+    <select name="reward_role" id="reward_role">
+        {% for role in roles %}
+        <option value="{{role.id}}">{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="required_level">Required level</label>
+    <input type="number" name="required_level" id="required_level">
+    <br>
+    <button type="submit">Add</button>
+</form>
+
+<hr>
+
+{% for reward in reward_roles %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/leveling/edit/reward/{{reward.index}}" method="post">
+        <label for="reward_role">Role to add</label>
+        <select name="reward_role" id="reward_role">
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if reward.id == role.id %}selected{% endif %}>{{role.name}}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="required_level">Required level</label>
+        <input type="number" name="required_level" id="required_level" value="{{reward.level}}">
+        <br>
+        <button type="submit">Save</button>
+    </form>
+    <a href="/settings/leveling/delete/reward/{{reward.index}}">Delete</a>
+</div>
+{% else %}
+<p>No rewards set up</p>
+{% endfor %}
+
+<h2>Multipliers</h2>
+
+<p>Here you can configure multipliers for date ranges.</p>
+
+<form action="/settings/leveling" method="post">
+    <label for="start">Start date</label>
+    <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5">
+    <br>
+
+    <label for="end">End date</label>
+    <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5">
+    <br>
+
+    <label for="multiplier">Multiplier</label>
+    <input type="number" name="multiplier" id="multiplier">
+    <br>
+
+    <button type="submit">Add</button>
+</form>
+
+<hr>
+
+{% for multiplier in multipliers %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/leveling/edit/multiplier/{{multiplier.index}}" method="post">
+        <label for="start">Start date</label>
+        <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.start}}">
+        <br>
+
+        <label for="end">End date</label>
+        <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.end}}">
+        <br>
+
+        <label for="multiplier">Multiplier</label>
+        <input type="number" name="multiplier" id="multiplier" value="{{multiplier.multiplier}}">
+        <br>
+
+        <button type="submit">Edit multiplier</button>
+    </form>
+    <a href="/settings/leveling/delete/multiplier/{{multiplier.index}}">Delete</a>
+</div>
+{% else %}
+<p>No multipliers set up</p>
+{% endfor %}
+
+{% endblock %}

@@ -97,11 +97,11 @@ class UserSetting:
     def default(self) -> list[str] | str:
         return self.default_value
 
-    def get(self, c: Connection, member: Member) -> str | list[str]:
+    def get(self, c: Connection, member: int) -> str | list[str]:
         if self.setting_type == SettingType.NORMAL:
             setting = c.execute(
                 select(us_table.c.value).where(
-                    (us_table.c.uid == str(member.id)) & (us_table.c.name == self.name)
+                    (us_table.c.uid == str(member)) & (us_table.c.name == self.name)
                 )
             ).fetchone()
 
@@ -112,7 +112,7 @@ class UserSetting:
         elif self.setting_type == SettingType.LIST:
             setting = c.execute(
                 select(usl_table.c.value).where(
-                    (usl_table.c.uid == str(member.id))
+                    (usl_table.c.uid == str(member))
                     & (usl_table.c.name == self.name)
                 )
             ).fetchall()
@@ -126,12 +126,12 @@ class UserSetting:
 
     def get_formatted(self, c: Connection, m: Member):
         if self.setting_type == SettingType.NORMAL:
-            val = self.get(c, m)
+            val = self.get(c, m.id)
             if self.normal_view is not None:
                 return self.normal_view(c, m, val)
             return f"Setting `{self.name}` has value `{val}`"
         elif self.setting_type == SettingType.LIST:
-            val = self.get(c, m)
+            val = self.get(c, m.id)
             if self.list_view is not None:
                 return self.list_view(c, m, val)
             return f"Setting `{self.name}` has value `{', '.join(val)}`"

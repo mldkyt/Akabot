@@ -1,0 +1,40 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Moderation</h1>
+<p>Here you can configure things related to Akabot moderation.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Moderator roles</h2>
+
+<form action="/settings/moderation" method="post">
+    <label for="role">Moderator role</label>
+    <select name="role" id="role">
+        {% for role in roles %}
+        <option value="{{role.id}}">{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <button type="submit">Add</button>
+</form>
+
+<h2>Existing moderator roles</h2>
+
+{% for moderator_role in moderator_roles %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <ul>
+        <li>Moderator role: {{moderator_role.name}}</li>
+    </ul>
+
+    <a href="/settings/moderation/delete/{{moderator_role.index}}">Delete</a>
+</div>
+{% else %}
+<p>No moderation roles</p>
+{% endfor %}
+
+{% endblock %}

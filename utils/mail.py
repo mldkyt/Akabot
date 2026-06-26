@@ -53,20 +53,20 @@ def append_mail_footer(user_id: int):
     return ""
 
 
-def get_all_mail(user_id: str) -> list[tuple[int, str, str, bool]]:
+def get_all_mail(user_id: str) -> list[tuple[int, str, str, bool, datetime.datetime]]:
     bump_first_seen(user_id)
 
     with engine.begin() as c:
         mai = c.execute(
             text(
                 "SELECT mail.id, mail.text, mail.author, "
-                "(mail.created_at < (SELECT firstseen FROM \"user\" WHERE id = :user_id) OR EXISTS(SELECT 1 FROM mail_read WHERE mail_read.mail_id = mail.id AND mail_read.user_id = :user_id)) "
+                "(mail.created_at < (SELECT firstseen FROM \"user\" WHERE id = :user_id) OR EXISTS(SELECT 1 FROM mail_read WHERE mail_read.mail_id = mail.id AND mail_read.user_id = :user_id)), "
+                "mail.created_at "
                 "FROM mail ORDER BY created_at DESC"),
             {"user_id": user_id}
         ).fetchall()
 
     return mai
-
 
 def mark_as_read(user_id: str, mail_id: int):
     with engine.begin() as c:

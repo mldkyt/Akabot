@@ -1,0 +1,13 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>TOPIC</h1>
+<p>DESC</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+{% endblock %}

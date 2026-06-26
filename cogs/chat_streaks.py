@@ -20,11 +20,9 @@ from utils.chat_streaks import (
     get_unexpired_streak,
     server_message_delay,
     update_for_user,
-    handle_send_reply, user_response_setting, server_response_setting
+    handle_send_reply, user_response_setting
 )
-from utils.docs import Docs, DocsCommand
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
 from utils.user_settings import user_settings
 
 
@@ -53,23 +51,23 @@ class ChatStreaks(Cog):
 
                 if unex_streak != prev_streak:
 
-                    if user_response_setting.get(c, msg.author) in ["expiry", "on"]:
+                    if user_response_setting.get(c, msg.guild.id) in ["expiry", "on"]:
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg, apply_appends(msg.author.id,
                                                f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.")
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
                     return
                 if next_streak > prev_streak:
-                    if user_response_setting.get(c, msg.author) == "on":
+                    if user_response_setting.get(c, msg.guild.id) == "on":
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
                             apply_appends(msg.author.id,
                                           f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.author)))
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
         except Exception as e:
             akabot_logger.exception(e)
 
@@ -160,29 +158,4 @@ class ChatStreaks(Cog):
 def setup(bot: Bot):
     bot.add_cog(ChatStreaks(bot))
 
-    settings.add_settings(server_response_setting, server_message_delay)
-
     user_settings.add_settings(user_response_setting)
-
-
-def docs():
-    return str(
-        Docs(
-            name="Chat Streaks",
-            description="Chat Streaks allow you to see how chronically online are your members. It counts consecutive days of chatting. A chat streak is lost when the member skips a day.",
-            commands=[
-                DocsCommand(
-                    command="chat_streaks leaderboard",
-                    description="View the leaderboard. The leaderboard has arrows to navigate back and forth.",
-                ),
-                DocsCommand(
-                    command="chat_streaks streak",
-                    description="View the amount of days on your streak.",
-                ),
-            ],
-            settings=[
-                server_response_setting,
-                server_message_delay
-            ],
-        )
-    )

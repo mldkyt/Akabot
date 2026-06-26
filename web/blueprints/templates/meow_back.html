@@ -1,0 +1,41 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Meow back</h1>
+<p>The bot can meow back to messages. It can also bark, :3, owo, awawa and do fox noises.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form action="/settings/meow_back" method="post">
+    <input type="checkbox" name="meow" id="meow" {% if meow %}checked{% endif %}>
+    <label for="meow">Meow back</label>
+    <br>
+
+    <input type="checkbox" name="waf" id="waf" {% if waf %}checked{% endif %}>
+    <label for="waf">Waf back</label>
+    <br>
+
+    <input type="checkbox" name="bark" id="bark" {% if bark %}checked{% endif %}>
+    <label for="bark">Bark back</label>
+    <br>
+
+    <input type="checkbox" name="colon_3" id="colon_3" {% if colon_3 %}checked{% endif %}>
+    <label for="colon_3">:3 back</label>
+    <br>
+
+    <input type="checkbox" name="owo" id="owo" {% if owo %}checked{% endif %}>
+    <label for="owo">OwO back</label>
+    <br>
+
+    <input type="checkbox" name="awawa" id="awawa" {% if awawa %}checked{% endif %}>
+    <label for="awawa">awawawa back :3</label>
+    <br>
+
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}

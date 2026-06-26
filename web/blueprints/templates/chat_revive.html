@@ -1,0 +1,71 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Chat Revive</h1>
+<p>Revive channels to keep your server active! If a channel is not active for long enough, the bot will ping a role</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Settings</h2>
+
+<form action="/settings/chat_revive" method="post">
+    <label for="revive_role">Revive Role</label>
+    <br>
+    <select name="revive_role" id="revive_role">
+        <option value="unset">-- Unset --</option>
+        {% for role in roles %}
+        <option value="{{role.id}}" {% if role.id == chat_revive_role %}selected{% endif %}>{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <button type="submit">Save settings</button>
+</form>
+
+<h2>New chat revive role</h2>
+
+<form action="/settings/chat_revive" method="post">
+    <label for="channel">Channel</label>
+    <br>
+    <select id="channel" name="channel" required>
+        {% for channel in channels %}
+        <option value="{{channel.id}}">{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="minutes">Minutes to revive after</label>
+    <br>
+    <input type="number" name="minutes" id="minutes">
+    <br>
+
+    <button type="submit">Create chat revive</button>
+</form>
+
+<h2>Existing chat revives</h2>
+
+{% for chat_revive in chat_revives %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/chat_revive/edit/{{chat_revive.index}}" method="post">
+        <label for="channel">Channel</label>
+        <select id="channel" name="channel" required>
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if channel.id == chat_revive.channel_id %}selected{% endif %}>{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <label for="minutes">Minutes to revive after</label>
+        <input type="number" name="minutes" id="minutes" value="{{chat_revive.minutes}}">
+        <br>
+
+        <button type="submit">Edit chat revive</button>
+    </form>
+    <a href="/settings/chat_revive/delete/{{chat_revive.index}}">Delete</a>
+</div>
+{% else %}
+<p>No chat revives set up.</p>
+{% endfor %}
+
+{% endblock %}

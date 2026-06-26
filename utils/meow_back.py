@@ -4,66 +4,42 @@ import re
 from discord import Message
 
 from database import engine
-from utils.server_settings import ServerSetting, SettingType, setting_to_boolean, setting_simple_string_boolean
+from utils.server_settings import ServerSetting, SettingType
 
 meowing = ServerSetting(
     name="Meow back at messages",
-    description="Meow back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("%s meowing at messages (cat)", "Enabled", "Disabled"),
-    normal_view=setting_simple_string_boolean("Meowing back at messages is %s", "enabled", "disabled")
 )
 
 wafing = ServerSetting(
     name="Waf back at messages",
-    description="Waf back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("%s waffing at messages (fox)", "Enabled", "Disabled"),
-    normal_view=setting_simple_string_boolean("Waffing back at messages is %s", "enabled", "disabled")
 )
 
 barking = ServerSetting(
     name="Bark back at messages",
-    description="Bark back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("%s barking at messages (dog)", "Enabled", "Disabled"),
-    normal_view=setting_simple_string_boolean("Barking back at messages is %s", "enabled", "disabled")
 )
 
 colon_3 = ServerSetting(
     name=":3 back at messages",
-    description=":3 back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("%s :3ing at messages (owo)", "Enabled", "Disabled"),
-    normal_view=setting_simple_string_boolean(":3ing back at messages is %s", "enabled", "disabled")
 )
 
 owo = ServerSetting(
     name="OwO back at messages",
-    description="OwO back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("%s OwOing back at messages (owo)", "Enabled", "Disabled"),
-    normal_view=setting_simple_string_boolean("OwOing back at messages is %s", "enabled", "disabled")
 )
 
 awawa = ServerSetting(
     name="awawa back at messages",
-    description="awawa back at messages. :3",
     setting_type=SettingType.NORMAL,
     default="false",
-    normal_processor=setting_to_boolean,
-    normal_response=setting_simple_string_boolean("%s awawaing back at messages (awawa)", "Enabled", "Disabled"),
-    normal_view=setting_simple_string_boolean("awawaing back at messages is %s", "enabled", "disabled")
 )
 
 
@@ -178,12 +154,12 @@ def meow_back_for_message(message: Message):
         return ""
 
     with engine.begin() as c:
-        meowing_enabled = meowing.get_guild(c, message.guild) == "true"
-        colon_3_enabled = colon_3.get_guild(c, message.guild) == "true"
-        owo_enabled = owo.get_guild(c, message.guild) == "true"
-        awawa_enabled = awawa.get_guild(c, message.guild) == "true"
-        barking_enabled = barking.get_guild(c, message.guild) == "true"
-        wafing_enabled = wafing.get_guild(c, message.guild) == "true"
+        meowing_enabled = meowing.get(c, message.guild.id) == "true"
+        colon_3_enabled = colon_3.get(c, message.guild.id) == "true"
+        owo_enabled = owo.get(c, message.guild.id) == "true"
+        awawa_enabled = awawa.get(c, message.guild.id) == "true"
+        barking_enabled = barking.get(c, message.guild.id) == "true"
+        wafing_enabled = wafing.get(c, message.guild.id) == "true"
 
     message_reply = " ".join(
         [

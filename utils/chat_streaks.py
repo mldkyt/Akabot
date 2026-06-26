@@ -9,33 +9,14 @@ from utils.bot_channel import setting_bot_channel
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-    setting_to_number,
-    setting_simple_string,
     setting_choice
 )
 from utils.user_settings import UserSetting
 
 
-def server_message_delay_processor(
-    c: Connection, m: Member, v: str
-) -> tuple[bool, str]:
-    ok, err = setting_to_number(c, m, v)
-    if not ok:
-        return ok, err
-
-    v2 = int(v)
-    if v2 < 3 or v2 > 10:
-        return False, "Invalid number range"
-
-    return True, v
-
-
 server_response_setting = ServerSetting(
     "Chat streaks response setting",
-    description="Chat streaks disable response",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_choice("off", "bot channel", "on"),
-    normal_response=setting_simple_string("The server mode has been set to %s"),
     default="on",
 )
 
@@ -43,18 +24,12 @@ user_response_setting = UserSetting(
     "Chat streaks response setting",
     setting_type=SettingType.NORMAL,
     normal_processor=setting_choice("off", "expiry", "on"),
-    normal_response=setting_simple_string("The user mode has been set to %s"),
     default="on",
 )
 
 server_message_delay = ServerSetting(
     "Chat streaks message duration",
-    description="A server setting that configures how long the response is shown for.",
     setting_type=SettingType.NORMAL,
-    normal_processor=server_message_delay_processor,
-    normal_response=setting_simple_string(
-        "When the bot responds to a message, the bot message will be deleted after %s seconds"
-    ),
     default="5",
 )
 
@@ -194,8 +169,8 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         assert not isinstance(msg.channel, PartialMessageable) and not isinstance(msg.channel, DMChannel)
 
         with engine.begin() as c:
-            bot_channel_id = setting_bot_channel.get_guild(c, msg.guild)
-            setting_response = server_response_setting.get_guild(c, msg.guild)
+            bot_channel_id = setting_bot_channel.get(c, msg.guild.id)
+            setting_response = server_response_setting.get(c, msg.guild.id)
 
         if setting_response == "off":
             return None, False

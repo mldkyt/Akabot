@@ -26,18 +26,14 @@ from discord.abc import GuildChannel
 
 from database import engine
 from logger import akabot_logger
-from utils.docs import Docs
 from utils.logs import (
     format_overwrite,
     format_perm_name,
     handle_emoji,
     handle_sticker,
     is_logging_enabled,
-    logging_channel,
-    logging_settings,
     send_message_to_log_channel,
 )
-from utils.server_settings import settings
 
 
 class Logging(Cog):
@@ -1446,18 +1442,3 @@ class Logging(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(Logging(bot))
-
-    settings.add_settings(logging_channel, *[i[1] for i in logging_settings])
-
-
-def docs():
-    return str(
-        Docs(
-            name="Logging",
-            description="This module logs events into the logs channel of your choosing.",
-            settings=[
-                logging_channel,
-                *[i[1] for i in logging_settings],
-            ],
-        )
-    )

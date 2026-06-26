@@ -2,11 +2,9 @@ from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCom
     IntegrationType
 
 from database import engine
-from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
     setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command, tick_counter, ActionBack
 from utils.message_appends import apply_appends
-from utils.server_settings import settings
 
 
 class Fun(Cog):
@@ -19,7 +17,7 @@ class Fun(Cog):
     async def yaoi(self, ctx: ApplicationContext):
         if ctx.guild is not None:
             with engine.begin() as c:
-                disable_yaoi = setting_disable_yaoi_command.get_guild(c, ctx.guild)
+                disable_yaoi = setting_disable_yaoi_command.get(c, ctx.guild.id)
                 if disable_yaoi == "true":
                     await ctx.respond("The yaoi command is disabled in this server", ephemeral=True)
                     return
@@ -40,7 +38,7 @@ class Fun(Cog):
     async def yuri(self, ctx: ApplicationContext):
         if ctx.guild is not None:
             with engine.begin() as c:
-                disable_yuri = setting_disable_yuri_command.get_guild(c, ctx.guild)
+                disable_yuri = setting_disable_yuri_command.get(c, ctx.guild.id)
                 if disable_yuri == "true":
                     await ctx.respond("The yuri command is disabled in this server", ephemeral=True)
                     return
@@ -63,7 +61,7 @@ class Fun(Cog):
     @rp_group.command()
     async def lurk(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -76,7 +74,7 @@ class Fun(Cog):
     @rp_group.command()
     async def shrug(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -89,7 +87,7 @@ class Fun(Cog):
     @rp_group.command()
     async def wave(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -102,7 +100,7 @@ class Fun(Cog):
     @rp_group.command()
     async def poke(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -124,7 +122,7 @@ class Fun(Cog):
     @rp_group.command()
     async def smile(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -137,7 +135,7 @@ class Fun(Cog):
     @rp_group.command()
     async def wink(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -150,7 +148,7 @@ class Fun(Cog):
     @rp_group.command()
     async def blush(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -163,7 +161,7 @@ class Fun(Cog):
     @rp_group.command()
     async def smug(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -176,7 +174,7 @@ class Fun(Cog):
     @rp_group.command()
     async def tickle(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -198,7 +196,7 @@ class Fun(Cog):
     @rp_group.command()
     async def yeet(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -220,7 +218,7 @@ class Fun(Cog):
     @rp_group.command()
     async def highfive(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -242,7 +240,7 @@ class Fun(Cog):
     @rp_group.command()
     async def wag(self, ctx: ApplicationContext):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -255,7 +253,7 @@ class Fun(Cog):
     @rp_group.command()
     async def bite(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -277,7 +275,7 @@ class Fun(Cog):
     @rp_group.command()
     async def cuddle(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -299,7 +297,7 @@ class Fun(Cog):
     @rp_group.command()
     async def kick(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -321,7 +319,7 @@ class Fun(Cog):
     @rp_group.command()
     async def carry(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -343,7 +341,7 @@ class Fun(Cog):
     @rp_group.command()
     async def hug(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -365,7 +363,7 @@ class Fun(Cog):
     @rp_group.command()
     async def bonk(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -387,7 +385,7 @@ class Fun(Cog):
     @rp_group.command()
     async def pat(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -409,7 +407,7 @@ class Fun(Cog):
     @rp_group.command()
     async def kiss(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -431,7 +429,7 @@ class Fun(Cog):
     @rp_group.command()
     async def slap(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -453,7 +451,7 @@ class Fun(Cog):
     @rp_group.command()
     async def lappillow(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -475,7 +473,7 @@ class Fun(Cog):
     @rp_group.command()
     async def handhold(self, ctx: ApplicationContext, target: Member):
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -498,7 +496,7 @@ class Fun(Cog):
     async def consent(self, ctx: ApplicationContext, target: User):
         """Ask for consent with another member"""
         with engine.begin() as c:
-            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.user) != "true":
+            if ctx.guild is not None and setting_allow_rp_commands.get(c, ctx.guild.id) != "true":
                 await ctx.respond(apply_appends(ctx.user.id, "RP commands are disabled in this server"), ephemeral=True)
                 return
 
@@ -546,225 +544,3 @@ class Fun(Cog):
 
 def setup(bot):
     bot.add_cog(Fun(bot))
-
-    settings.add_settings(
-        setting_allow_rp_commands,
-        setting_disable_yaoi_command,
-        setting_disable_yuri_command
-    )
-
-
-def docs():
-    return str(
-        Docs(
-            name="Fun commands",
-            description="Whoa... fun :3",
-            settings=[
-                setting_allow_rp_commands,
-                setting_disable_yaoi_command,
-                setting_disable_yuri_command
-            ],
-            commands=[
-                DocsCommand(
-                    command="yaoi",
-                    description="Get some fine yaoi"
-                ),
-                DocsCommand(
-                    command="yuri",
-                    description="Get some fine yuri"
-                ),
-                DocsCommand(
-                    command="lurk",
-                    description="Lurk"
-                ),
-                DocsCommand(
-                    command="shrug",
-                    description="Shrug"
-                ),
-                DocsCommand(
-                    command="wave",
-                    description="Wave"
-                ),
-                DocsCommand(
-                    command="poke",
-                    description="Poke somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to poke :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="smile",
-                    description="Smile",
-                ),
-                DocsCommand(
-                    command="wink",
-                    description="Wink",
-                ),
-                DocsCommand(
-                    command="blush",
-                    description="Blush",
-                ),
-                DocsCommand(
-                    command="smug",
-                    description="Smug",
-                ),
-                DocsCommand(
-                    command="tickle",
-                    description="Tickle somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to tickle :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="yeet",
-                    description="Yeet somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to yeet :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="wag",
-                    description="Wag your tail",
-                ),
-                DocsCommand(
-                    command="bite",
-                    description="Bite somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to bite :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="cuddle",
-                    description="Cuddle somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to cuddle :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="kick",
-                    description="Kick somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to kick :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="carry",
-                    description="Carry somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to carry :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="hug",
-                    description="Hug somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to hug :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="bonk",
-                    description="Bonk somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to bonk :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="pat",
-                    description="Pat somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to pat :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="kiss",
-                    description="Kiss somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to kiss :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="slap",
-                    description="Slap somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to slap :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="lappillow",
-                    description="Lie on someone's lap",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user whose lap to lie on :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="handhold",
-                    description="Handhold with somebody",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to do the handholding with :3"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="consent",
-                    description="Set up consent with somebody. Run this command to get access to more personal RP with somebody. Consent is important :3",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to set up the consent with"
-                        )
-                    ]
-                ),
-                DocsCommand(
-                    command="check_consent",
-                    description="Check your consent status with someone. No one will be notified",
-                    parameters=[
-                        DocsCommandParameter(
-                            name="target",
-                            description="The user to check the consent with"
-                        )
-                    ]
-                )
-            ]
-        )
-    )

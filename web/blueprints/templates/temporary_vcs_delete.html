@@ -1,0 +1,17 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Remve temporary VC creator</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the temporary VC creator <strong>{{channel_name}}</strong>. The channel will stop creating VCs when this is done.</p>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/temporary_vcs">Cancel</a>
+
+{% endblock %}

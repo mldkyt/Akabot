@@ -1,0 +1,24 @@
+{% extends 'page.html' %}
+
+{% block main %}
+
+<h1>Delete multiplier</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<p>You are about to delete the following multiplier:</p>
+
+<ul>
+    <li>Start date: {{start_date}}</li>
+    <li>End date: {{end_date}}</li>
+    <li>Multiplier: {{multiplier}}</li>
+</ul>
+
+<a href="?confirm=yes">Delete</a><br>
+<a href="/settings/leveling">Cancel</a>
+
+{% endblock %}

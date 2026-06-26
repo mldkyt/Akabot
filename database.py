@@ -252,3 +252,47 @@ rp_counters = Table(
     Column("counter", VARCHAR, primary_key=True),
     Column("count", Integer, server_default="0", nullable=False)
 )
+
+web_tokens = Table(
+    "web_tokens",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("gname", VARCHAR, nullable=False),
+    Column("uid", VARCHAR, nullable=False),
+    Column("uname", VARCHAR, nullable=False),
+    Column("uavatar", VARCHAR, nullable=False),
+    Column("token", VARCHAR, nullable=False),
+    Column("expires", DateTime(timezone=True), nullable=False)
+)
+
+synced_channels = Table(
+    "sync_channels",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("cname", VARCHAR, nullable=False),
+    Column("ctype", VARCHAR, nullable=False, server_default="text")
+)
+
+synced_roles = Table(
+    "sync_roles",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("rid", VARCHAR, primary_key=True),
+    Column("rname", VARCHAR, nullable=False)
+)
+
+synced_automod_rules = Table(
+    "sync_automod_rules",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("aid", VARCHAR, primary_key=True),
+    Column("aname", VARCHAR, nullable=False)
+)
+
+web_feedback_bans = Table(
+    "web_feedback_bans",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True)
+)

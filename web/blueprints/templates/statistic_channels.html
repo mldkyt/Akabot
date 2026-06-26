@@ -1,0 +1,69 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Statistic channels</h1>
+<p>Statistic channels allow you to display the stats of your Discord server using voice channels conveniently in the channel list.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Configuration</h2>
+
+<p>The following placeholders are supported in Akabot:</p>
+
+<ul>
+    <li><strong>{members}</strong> - Member count</li>
+    <li><strong>{bots}</strong> - Count of bots</li>
+    <li><strong>{users}</strong> - Count of non-bot members</li>
+    <li><strong>{guild}</strong> - Server name</li>
+    <li><strong>{owner}</strong> - Current owner username</li>
+</ul>
+
+<p>More will be added later based on suggestions.</p>
+
+<h2>Add statistic channel</h2>
+<form action="/settings/statistic_channels" method="post">
+    <label for="channel">Voice channel to turn into a statistic channel</label>
+    <select name="channel" id="channel">
+        {% for channel in channels %}
+        <option value="{{channel.id}}">{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+
+    <label for="template">Template</label>
+    <input type="text" id="template" name="template" placeholder="{members} members">
+    <br>
+
+    <button type="submit">Add</button>
+</form>
+
+<h2>Statistic channels settings</h2>
+
+{% for statistic_channel in statistic_channels %}
+<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <form action="/settings/statistic_channels/edit/{{statistic_channel.index}}" method="post">
+        <label for="channel">Voice channel</label>
+        <select name="channel" id="channel">
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if statistic_channel.id == channel.id %}selected{% endif %}>{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label for="template">Template</label>
+        <input type="text" id="template" name="template" placeholder="{members} members" value="{{statistic_channel.template}}">
+        <br>
+
+        <button type="submit">Edit</button>
+    </form>
+    <a href="/settings/statistic_channels/delete/{{statistic_channel.index}}">Delete</a>
+</div>
+{% else %}
+<p>No statistic channels</p>
+{% endfor %}
+
+{% endblock %}

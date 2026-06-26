@@ -1,0 +1,30 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<a href="/settings/automod_actions">Back</a>
+
+<h1>Delete automod action</h1>
+
+<p>You are deleting the following action:</p>
+
+<ul>
+    <li>Action: {{action.action}}</li>
+    <li>Rule name: {{action.name}}</li>
+    {% if "time" in action %}
+    <li>Mute time: {{action.time}}</li>
+    {% endif %}
+    {% if "message" in action %}
+    <li>DM message: {{action.message}}</li>
+    {% endif %}
+    {% if "reason" in action %}
+    <li>Reason used in audit logs: {{action.reason}}</li>
+    {% endif %}
+</ul>
+
+<p>Are you sure?</p>
+
+
+<a href="?confirm=yes">Confirm</a>
+<a href="/settings/automod_actions">Cancel</a>
+
+{% endblock %}

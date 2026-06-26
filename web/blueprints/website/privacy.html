@@ -1,0 +1,83 @@
+{% extends 'page.html' %}
+
+{% block content %}
+
+<div class="paragraph">
+    <h1>Akabot Privacy Policy</h1>
+    <p>
+        The public instance of Akabot Discord bot takes privacy very seriously. It is as private as if you would host it yourself. If you think this privacy statement is way too privacy intrusive,
+        check out the Discord privacy policy.
+    </p>
+    <h2>What Akabot stores in its databases</h2>
+    <p>Each feature of the bot stores as little data as possible. Here&apos;s a quick overview of what is stored and what is associated with every feature:</p>
+    <ul>
+        <li>
+            <strong>Automod Actions</strong> - User defined actions along with all information about them (names, actions and the optional message) are stored. When an automod action with a name gets
+            triggered, the user defined actions stored will be executed.
+        </li>
+        <li><strong>Chat Revive</strong> - The Chat Revive feature only stores which role has been chosen, channels which are active and the last message time sent in that channel.</li>
+        <li>
+            <strong>Chat Streaks</strong> - The Chat Streaks feature stored the date you started your chat streak along with the date of your last sent message. Using these 2 dates, the bot calculates
+            the rest of the messages. You can disable the notifications of this feature using `/user_settings chat_streaks_alerts off` and you can always check your streak by using the `/streak` command.
+        </li>
+        <li>
+            <strong>Chat Summary</strong> - The Chat Summary feature stores the amount of messages sent in a channel daily, along with who has sent how many messages in that channel. Only the top 5
+            chatters will be shown in the summary. No message content is stored. All numbers in this module are cleared every midnight.
+        </li>
+        <li>
+            <strong>Giveaways</strong> - The giveaways module stores the channel the giveaway was started in, the item entered and the ending date, calculated when the giveaway is created. The creator
+            of the giveaway is not stored.
+        </li>
+        <li>
+            <strong>Leveling</strong> - Each user has an associated number of XP points which is stored and associated to every user. A list of leveling multipliers, the server general leveling multiplier,
+            and the XP required to level up are stored and associated to every server.
+        </li>
+        <li>
+            <strong>Logging</strong> - The logging channel is stored and associated with the server. The bot then listens to Discord changes and creates messages from available information in your
+            logs channel.
+        </li>
+        <li>
+            <strong>Moderation</strong> - No information is stored when using kick, ban and timeout commands. When using warnings, a list of warnings created using the bot are stored. Warning actions
+            are also stored and associated with the server and performed after adding a warning to the user.
+        </li>
+        <li><strong>Per User Settings</strong> - All per user settings have settings associated with the user.</li>
+        <li>
+            <strong>Reaction Roles</strong> - You wouldn&apos;t believe it, but this module doesn&apos;t store any information at all. The Role ID&apos;s and types of the reaction roles are stored
+            in the button&apos;s custom ID itself.
+        </li>
+        <li><strong>Roles on Join</strong> - The list of roles to be added on join are stored and associated with the server.</li>
+        <li><strong>Server Settings</strong> - All settings stored are associated with the server.</li>
+        <li><strong>Verification</strong> - The verification difficulty and role are stored per server.</li>
+        <li><strong>Welcome and Goodbye</strong> - All user defined settings are stored and associated with the server.</li>
+    </ul>
+    <p>Backend modules mostly don&apos;t mess with any user data or any server data.</p>
+    <ul>
+        <li><strong>Heartbeat</strong> - Sends periodic network requests to a URL every set interval.</li>
+    </ul>
+    <h2>Third parties</h2>
+    <p>
+        The Discord bot can share data with a self-hosted Forgejo instance on the same server, only if a user uses the feedback form in settings.
+    </p>
+    <p>The bot doesn&apos;t share any user data with any other party, except the one listed above.</p>
+    <h2>Changes to the privacy statement</h2>
+    <p>
+        If the privacy statement ever changes, which it might in the future, you will receive a bot mail with the alert, along with a summary of the changes, so you don&apos;t
+        have to read the entire statement again.
+    </p>
+</div>
+
+<style>
+    .title {
+        margin-left: auto;
+        margin-right: auto;
+        width: 70vw;
+        color: rgb(99, 99, 238);
+    }
+
+.paragraph {
+    width: 70vw;
+    margin: auto;
+}
+</style>
+
+{% endblock %}

@@ -2,7 +2,7 @@ from decimal import InvalidOperation
 from enum import Enum
 from typing import Callable
 
-from discord import AutocompleteContext, Guild, Member
+from discord import AutocompleteContext, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import server_settings, server_settings_list
@@ -20,92 +20,25 @@ class ServerSetting:
         self,
         name: str,
         *,
-            description: str = "No description provided.",
         setting_type: SettingType = SettingType.NORMAL,
-            normal_processor: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
-            list_add_processor: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
-            list_remove_processor: Callable[[Connection, Member, str], tuple[bool, str]] | None = None,
-        default: str | None = None,
-        normal_response: Callable[[Connection, Member, str], str] | None = None,
-        list_add_response: Callable[[Connection, Member, str], str] | None = None,
-        list_remove_response: Callable[[Connection, Member, str], str] | None = None,
-        normal_view: Callable[[Connection, Member, str], str] | None = None,
-        list_view: Callable[[Connection, Member, list[str]], str] | None = None,
+        default: str | None = None
     ):
         self.name = name
-        self.description = description
-
         self.setting_type = setting_type
 
         if self.setting_type == SettingType.NORMAL:
             self.default_value = default
-            self.normal_processor = normal_processor
-            self.normal_response = normal_response
-            self.normal_view = normal_view
         elif self.setting_type == SettingType.LIST:
             self.default_value = []
-            self.list_add_processor = list_add_processor
-            self.list_add_response = list_add_response
-            self.list_remove_processor = list_remove_processor
-            self.list_remove_response = list_remove_response
-            self.list_view = list_view
-
-    def process_add(self, c: Connection, member: Member, value: str) -> tuple[bool, str]:
-        if self.setting_type == SettingType.NORMAL:
-            if self.normal_processor is None:
-                return True, value
-
-            return self.normal_processor(c, member, value)
-        elif self.setting_type == SettingType.LIST:
-            if self.list_add_processor is None:
-                return True, value
-
-            return self.list_add_processor(c, member, value)
-
-        raise ValueError(f"Invalid setting_type {self.setting_type} for transform_add")
-
-    def process_remove(self, c: Connection, member: Member, value: str) -> tuple[bool, str]:
-        if self.setting_type == SettingType.LIST:
-            if self.list_remove_processor is None:
-                return True, value
-
-            return self.list_remove_processor(c, member, value)
-
-        raise ValueError(
-            f"Invalid setting_type {self.setting_type} for transform_remove"
-        )
-
-    def respond_add(self, c: Connection, member: Member, value: str) -> str:
-        if self.setting_type == SettingType.NORMAL:
-            if self.normal_response is None:
-                return f"Set {self.name} to {value}"
-
-            return self.normal_response(c, member, value)
-        elif self.setting_type == SettingType.LIST:
-            if self.list_add_response is None:
-                return f"Added {value} to list {self.name}"
-
-            return self.list_add_response(c, member, value)
-
-        raise ValueError(f"Invalid setting_type {self.setting_type} for respond_add")
-
-    def respond_remove(self, c: Connection, member: Member, value: str) -> str:
-        if self.setting_type == SettingType.LIST:
-            if self.list_remove_response is None:
-                return f"Removed {value} from list {self.name}"
-
-            return self.list_remove_response(c, member, value)
-
-        raise ValueError(f"Invalid setting_type {self.setting_type} for respond_remove")
 
     def default(self) -> list | str:
         return self.default_value
 
-    def get(self, c: Connection, member: Member) -> str | list[str]:
+    def get(self, c: Connection, guild_id: int) -> str | list[str]:
         if self.setting_type == SettingType.NORMAL:
             setting = c.execute(
                 select(server_settings.c.value).where(
-                    (server_settings.c.uid == str(member.guild.id))
+                    (server_settings.c.uid == str(guild_id))
                     & (server_settings.c.name == self.name)
                 )
             ).fetchone()
@@ -117,7 +50,7 @@ class ServerSetting:
         elif self.setting_type == SettingType.LIST:
             setting = c.execute(
                 select(server_settings_list.c.value).where(
-                    (server_settings_list.c.uid == str(member.guild.id))
+                    (server_settings_list.c.uid == str(guild_id))
                     & (server_settings_list.c.name == self.name)
                 )
             ).fetchall()
@@ -129,61 +62,15 @@ class ServerSetting:
         else:
             raise ValueError(f"Variable type {self.setting_type} is invalid")
 
-    def get_guild(self, c: Connection, g: Guild) -> str | None | list[str]:
-        if self.setting_type == SettingType.NORMAL:
-            setting = c.execute(
-                select(server_settings.c.value).where(
-                    (server_settings.c.uid == str(g.id))
-                    & (server_settings.c.name == self.name)
-                )
-            ).fetchone()
-
-            if setting is None:
-                return self.default_value
-
-            return setting[0]
-        elif self.setting_type == SettingType.LIST:
-            setting = c.execute(
-                select(server_settings_list.c.value).where(
-                    (server_settings_list.c.uid == str(g.id))
-                    & (server_settings_list.c.name == self.name)
-                )
-            ).fetchall()
-
-            if len(setting) == 0:
-                return []
-
-            return [i[0] for i in setting]
-        else:
-            raise ValueError(f"Variable type {self.setting_type} is invalid")
-
-    def get_formatted(self, c: Connection, m: Member):
-        if self.setting_type == SettingType.NORMAL:
-            val = self.get(c, m)
-            if self.normal_view is not None:
-                return self.normal_view(c, m, val)
-            return f"Setting `{self.name}` has value `{val}`"
-        elif self.setting_type == SettingType.LIST:
-            val = self.get(c, m)
-            if self.list_view is not None:
-                return self.list_view(c, m, val)
-            return f"Setting `{self.name}` has value `{', '.join(val)}`"
-        else:
-            raise ValueError(f"Variable type {self.setting_type} is invalid")
-
-    def set(self, c: Connection, member: Member, value: str):
+    def set(self, c: Connection, guild_id: int, value: str):
         if self.setting_type != SettingType.NORMAL:
             raise InvalidOperation(
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
             )
 
-        ok, value = self.process_add(c, member, value)
-        if not ok:
-            raise ValueError(value)
-
         setting = c.execute(
             select(server_settings.c.value).where(
-                (server_settings.c.uid == str(member.guild.id))
+                (server_settings.c.uid == str(guild_id))
                 & (server_settings.c.name == self.name)
             )
         ).fetchone()
@@ -191,7 +78,7 @@ class ServerSetting:
         if setting is None:
             c.execute(
                 insert(server_settings).values(
-                    uid=str(member.guild.id), name=self.name, value=value
+                    uid=str(guild_id), name=self.name, value=value
                 )
             )
         else:
@@ -199,13 +86,13 @@ class ServerSetting:
                 update(server_settings)
                 .values(value=value)
                 .where(
-                    (server_settings.c.uid == str(member.guild.id))
+                    (server_settings.c.uid == str(guild_id))
                     & (server_settings.c.name == self.name)
                 )
             )
 
     def add_to_list(
-        self, c: Connection, member: Member, value: str, silent: bool = False
+            self, c: Connection, guild_id: int, value: str, silent: bool = False
     ):
         if self.setting_type != SettingType.LIST:
             raise InvalidOperation(
@@ -214,7 +101,7 @@ class ServerSetting:
 
         a = c.execute(
             select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )
@@ -228,12 +115,12 @@ class ServerSetting:
 
         c.execute(
             insert(server_settings_list).values(
-                uid=str(member.guild.id), name=self.name, value=value
+                uid=str(guild_id), name=self.name, value=value
             )
         )
 
     def remove_from_list(
-        self, c: Connection, member: Member, value: str, silent: bool = False
+            self, c: Connection, guild_id: int, value: str, silent: bool = False
     ):
         if self.setting_type != SettingType.LIST:
             raise InvalidOperation(
@@ -242,7 +129,7 @@ class ServerSetting:
 
         a = c.execute(
             select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )
@@ -256,16 +143,16 @@ class ServerSetting:
 
         c.execute(
             delete(server_settings_list).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )
         )
 
-    def is_in_list(self, c: Connection, member: Member, value: str) -> bool:
+    def is_in_list(self, c: Connection, guild_id: int, value: str) -> bool:
         a = c.execute(
             select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(member.guild.id))
+                (server_settings_list.c.uid == str(guild_id))
                 & (server_settings_list.c.name == self.name)
                 & (server_settings_list.c.value == value)
             )
@@ -281,160 +168,6 @@ class ServerSetting:
             )
         )
 
-    def __str__(self):
-        if self.setting_type == SettingType.NORMAL:
-            return (
-                f"- Setting `{self.name}`\n\n\t{self.description}\n\n\tThe setting can be changed using `/server_settings set_setting`\n\n"
-            )
-        elif self.setting_type == SettingType.LIST:
-            return (
-                f"- Setting `{self.name}`\n\n\t{self.description}\n\n\tThis setting is a list, items can be added using `/server_settings add_list_setting` and removed using `/server_settings remove_list_setting`\n\n"
-            )
-
-        return f"- {self.name}\n\n\tThe setting type for this setting is unrecognized."
-
-
-class ServerSettings:
-    def __init__(self):
-        self.registered_settings: list[ServerSetting] = []
-
-    def add_setting(self, setting: ServerSetting):
-        self.registered_settings.append(setting)
-
-    def add_settings(self, *setting: ServerSetting):
-        self.registered_settings.extend(setting)
-
-    def get_settings(self) -> list[ServerSetting]:
-        return self.registered_settings
-
-    def get_setting(self, name: str) -> ServerSetting | None:
-        for i in self.registered_settings:
-            if i.name == name:
-                return i
-
-        return None
-
-    def list_server_settings_pretty(
-        self, c: Connection, member: Member
-    ) -> list[tuple[str, str]]:
-        sets = []
-
-        for i in self.registered_settings:
-            if i.setting_type == SettingType.NORMAL:
-                try:
-                    pretty_setting = i.get_formatted(c, member)
-                    if len(pretty_setting.strip()) == 0:
-                        akabot_logger.warning("Setting %s is empty when normal_view was called", i.name)
-
-                    sets.append(pretty_setting)
-                except Exception:
-                    akabot_logger.exception("An error occurred while getting setting %s", i.name)
-
-        return sets
-
-
-settings = ServerSettings()
-
-
-# noinspection PyUnusedLocal
-def setting_to_number(c: Connection, member: Member, value: str) -> tuple[bool, str]:
-    if not value.isnumeric():
-        return False, f"{value} is not a number"
-
-    return True, value
-
-
-def setting_number_within_range(minimum: int, maximum: int):
-    def wrapper(c: Connection, m: Member, value: str) -> tuple[bool, str]:
-        ok, value = setting_to_number(c, m, value)
-        if not ok:
-            return False, value
-
-        if int(value) <= minimum:
-            return False, f"Value must be greater than {minimum}"
-
-        if int(value) >= maximum:
-            return False, f"Value must be less than {maximum}"
-
-        return True, value
-
-    return wrapper
-
-BOOLEAN_VALUES = [
-    "true",
-    "yes",
-    "y",
-    "1",
-    "Y",
-    "Yes",
-    "On",
-    "ON",
-    "on",
-    "false",
-    "no",
-    "n",
-    "0",
-    "N",
-    "No",
-    "Off",
-    "OFF",
-    "off",
-]
-
-# noinspection PyUnusedLocal
-def setting_to_boolean(c: Connection, member: Member, value: str) -> tuple[bool, str]:
-    if value in ["true", "yes", "y", "1", "Y", "Yes", "On", "ON", "on"]:
-        return True, "true"
-    elif value in ["false", "no", "n", "0", "N", "No", "Off", "OFF", "off"]:
-        return True, "false"
-
-    return False, f"Invalid value: {value}"
-
-# noinspection PyUnusedLocal
-def setting_to_text_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
-    if value in ["none", "0", "null", "unset", "un set", "don't set", "no", "false"]:
-        return True, ""
-
-    s = value.split(",")
-    if len(s) == 2 and s[1].isnumeric():
-        chat_convert = convert_text_channel(member.guild, s[0], int(s[1]))
-    else:
-        chat_convert = convert_text_channel(member.guild, value)
-
-    if chat_convert is None:
-        return False, "Invalid channel"
-
-    return True, str(chat_convert.id)
-
-
-def setting_to_voice_channel(c: Connection, member: Member, value: str) -> tuple[bool, str]:
-    if value in ["none", "0", "null", "unset", "un set", "don't set", "no", "false"]:
-        return True, ""
-
-    s = value.split(",")
-    if len(s) == 2 and s[1].isnumeric():
-        chat_convert = convert_voice_channel(member.guild, s[0], int(s[1]))
-    else:
-        chat_convert = convert_voice_channel(member.guild, value)
-
-    if chat_convert is None:
-        return False, "Invalid channel"
-
-    return True, str(chat_convert.id)
-
-# noinspection PyUnusedLocal
-def setting_to_role(c: Connection, member: Member, value: str) -> tuple[bool, str]:
-    s = value.split(",")
-    if len(s) == 2 and s[1].isnumeric():
-        role_convert = convert_role(member.guild, s[0], int(s[1]))
-    else:
-        role_convert = convert_role(member.guild, value)
-
-    if role_convert is None:
-        return False, "Invalid role"
-
-    return True, str(role_convert.id)
-
 
 def setting_choice(*choices: str):
     def processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
@@ -444,66 +177,3 @@ def setting_choice(*choices: str):
         return False, f"Invalid choice \"{v}\", pick one from {', '.join(choices)}."
 
     return processor
-
-
-def setting_simple_string(fmt: str):
-    def formatter(c: Connection, m: Member, v: str) -> str:
-        return fmt.replace("%s", v)
-
-    return formatter
-
-
-def setting_simple_list_string(fmt: str, sep: str, empty: str):
-    def formatter(c: Connection, m: Member, v: list[str]) -> str:
-        if len(v) == 0:
-            return empty
-        return fmt.replace("%s", sep.join(v))
-
-    return formatter
-
-
-def setting_simple_list_string_item(fmt: str, sep: str, empty: str, item_fmt: str):
-    def formatter(c: Connection, m: Member, v: list[str]) -> str:
-        if len(v) == 0:
-            return fmt.replace("%s", empty)
-
-        items = [item_fmt.replace("%s", i) for i in v]
-        return fmt.replace("%s", sep.join(items))
-
-    return formatter
-
-
-def setting_simple_string_boolean(fmt: str, truthy: str, falsey: str):
-    def formatter(c: Connection, m: Member, v: str) -> str:
-        if v == "true":
-            return fmt.replace("%s", truthy)
-        else:
-            return fmt.replace("%s", falsey)
-
-    return formatter
-
-
-def setting_name_autocomplete(ctx: AutocompleteContext) -> list[str]:
-    setting = ctx.options["name"]
-
-    options = [
-        i.name
-        for i in settings.get_settings()
-        if setting.lower() in i.name.lower() and i.setting_type == SettingType.NORMAL
-    ]
-    options = options[:10]
-
-    return options
-
-
-def setting_name_list_autocomplete(ctx: AutocompleteContext) -> list[str]:
-    setting = ctx.options["name"]
-
-    options = [
-        i.name
-        for i in settings.get_settings()
-        if setting.lower() in i.name.lower() and i.setting_type == SettingType.LIST
-    ]
-    options = options[:10]
-
-    return options

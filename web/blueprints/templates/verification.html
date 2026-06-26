@@ -1,0 +1,42 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Verification</h1>
+<p>You can configure the verify role here. The message can be sent using a slash command in Discord in your verification channel. You can also configure the verification mode here.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form action="/settings/verification" method="post">
+    <label for="verification_role">Verification role</label>
+    <select name="verification_role" id="verification_role">
+        <option value="unset">-- unset --</option>
+        {% for role in roles %}
+        <option value="{{role.id}}" {% if role.id == verification_role %}selected{% endif %}>{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+
+    <label for="verification_mode">Verification mode</label>
+    <select name="verification_mode" id="verification_mode">
+        <option value="none" {% if verification_mode == "none" %}selected{% endif %}>None</option>
+        <option value="math" {% if verification_mode == "math" %}selected{% endif %}>Math problem</option>
+        <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3</option>
+    </select>
+    <br>
+    
+    <button type="submit">Save</button>
+</form>
+
+<h2>What is the difference between verification modes?</h2>
+
+<ul>
+    <li><strong>None</strong>: This verification method is very simple but won't protect you from attackers who can click buttons using their accounts.</li>
+    <li><strong>Math</strong>: Shows a math problem in addition of pressing the button to verify.</li>
+    <li><strong>Silly</strong>: Makes the user make a bark, meow, or a fox noise to pass the check. This one is just silly and here for no reason.</li>
+</ul>
+
+{% endblock %}
