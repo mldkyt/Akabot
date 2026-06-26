@@ -13,6 +13,7 @@ from web.blueprints.index import settings_index_bp
 from web.blueprints.leveling import leveling_bp
 from web.blueprints.logging import logging_bp
 from web.blueprints.mail import mail_bp
+from web.blueprints.main_page import main_page_bp
 from web.blueprints.meow_back import meow_back_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
@@ -23,9 +24,13 @@ from web.blueprints.welcome_goodbye import welcome_goodbye_bp
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_folder='web/static',
+            static_url_path='/static')
 
 app.secret_key = os.getenv("WEB_SECRET", "1234")
+
+app.register_blueprint(main_page_bp)
 
 # Settings
 app.register_blueprint(settings_index_bp)
