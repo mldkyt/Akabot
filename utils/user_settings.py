@@ -56,7 +56,7 @@ class UserSetting:
         else:
             raise ValueError(f"Variable type {self.setting_type} is invalid")
 
-    def set(self, c: Connection, member: Member, value: str):
+    def set(self, c: Connection, member: int, value: str):
         if self.setting_type != SettingType.NORMAL:
             raise InvalidOperation(
                 f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
@@ -64,14 +64,14 @@ class UserSetting:
 
         setting = c.execute(
             select(us_table).where(
-                (us_table.c.uid == str(member.id)) & (us_table.c.name == self.name)
+                (us_table.c.uid == str(member)) & (us_table.c.name == self.name)
             )
         ).fetchone()
 
         if setting is None:
             c.execute(
                 insert(us_table).values(
-                    uid=str(member.id), name=self.name, value=value
+                    uid=str(member), name=self.name, value=value
                 )
             )
         else:
@@ -79,12 +79,12 @@ class UserSetting:
                 update(us_table)
                 .values(value=value)
                 .where(
-                    (us_table.c.uid == str(member.id)) & (us_table.c.name == self.name)
+                    (us_table.c.uid == str(member)) & (us_table.c.name == self.name)
                 )
             )
 
     def add_to_list(
-        self, c: Connection, member: Member, value: str, silent: bool = False
+        self, c: Connection, member: int, value: str, silent: bool = False
     ):
         if self.setting_type != SettingType.LIST:
             raise InvalidOperation(
@@ -93,7 +93,7 @@ class UserSetting:
 
         a = c.execute(
             select(usl_table.c.value).where(
-                (usl_table.c.uid == str(member.id))
+                (usl_table.c.uid == str(member))
                 & (usl_table.c.name == self.name)
                 & (usl_table.c.value == value)
             )
@@ -107,12 +107,12 @@ class UserSetting:
 
         c.execute(
             insert(usl_table).values(
-                uid=str(member.guild.id), name=self.name, value=value
+                uid=str(member), name=self.name, value=value
             )
         )
 
     def remove_from_list(
-        self, c: Connection, member: Member, value: str, silent: bool = False
+        self, c: Connection, member: int, value: str, silent: bool = False
     ):
         if self.setting_type != SettingType.LIST:
             raise InvalidOperation(
@@ -121,7 +121,7 @@ class UserSetting:
 
         a = c.execute(
             select(usl_table.c.value).where(
-                (usl_table.c.uid == str(member.id))
+                (usl_table.c.uid == str(member))
                 & (usl_table.c.name == self.name)
                 & (usl_table.c.value == value)
             )
@@ -135,16 +135,16 @@ class UserSetting:
 
         c.execute(
             delete(usl_table).where(
-                (usl_table.c.uid == str(member.id))
+                (usl_table.c.uid == str(member))
                 & (usl_table.c.name == self.name)
                 & (usl_table.c.value == value)
             )
         )
 
-    def is_in_list(self, c: Connection, member: Member, value: str) -> bool:
+    def is_in_list(self, c: Connection, member: int, value: str) -> bool:
         a = c.execute(
             select(usl_table.c.value).where(
-                (usl_table.c.uid == str(member.id))
+                (usl_table.c.uid == str(member))
                 & (usl_table.c.name == self.name)
                 & (usl_table.c.value == value)
             )
@@ -152,9 +152,9 @@ class UserSetting:
 
         return a is not None
 
-    def clear_list(self, c: Connection, member: Member):
+    def clear_list(self, c: Connection, member: int):
         c.execute(
             delete(usl_table.c.value).where(
-                (usl_table.c.uid == str(member.id)) & (usl_table.c.name == self.name)
+                (usl_table.c.uid == str(member)) & (usl_table.c.name == self.name)
             )
         )
