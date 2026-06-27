@@ -8,11 +8,9 @@ from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import (
     ServerSetting,
-    SettingType,
-    setting_choice
+    SettingType
 )
 from utils.user_settings import UserSetting
-
 
 server_response_setting = ServerSetting(
     "Chat streaks response setting",
@@ -23,7 +21,6 @@ server_response_setting = ServerSetting(
 user_response_setting = UserSetting(
     "Chat streaks response setting",
     setting_type=SettingType.NORMAL,
-    normal_processor=setting_choice("off", "expiry", "on"),
     default="on",
 )
 

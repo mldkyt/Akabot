@@ -167,13 +167,3 @@ class ServerSetting:
                 & (server_settings_list.c.name == self.name)
             )
         )
-
-
-def setting_choice(*choices: str):
-    def processor(c: Connection, m: Member, v: str) -> tuple[bool, str]:
-        if v.strip() in choices:
-            return True, v
-
-        return False, f"Invalid choice \"{v}\", pick one from {', '.join(choices)}."
-
-    return processor
