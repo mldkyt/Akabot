@@ -187,8 +187,10 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
                 else:
                     return None, False
 
+        if bot_channel is None:
+            return None, False
+
         assert not isinstance(bot_channel, ForumChannel) and not isinstance(bot_channel, CategoryChannel)
-        assert bot_channel is not None
         return await bot_channel.send(f"{msg.author.mention} {content}"), False
     except Exception as e:
         akabot_logger.exception("handle_send_reply exception")
