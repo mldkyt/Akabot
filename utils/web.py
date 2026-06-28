@@ -21,7 +21,7 @@ async def sync_text_channels(c: Connection, guild: Guild):
     for channel in to_remove:
         c.execute(
             delete(synced_channels)
-            .where((synced_channels.c.gid == str(guild.id)) & (synced_channels.c.cid == channel))
+            .where((synced_channels.c.gid == str(guild.id)) & (synced_channels.c.cid == str(channel)))
         )
 
     for channel in guild.text_channels:
@@ -53,7 +53,7 @@ async def sync_voice_channels(c: Connection, guild: Guild):
     for channel in to_remove:
         c.execute(
             delete(synced_channels)
-            .where((synced_channels.c.gid == str(guild.id)) & (synced_channels.c.cid == channel))
+            .where((synced_channels.c.gid == str(guild.id)) & (synced_channels.c.cid == str(channel)))
         )
 
     for channel in guild.voice_channels:
@@ -85,7 +85,7 @@ async def sync_roles(c: Connection, guild: Guild):
     for role in to_remove:
         c.execute(
             delete(synced_roles)
-            .where((synced_roles.c.gid == str(guild.id)) & (synced_roles.c.rid == role))
+            .where((synced_roles.c.gid == str(guild.id)) & (synced_roles.c.rid == str(role)))
         )
 
     for role in guild.roles:
