@@ -58,7 +58,7 @@ class ChatSummary(Cog):
                 if msg.guild is None:
                     return
 
-                if not chat_summary.is_in_list(c, msg.author, str(msg.channel.id)):
+                if not chat_summary.is_in_list(c, msg.guild.id, str(msg.channel.id)):
                     return
 
                 # Count into chat summary
@@ -91,6 +91,11 @@ class ChatSummary(Cog):
                 ephemeral=True,
             )
             return
+
+        with engine.begin() as c:
+            if not chat_summary.is_in_list(c, ctx.guild.id, str(ctx.channel.id)):
+                await ctx.respond("This channel is not a chat summary channel", ephemeral=True)
+                return
 
         status = await ctx.respond("Backfilling channel...")
         await perform_backfill(ctx.guild, ctx.channel)

@@ -482,7 +482,6 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                             )
 
                     # Increment for user
-
                     if a is None or a[1] != str(message.author.id):
                         a = c.execute(
                             select(chat_summary_members.c.messages).where(
