@@ -172,7 +172,7 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         if setting_response == "off":
             return None, False
 
-        bot_channel = msg.guild.get_channel(int(bot_channel_id))
+        bot_channel = msg.guild.get_channel(int(bot_channel_id)) if bot_channel_id != "" else None
 
         if msg.channel.permissions_for(msg.guild.me).read_message_history:
             if len(bot_channel_id.strip()) == 0:
