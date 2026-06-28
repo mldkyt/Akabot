@@ -30,8 +30,6 @@ app = Flask(__name__,
 
 app.secret_key = os.getenv("WEB_SECRET", "1234")
 
-app.register_blueprint(main_page_bp)
-
 # Settings
 app.register_blueprint(settings_index_bp)
 app.register_blueprint(automod_actions_bp)
@@ -50,6 +48,8 @@ app.register_blueprint(verification_bp)
 app.register_blueprint(welcome_goodbye_bp)
 app.register_blueprint(fun_commands_bp)
 app.register_blueprint(feedback_bp)
+
+app.register_blueprint(main_page_bp)
 
 def main():
     app.run("::", 8080)
