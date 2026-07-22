@@ -324,3 +324,11 @@ meow_back_settings = Table(
     Column("owo", Integer, default=0),
     Column("awawa", Integer, default=0),
 )
+
+saves = Table(
+    "saves",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("uid", VARCHAR, nullable=False),
+    Column("link", VARCHAR, nullable=False),
+)
