@@ -142,20 +142,6 @@ def meow_back_channel():
         colon_3 = 1 if request.form.get("colon_3") else 0
         owo = 1 if request.form.get("owo") else 0
         awawa = 1 if request.form.get("awawa") else 0
-        print(
-            "meow",
-            meow,
-            "waf",
-            waf,
-            "bark",
-            bark,
-            "colon_3",
-            colon_3,
-            "owo",
-            owo,
-            "awawa",
-            awawa,
-        )
 
         if c.execute(
             select(meow_back_settings).where(
@@ -163,14 +149,12 @@ def meow_back_channel():
             )
         ).fetchone():
             if meow + waf + bark + colon_3 + owo + awawa == 0:
-                print("Deleting")
                 c.execute(
                     delete(meow_back_settings).where(
                         meow_back_settings.c.cid == request.form["channel"]
                     )
                 )
             else:
-                print("Updating")
                 c.execute(
                     update(meow_back_settings)
                     .values(
@@ -184,7 +168,6 @@ def meow_back_channel():
                     .where(meow_back_settings.c.cid == request.form["channel"])
                 )
         else:
-            print("Inserting")
             c.execute(
                 insert(meow_back_settings).values(
                     cid=request.form["channel"],
