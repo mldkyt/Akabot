@@ -1,39 +1,111 @@
-{% extends 'page.html' %}
-
-{% block main %}
+{% extends 'page.html' %} {% block main %}
 <h1>Meow back</h1>
 <p>The bot can meow back to messages. It can also bark, :3, owo, awawa and do fox noises.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div style="border: 1px solid blue">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
 
+<h2>Add per-channel meow settings</h2>
+<form action="/settings/meow_back/channel" method="post">
+    <label for="channel">Channel</label>
+    <select name="channel" id="channel">
+        {% for channel in text_channels %}
+        <option value="{{channel.id}}">#{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br />
+
+    <input type="checkbox" name="meow" id="per-channel-meow" />
+    <label for="per-channel-meow">Meow back</label>
+    <br />
+
+    <input type="checkbox" name="waf" id="per-channel-waf" />
+    <label for="per-channel-waf">Waf back</label>
+    <br />
+
+    <input type="checkbox" name="bark" id="per-channel-bark" />
+    <label for="per-channel-bark">Bark back</label>
+    <br />
+
+    <input type="checkbox" name="colon_3" id="per-channel-colon_3" />
+    <label for="per-channel-colon_3">:3 back</label>
+    <br />
+
+    <input type="checkbox" name="owo" id="per-channel-owo" />
+    <label for="per-channel-owo">OwO back</label>
+    <br />
+
+    <input type="checkbox" name="awawa" id="per-channel-awawa" />
+    <label for="per-channel-awawa">awawawa back :3</label>
+    <br />
+
+    <button type="submit">Add channel</button>
+</form>
+{% for channel in meow_back_channels %}
+
+<h2>Settings for channel #{{channel.name}}</h2>
+<form action="/settings/meow_back/channel" method="post">
+    <br />
+
+    <input type="hidden" name="channel" value="{{channel.id}}" />
+
+    <input type="checkbox" name="meow" id="{{channel.id}}-meow" {% if channel.meow %}checked{% endif %} />
+    <label for="{{channel.id}}-meow">Meow back</label>
+    <br />
+
+    <input type="checkbox" name="waf" id="{{channel.id}}-waf" {% if channel.waf %}checked{% endif %} />
+    <label for="{{channel.id}}-waf">Waf back</label>
+    <br />
+
+    <input type="checkbox" name="bark" id="{{channel.id}}-bark" {% if channel.bark %}checked{% endif %} />
+    <label for="{{channel.id}}-bark">Bark back</label>
+    <br />
+
+    <input type="checkbox" name="colon_3" id="{{channel.id}}-colon_3" {% if channel.colon_3 %}checked{% endif %} />
+    <label for="{{channel.id}}-colon_3">:3 back</label>
+    <br />
+
+    <input type="checkbox" name="owo" id="{{channel.id}}-owo" {% if channel.owo %}checked{% endif %} />
+    <label for="{{channel.id}}-owo">OwO back</label>
+    <br />
+
+    <input type="checkbox" name="awawa" id="{{channel.id}}-awawa" {% if channel.awawa %}checked{% endif %} />
+    <label for="{{channel.id}}-awawa">awawawa back :3</label>
+    <br />
+
+    <button type="submit">Save</button>
+</form>
+
+{% endfor %}
+
+<h2>Global settings (legacy)</h2>
 <form action="/settings/meow_back" method="post">
-    <input type="checkbox" name="meow" id="meow" {% if meow %}checked{% endif %}>
+    <input type="checkbox" name="meow" id="meow" {% if meow %}checked{% endif %} />
     <label for="meow">Meow back</label>
-    <br>
+    <br />
 
-    <input type="checkbox" name="waf" id="waf" {% if waf %}checked{% endif %}>
+    <input type="checkbox" name="waf" id="waf" {% if waf %}checked{% endif %} />
     <label for="waf">Waf back</label>
-    <br>
+    <br />
 
-    <input type="checkbox" name="bark" id="bark" {% if bark %}checked{% endif %}>
+    <input type="checkbox" name="bark" id="bark" {% if bark %}checked{% endif %} />
     <label for="bark">Bark back</label>
-    <br>
+    <br />
 
-    <input type="checkbox" name="colon_3" id="colon_3" {% if colon_3 %}checked{% endif %}>
+    <input type="checkbox" name="colon_3" id="colon_3" {% if colon_3 %}checked{% endif %} />
     <label for="colon_3">:3 back</label>
-    <br>
+    <br />
 
-    <input type="checkbox" name="owo" id="owo" {% if owo %}checked{% endif %}>
+    <input type="checkbox" name="owo" id="owo" {% if owo %}checked{% endif %} />
     <label for="owo">OwO back</label>
-    <br>
+    <br />
 
-    <input type="checkbox" name="awawa" id="awawa" {% if awawa %}checked{% endif %}>
+    <input type="checkbox" name="awawa" id="awawa" {% if awawa %}checked{% endif %} />
     <label for="awawa">awawawa back :3</label>
-    <br>
+    <br />
 
     <button type="submit">Save</button>
 </form>

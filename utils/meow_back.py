@@ -2,8 +2,9 @@ import random
 import re
 
 from discord import Message
+from sqlalchemy import select
 
-from database import engine
+from database import engine, meow_back_settings
 from utils.server_settings import ServerSetting, SettingType
 
 meowing = ServerSetting(
@@ -130,7 +131,7 @@ def handle_owo(message: Message):
         return ""
 
     return (
-            " ".join(random.choices(["OwO", "owo", "UwU", "uwu", ">w<"], k=count)) + " :3"
+        " ".join(random.choices(["OwO", "owo", "UwU", "uwu", ">w<"], k=count)) + " :3"
     )
 
 
@@ -154,12 +155,31 @@ def meow_back_for_message(message: Message):
         return ""
 
     with engine.begin() as c:
-        meowing_enabled = meowing.get(c, message.guild.id) == "true"
-        colon_3_enabled = colon_3.get(c, message.guild.id) == "true"
-        owo_enabled = owo.get(c, message.guild.id) == "true"
-        awawa_enabled = awawa.get(c, message.guild.id) == "true"
-        barking_enabled = barking.get(c, message.guild.id) == "true"
-        wafing_enabled = wafing.get(c, message.guild.id) == "true"
+        channel_settings = c.execute(
+            select(
+                meow_back_settings.c.meow,
+                meow_back_settings.c.waf,
+                meow_back_settings.c.bark,
+                meow_back_settings.c.colon_3,
+                meow_back_settings.c.owo,
+                meow_back_settings.c.awawa,
+            ).where(meow_back_settings.c.cid == message.channel.id)
+        ).fetchone()
+
+        if channel_settings:
+            meowing_enabled = channel_settings[0] == 1
+            colon_3_enabled = channel_settings[3] == 1
+            owo_enabled = channel_settings[4] == 1
+            awawa_enabled = channel_settings[5] == 1
+            barking_enabled = channel_settings[2] == 1
+            wafing_enabled = channel_settings[1] == 1
+        else:
+            meowing_enabled = meowing.get(c, message.guild.id) == "true"
+            colon_3_enabled = colon_3.get(c, message.guild.id) == "true"
+            owo_enabled = owo.get(c, message.guild.id) == "true"
+            awawa_enabled = awawa.get(c, message.guild.id) == "true"
+            barking_enabled = barking.get(c, message.guild.id) == "true"
+            wafing_enabled = wafing.get(c, message.guild.id) == "true"
 
     message_reply = " ".join(
         [
