@@ -332,3 +332,19 @@ saves = Table(
     Column("uid", VARCHAR, nullable=False),
     Column("link", VARCHAR, nullable=False),
 )
+
+suggestions = Table(
+    "suggestions",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("author_id", VARCHAR, nullable=False),
+    Column("message_id", VARCHAR, nullable=False),
+)
+
+suggestion_voting = Table(
+    "suggestion_voting",
+    md_obj,
+    Column("message_id", VARCHAR, primary_key=True),
+    Column("member_id", VARCHAR, primary_key=True),
+    Column("vote", Integer, default=0),  # 0 downvote, 1 upvote
+)

@@ -18,15 +18,14 @@ from web.blueprints.meow_back import meow_back_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
 from web.blueprints.statistic_channels import statistic_channels_bp
+from web.blueprints.suggestions import suggestions_bp
 from web.blueprints.temporary_vcs import temporary_vcs_bp
 from web.blueprints.verification import verification_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
 
 load_dotenv()
 
-app = Flask(__name__,
-            static_folder='web/static',
-            static_url_path='/static')
+app = Flask(__name__, static_folder="web/static", static_url_path="/static")
 
 app.secret_key = os.getenv("WEB_SECRET", "1234")
 
@@ -48,12 +47,14 @@ app.register_blueprint(verification_bp)
 app.register_blueprint(welcome_goodbye_bp)
 app.register_blueprint(fun_commands_bp)
 app.register_blueprint(feedback_bp)
+app.register_blueprint(suggestions_bp)
 
 app.register_blueprint(main_page_bp)
+
 
 def main():
     app.run("::", 8080)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

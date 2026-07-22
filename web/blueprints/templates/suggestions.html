@@ -1,0 +1,39 @@
+{% extends 'page.html' %} {% block main %} {% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h1>Suggestions</h1>
+
+<h2>Main settings</h2>
+
+<form action="/settings/suggestions" method="post">
+    <input type="checkbox" name="threads" id="threads" {% if suggestion_threads %}checked{% endif %} />
+    <label for="threads">Threads</label>
+    <br />
+
+    <button type="submit">Save</button>
+</form>
+
+<h2>Channels</h2>
+
+<form action="/settings/suggestions/addchannel" method="post">
+    <label for="channel">Suggestion channel</label>
+    <select name="channel" id="channel">
+        {% for text_channel in text_channels %}
+        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Add channel</button>
+</form>
+
+{% for suggestion_channel in suggestion_channels %}
+
+<form action="/settings/suggestions/deletechannel" method="post">
+    <input type="hidden" name="channel" value="{{suggestion_channel.id}}" />
+    <span>#{{suggestion_channel.name}} is a suggestion channel</span>
+    <button type="submit">Remove</button>
+</form>
+
+{% endfor %} {% endblock %}
