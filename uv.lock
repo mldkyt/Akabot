@@ -185,6 +185,7 @@ dependencies = [
     { name = "dateparser" },
     { name = "flask" },
     { name = "gunicorn" },
+    { name = "markovify" },
     { name = "mdparser-html" },
     { name = "psycopg2" },
     { name = "py-cord", extra = ["speed"] },
@@ -199,6 +200,7 @@ requires-dist = [
     { name = "dateparser", specifier = ">=1.4.1" },
     { name = "flask", specifier = ">=3.1.3" },
     { name = "gunicorn", specifier = ">=26.0.0" },
+    { name = "markovify", specifier = ">=0.9.4" },
     { name = "mdparser-html", specifier = "==2.0.2" },
     { name = "psycopg2", specifier = ">=2.9.12" },
     { name = "py-cord", extras = ["speed"], specifier = ">=2.8.0" },
@@ -887,6 +889,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9e/38/bd5b78a920a64d708fe6bc8e0a2c075e1389d53bef8413725c63ba041535/mako-1.3.10.tar.gz", hash = "sha256:99579a6f39583fa7e5630a28c3c1f440e4e97a414b80372649c0ce338da2ea28", size = 392474, upload-time = "2025-04-10T12:44:31.16Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/87/fb/99f81ac72ae23375f22b7afdb7642aba97c00a713c217124420147681a2f/mako-1.3.10-py3-none-any.whl", hash = "sha256:baef24a52fc4fc514a0887ac600f9f1cff3d82c61d4d700a1fa84d597b88db59", size = 78509, upload-time = "2025-04-10T12:50:53.297Z" },
+]
+
+[[package]]
+name = "markovify"
+version = "0.9.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "unidecode" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7a/e2/d0f7df1d6cc9e0b5ab6018d5d302caa1639fe702f492362baac794b6e578/markovify-0.9.4.tar.gz", hash = "sha256:eac0a156ed54bb6bede32ef20131813fbec9db70b515ead57b4d8887a16dfe39", size = 27850, upload-time = "2022-03-03T02:41:58.754Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/6c/daf4527ea22e9c9c7c7638c9b60a61b45f0a9b9aa181b512137b98fd83f1/markovify-0.9.4-py3-none-any.whl", hash = "sha256:0a64ab2fa44989248f4093bf93fbbeef23ca2a4610d53ab073523f600e88b7ae", size = 19140, upload-time = "2025-06-12T03:04:45.047Z" },
 ]
 
 [[package]]
@@ -1731,6 +1745,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8b/2e/c14812d3d4d9cd1773c6be938f89e5735a1f11a9f184ac3639b93cef35d5/tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd", size = 30761, upload-time = "2025-03-05T21:17:41.549Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/14/e2a54fabd4f08cd7af1c07030603c3356b74da07f7cc056e600436edfa17/tzlocal-5.3.1-py3-none-any.whl", hash = "sha256:eb1a66c3ef5847adf7a834f1be0800581b683b5608e74f86ecbcef8ab91bb85d", size = 18026, upload-time = "2025-03-05T21:17:39.857Z" },
+]
+
+[[package]]
+name = "unidecode"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/7d/a8a765761bbc0c836e397a2e48d498305a865b70a8600fd7a942e85dcf63/Unidecode-1.4.0.tar.gz", hash = "sha256:ce35985008338b676573023acc382d62c264f307c8f7963733405add37ea2b23", size = 200149, upload-time = "2025-04-24T08:45:03.798Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/b7/559f59d57d18b44c6d1250d2eeaa676e028b9c527431f5d0736478a73ba1/Unidecode-1.4.0-py3-none-any.whl", hash = "sha256:c3c7606c27503ad8d501270406e345ddb480a7b5f38827eafe4fa82a137f0021", size = 235837, upload-time = "2025-04-24T08:45:01.609Z" },
 ]
 
 [[package]]

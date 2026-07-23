@@ -1,0 +1,43 @@
+{% extends 'page.html' %} {% block main %}
+<h1>Markov Chains</h1>
+
+<form action="/settings/markov" method="post">
+    <label for="channel">Channel</label>
+    <select name="channel" id="channel">
+        {% for text_channel in text_channels %}
+        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <label for="num_periods">Every</label>
+    <input type="number" name="num_periods" id="num_periods" min="1" value="1" />
+    <select name="period" id="period">
+        <option value="minutely">minutes</option>
+        <option value="hourly">hours</option>
+        <option value="daily">days</option>
+    </select>
+    <br />
+    <button type="submit">Save</button>
+</form>
+
+{% for channel in enabled_channels %}
+<h2>Channel: #{{channel.name}}</h2>
+<form action="/settings/markov" method="post">
+    <input type="hidden" name="channel" value="{{channel.id}}" />
+    <label for="num_periods">Every</label>
+    <input type="number" name="num_periods" id="num_periods" min="1" value="{{channel.period_num}}" />
+    <select name="period" id="period">
+        <option value="minutely" {% if channel.period == 'minutely' %}selected{% endif %}>minutes</option>
+        <option value="hourly" {% if channel.period == 'hourly' %}selected{% endif %}>hours</option>
+        <option value="daily" {% if channel.period == 'daily' %}selected{% endif %}>days</option>
+    </select>
+    <br />
+    <button type="submit">Update</button>
+</form>
+<form action="/settings/markov" method="post">
+    <input type="hidden" name="delete" value="{{channel.id}}" />
+    <button type="submit">Disable</button>
+</form>
+{% endfor %}
+
+{% endblock %}

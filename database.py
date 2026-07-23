@@ -370,3 +370,14 @@ periodic_messages = Table(
     Column("next_send", DateTime(timezone=True)),
     Column("content", VARCHAR, nullable=False),
 )
+
+# Add this new table to the existing declarations
+markov = Table(
+    "markov",
+    md_obj,
+    Column("channel_id", VARCHAR, primary_key=True),
+    Column("guild_id", VARCHAR, nullable=False),
+    Column("period", VARCHAR, nullable=False, default="daily"),
+    Column("period_num", Integer, nullable=False, default=1),
+    Column("next_send", DateTime(timezone=True)),
+)

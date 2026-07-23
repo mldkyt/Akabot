@@ -14,6 +14,7 @@ from web.blueprints.leveling import leveling_bp
 from web.blueprints.logging import logging_bp
 from web.blueprints.mail import mail_bp
 from web.blueprints.main_page import main_page_bp
+from web.blueprints.markov import markov_bp
 from web.blueprints.meow_back import meow_back_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.periodic_messages import periodic_messages_bp
@@ -52,6 +53,7 @@ app.register_blueprint(feedback_bp)
 app.register_blueprint(suggestions_bp)
 app.register_blueprint(sticky_messages_bp)
 app.register_blueprint(periodic_messages_bp)
+app.register_blueprint(markov_bp)
 
 app.register_blueprint(main_page_bp)
 
