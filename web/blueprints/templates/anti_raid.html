@@ -1,0 +1,23 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Anti Raid</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form method="post" action="/settings/anti_raid">
+    <input type="checkbox" name="kick_no_pfp" id="kick_no_pfp" {% if kick_no_pfp %}checked{% endif %}>
+    <label for="kick_no_pfp">Kick users without avatar</label>
+    <br/>
+    <label for="kick_min_age">Minimum age of user in days (0 = disable)</label>
+    <input type="number" name="kick_min_age" id="kick_min_age" value="{{kick_min_age}}">
+    <br/>
+
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}

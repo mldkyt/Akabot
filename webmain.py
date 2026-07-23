@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask
 
+from web.blueprints.anti_raid import anti_raid_bp
 from web.blueprints.automod_actions import automod_actions_bp
 from web.blueprints.chat_revive import chat_revive_bp
 from web.blueprints.chat_summary import chat_summary_bp
@@ -56,6 +57,7 @@ app.register_blueprint(sticky_messages_bp)
 app.register_blueprint(periodic_messages_bp)
 app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
+app.register_blueprint(anti_raid_bp)
 
 app.register_blueprint(main_page_bp)
 
