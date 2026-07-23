@@ -390,3 +390,19 @@ tags = Table(
     Column("keyword", VARCHAR, nullable=False),
     Column("content", VARCHAR, nullable=False),
 )
+
+
+message_counting = Table(
+    "message_counting",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("messages", Integer),
+)
+
+message_counting_members = Table(
+    "message_counting_members",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, primary_key=True),
+    Column("messages", Integer),
+)
