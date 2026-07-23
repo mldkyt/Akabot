@@ -358,3 +358,15 @@ sticky_messages = Table(
     Column("last_msg_id", VARCHAR),
     Column("cooldown", DateTime(timezone=True)),
 )
+
+periodic_messages = Table(
+    "periodic_messages",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("channel_id", VARCHAR, nullable=False),
+    Column("guild_id", VARCHAR, nullable=False),
+    Column("period", VARCHAR, nullable=False, default="daily"),
+    Column("period_num", Integer, nullable=False, default=0),
+    Column("next_send", DateTime(timezone=True)),
+    Column("content", VARCHAR, nullable=False),
+)

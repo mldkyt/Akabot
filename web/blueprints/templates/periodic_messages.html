@@ -1,0 +1,57 @@
+{% extends 'page.html' %} {% block main %}
+<h1>Periodic Messages</h1>
+
+<form action="/settings/periodic_messages" method="post">
+    <label for="channel">Channel</label>
+    <select name="channel" id="channel">
+        {% for text_channel in text_channels %}
+        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <label for="period">Period</label>
+    <select name="period" id="period">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+    </select>
+    <br />
+    <label for="period_num">Period number (e.g. number of days when daily)</label>
+    <input type="number" name="period_num" id="period_num" min="1" value="1" />
+    <br />
+    <label for="content">Message content</label>
+    <br />
+    <textarea rows="10" cols="50" id="content" name="content"></textarea>
+    <br />
+    <button type="submit">Add channel</button>
+</form>
+
+{% for i in periodic_messages %}
+<h2>Channel: #{{i.name}}</h2>
+<form action="/settings/periodic_messages" method="post">
+    <input type="hidden" name="channel" value="{{i.channel_id}}" />
+    <input type="hidden" name="id" value="{{i.id}}" />
+    <span>Period:</span>
+    <select name="period">
+        <option value="daily" {% if i.period == "daily" %}selected{% endif %}>Daily</option>
+        <option value="weekly" {% if i.period == "weekly" %}selected{% endif %}>Weekly</option>
+        <option value="monthly" {% if i.period == "monthly" %}selected{% endif %}>Monthly</option>
+        <option value="yearly" {% if i.period == "yearly" %}selected{% endif %}>Yearly</option>
+    </select>
+    <br />
+    <label for="period_num">Period number (e.g. number of days when daily)</label>
+    <input type="number" name="period_num" value="{{i.period_num}}" min="1" />
+    <br />
+    <label for="content">Message content</label>
+    <br />
+    <textarea rows="10" cols="50" name="content">{{i.content}}</textarea>
+    <br />
+    <button type="submit">Update message</button>
+</form>
+
+<form action="/settings/periodic_messages" method="post">
+    <input type="hidden" name="delete" value="{{i.channel_id}}" />
+    <button type="submit">Delete message</button>
+</form>
+{% endfor %} {% endblock %}
