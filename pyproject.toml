@@ -15,6 +15,7 @@ dependencies = [
     "gunicorn>=26.0.0",
     "mdparser-html==2.0.2",
     "markovify>=0.9.4",
+    "sentry-sdk>=2.66.1",
 ]
 
 [tool.basedpyright]

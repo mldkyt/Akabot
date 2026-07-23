@@ -1,6 +1,7 @@
 import os
 
 import discord
+import sentry_sdk
 from discord.ext import commands as commands_ext
 from dotenv import load_dotenv
 
@@ -10,6 +11,16 @@ if not os.path.exists("logs"):
     os.mkdir("logs")
 
 load_dotenv()
+
+if os.getenv("SENTRY_SDK"):
+    sentry_sdk.init(
+        os.getenv("SENTRY_SDK"),
+        send_default_pii=True,
+        max_request_body_size="always",
+        traces_sample_rate=0,
+        send_client_reports=False,
+        auto_session_tracking=False,
+    )
 
 BOT_VERSION = "@VERSION@"
 
@@ -49,16 +60,21 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
         minutes = int(error.retry_after / 60)
         seconds = int(error.retry_after % 60)
         if minutes > 0:
-            await ctx.respond(f"**Cooldown!** {minutes} minutes and {seconds} seconds remaining",
-                              ephemeral=True)
+            await ctx.respond(
+                f"**Cooldown!** {minutes} minutes and {seconds} seconds remaining",
+                ephemeral=True,
+            )
         else:
-            await ctx.respond(f"**Cooldown!** {seconds} seconds remaining", ephemeral=True)
+            await ctx.respond(
+                f"**Cooldown!** {seconds} seconds remaining", ephemeral=True
+            )
         return
 
     if isinstance(error, commands_ext.MissingPermissions):
         await ctx.respond(
             f"You do not have permission to use this command. Missing {', '.join(error.missing_permissions)}",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
 
     if isinstance(error, commands_ext.NoPrivateMessage):
@@ -68,7 +84,8 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
     if isinstance(error, commands_ext.BotMissingPermissions):
         await ctx.respond(
             f"The bot has missing permissions! Missing permissions: {', '.join(error.missing_permissions)}",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
 
     if isinstance(error, commands_ext.PrivateMessageOnly):
@@ -79,8 +96,10 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
     try:
         # respond
         await ctx.respond("An error occured", ephemeral=True)
-    except Exception as e:
+    except Exception:
         akabot_logger.error("Failed to respond to message")
+
+    sentry_sdk.capture_exception(error)
     raise error
 
 

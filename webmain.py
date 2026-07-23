@@ -1,5 +1,6 @@
 import os
 
+import sentry_sdk
 from dotenv import load_dotenv
 from flask import Flask
 
@@ -29,6 +30,16 @@ from web.blueprints.verification import verification_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
 
 load_dotenv()
+
+if os.getenv("SENTRY_SDK"):
+    sentry_sdk.init(
+        os.getenv("SENTRY_SDK"),
+        send_default_pii=True,
+        max_request_body_size="always",
+        traces_sample_rate=0,
+        send_client_reports=False,
+        auto_session_tracking=False,
+    )
 
 app = Flask(__name__, static_folder="web/static", static_url_path="/static")
 
