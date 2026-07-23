@@ -22,6 +22,7 @@ from web.blueprints.roles_on_join import roles_on_join_bp
 from web.blueprints.statistic_channels import statistic_channels_bp
 from web.blueprints.sticky_messages import sticky_messages_bp
 from web.blueprints.suggestions import suggestions_bp
+from web.blueprints.tags import tags_bp
 from web.blueprints.temporary_vcs import temporary_vcs_bp
 from web.blueprints.verification import verification_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
@@ -54,6 +55,7 @@ app.register_blueprint(suggestions_bp)
 app.register_blueprint(sticky_messages_bp)
 app.register_blueprint(periodic_messages_bp)
 app.register_blueprint(markov_bp)
+app.register_blueprint(tags_bp)
 
 app.register_blueprint(main_page_bp)
 

@@ -1,0 +1,48 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Tags</h1>
+
+<p>Simple way to make an auto response to messages.</p>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Add a tag</h2>
+
+<form method="post" action="/settings/tags">
+    <label for="keyword">Keyword</label>
+    <input type="text" id="keyword" name="keyword" />
+    <br />
+    <label for="content">Content</label>
+    <textarea name="content" id="content"></textarea>
+    <br />
+    <button type="submit">Add</button>
+</form>
+
+<h2>Edit existing tags</h2>
+
+{% for tag in tags %}
+<form method="post" action="/settings/tags">
+    <input type="hidden" name="id" value="{{tag.id}}">
+    <label for="keyword">Keyword</label>
+    <input type="text" id="keyword" name="keyword" value="{{tag.keyword}}" />
+    <br />
+    <label for="content">Content</label>
+    <textarea name="content" id="content">{{tag.content}}</textarea>
+    <br />
+    <button type="submit">Edit</button>
+</form>
+<form method="post" action="/settings/tags">
+    <input type="hidden" name="delete" value="{{tag.id}}">
+    <button type="submit">Delete</button>
+</form>
+<br />
+<br />
+
+{% endfor %}
+
+{% endblock %}

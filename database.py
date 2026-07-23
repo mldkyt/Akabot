@@ -381,3 +381,12 @@ markov = Table(
     Column("period_num", Integer, nullable=False, default=1),
     Column("next_send", DateTime(timezone=True)),
 )
+
+tags = Table(
+    "tags",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("guild_id", VARCHAR, nullable=False),
+    Column("keyword", VARCHAR, nullable=False),
+    Column("content", VARCHAR, nullable=False),
+)
