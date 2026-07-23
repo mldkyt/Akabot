@@ -1,4 +1,4 @@
-from aiohttp.tracing import Trace
+import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
@@ -10,7 +10,6 @@ from discord.ext.pages import Paginator
 from sqlalchemy import select
 
 from database import engine, message_counting, message_counting_members
-from logger import akabot_logger
 from utils.message_counting import (
     inc,
 )
@@ -34,7 +33,7 @@ class MessageCounting(Cog):
                 # Count into message counting
                 inc(c, msg)
         except Exception as e:
-            akabot_logger.exception(e)
+            sentry_sdk.capture_exception(e)
 
     message_counting_cmds = SlashCommandGroup(name="message_counting")
 

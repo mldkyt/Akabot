@@ -5,7 +5,6 @@ from discord import Bot, Cog, Message
 from sqlalchemy import select, update
 
 from database import engine, markov
-from logger import akabot_logger
 
 
 class MarkovChain(Cog):

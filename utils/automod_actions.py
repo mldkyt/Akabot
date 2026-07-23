@@ -1,12 +1,15 @@
 import re
 from datetime import timedelta
 
+import sentry_sdk
 from discord import (
     AutoModActionExecutionEvent,
     AutoModRule,
     Bot,
+    Embed,
+    EmbedField,
     Guild,
-    Message, Embed, EmbedField,
+    Message,
 )
 from sqlalchemy import Connection
 
@@ -27,6 +30,7 @@ def time_str_to_time(time: str):
     else:
         return 604800 * int(time[:-1])
 
+
 cached_automod_actions: dict[int, list[AutoModRule]] = {}
 
 
@@ -34,13 +38,12 @@ async def fetch_actions(g: Guild):
     cached_automod_actions[g.id] = await g.fetch_auto_moderation_rules()
 
 
-automod_actions = ServerSetting(
-    name="Automod actions",
-    setting_type=SettingType.LIST
-)
+automod_actions = ServerSetting(name="Automod actions", setting_type=SettingType.LIST)
 
 
-async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEvent, rule: str):
+async def handle_automod_action(
+    c: Connection, payload: AutoModActionExecutionEvent, rule: str
+):
     args = rule.split(";")
 
     if args[1] == "kick":
@@ -49,30 +52,42 @@ async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEv
             reason = ";".join(args[2:])
 
         await payload.member.kick(reason=reason)
-        await send_message_to_log_channel(c, payload.guild, Embed(
-            title='Automod has Kicked a Member!',
-            description='Akabot has kicked a member after AutoMod action execution',
-            fields=[
-                EmbedField(name="Member",
-                           value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})"),
-                EmbedField(name="Reason", value=reason)
-            ]
-        ))
+        await send_message_to_log_channel(
+            c,
+            payload.guild,
+            Embed(
+                title="Automod has Kicked a Member!",
+                description="Akabot has kicked a member after AutoMod action execution",
+                fields=[
+                    EmbedField(
+                        name="Member",
+                        value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})",
+                    ),
+                    EmbedField(name="Reason", value=reason),
+                ],
+            ),
+        )
     elif args[1] == "ban":
         reason = "AutoMod action"
         if len(args) > 3:
             reason = ";".join(args[2:])
 
         await payload.member.ban(reason=reason, delete_message_seconds=604800)
-        await send_message_to_log_channel(c, payload.guild, Embed(
-            title='Automod has Banned a Member!',
-            description='Akabot has banned a member after AutoMod action execution',
-            fields=[
-                EmbedField(name="Member",
-                           value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})"),
-                EmbedField(name="Reason", value=reason)
-            ]
-        ))
+        await send_message_to_log_channel(
+            c,
+            payload.guild,
+            Embed(
+                title="Automod has Banned a Member!",
+                description="Akabot has banned a member after AutoMod action execution",
+                fields=[
+                    EmbedField(
+                        name="Member",
+                        value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})",
+                    ),
+                    EmbedField(name="Reason", value=reason),
+                ],
+            ),
+        )
     elif args[1] == "mute":
         time = time_str_to_time(args[2])
 
@@ -81,16 +96,22 @@ async def handle_automod_action(c: Connection, payload: AutoModActionExecutionEv
             reason = ";".join(args[3:])
 
         await payload.member.timeout_for(timedelta(seconds=time), reason=reason)
-        await send_message_to_log_channel(c, payload.guild, Embed(
-            title='Automod has Muted a Member!',
-            description='Akabot has muted a member after AutoMod action execution',
-            fields=[
-                EmbedField(name="Member",
-                           value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})"),
-                EmbedField(name="Reason", value=reason),
-                EmbedField(name="Duration of timeout", value=args[2])
-            ]
-        ))
+        await send_message_to_log_channel(
+            c,
+            payload.guild,
+            Embed(
+                title="Automod has Muted a Member!",
+                description="Akabot has muted a member after AutoMod action execution",
+                fields=[
+                    EmbedField(
+                        name="Member",
+                        value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})",
+                    ),
+                    EmbedField(name="Reason", value=reason),
+                    EmbedField(name="Duration of timeout", value=args[2]),
+                ],
+            ),
+        )
     elif args[1] == "dm":
         message = ";".join(args[2:])
 
@@ -133,7 +154,9 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
     for i in actions:
         if i.startswith(str(payload.rule_id)):
             try:
-                with engine.begin() as c2:  # separate connection for running this call with as an exception will not allow writing
+                with (
+                    engine.begin() as c2
+                ):  # separate connection for running this call with as an exception will not allow writing
                     await handle_automod_action(c2, payload, i)
-            except Exception:
-                akabot_logger.exception("AutoMod execution error occurred:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)

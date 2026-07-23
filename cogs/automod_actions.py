@@ -1,6 +1,6 @@
+import sentry_sdk
 from discord import AutoModActionExecutionEvent, AutoModRule, Bot, Cog
 
-from logger import akabot_logger
 from utils.automod_actions import fetch_actions, handle_automod_actions
 
 
@@ -22,13 +22,13 @@ class AutomodActions(Cog):
 
     @Cog.listener()
     async def on_auto_moderation_action_execution(
-            self, payload: AutoModActionExecutionEvent
+        self, payload: AutoModActionExecutionEvent
     ):
         try:
             await fetch_actions(payload.guild)
             await handle_automod_actions(self.bot, payload)
-        except Exception:
-            akabot_logger.exception("Automod Action execution error:")
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_auto_moderation_rule_create(self, rule: AutoModRule):

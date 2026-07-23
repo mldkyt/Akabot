@@ -1,3 +1,4 @@
+import sentry_sdk
 from discord import (
     AuditLogAction,
     AutoModRule,
@@ -25,7 +26,6 @@ from discord import (
 from discord.abc import GuildChannel
 
 from database import engine
-from logger import akabot_logger
 from utils.logs import (
     format_overwrite,
     format_perm_name,
@@ -64,8 +64,8 @@ class Logging(Cog):
 
                         await handle_emoji(c, guild, b, a)
 
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_stickers_update(
@@ -90,8 +90,8 @@ class Logging(Cog):
 
                         await handle_sticker(c, guild, b, a)
 
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_auto_moderation_rule_create(self, rule: AutoModRule):
@@ -120,8 +120,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, rule.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_auto_moderation_rule_delete(self, rule: AutoModRule):
@@ -149,8 +149,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, rule.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_auto_moderation_rule_update(self, rule: AutoModRule):
@@ -178,8 +178,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unkown",
                 )
                 await send_message_to_log_channel(c, rule.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_member_ban(self, guild: Guild, user: User):
@@ -215,8 +215,8 @@ class Logging(Cog):
                     value=reason if reason else "*Not specified*",
                 )
                 await send_message_to_log_channel(c, guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_member_unban(self, guild: Guild, user: User):
@@ -252,8 +252,8 @@ class Logging(Cog):
                     value=reason if reason else "*Not specified*",
                 )
                 await send_message_to_log_channel(c, guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_channel_update(self, before: GuildChannel, after: GuildChannel):
@@ -414,8 +414,8 @@ class Logging(Cog):
                         value=moderator.mention if moderator else "Unknown",
                     )
                     await send_message_to_log_channel(c, after.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_channel_create(self, channel: GuildChannel):
@@ -444,8 +444,8 @@ class Logging(Cog):
                 )
 
                 await send_message_to_log_channel(c, channel.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_channel_delete(self, channel: GuildChannel):
@@ -474,8 +474,8 @@ class Logging(Cog):
                 )
 
                 await send_message_to_log_channel(c, channel.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_update(self, before: Guild, after: Guild):
@@ -640,8 +640,8 @@ class Logging(Cog):
                     )
 
                     await send_message_to_log_channel(c, after, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_role_create(self, role: Role):
@@ -670,8 +670,8 @@ class Logging(Cog):
                 )
 
                 await send_message_to_log_channel(c, role.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_role_delete(self, role: Role):
@@ -706,8 +706,8 @@ class Logging(Cog):
                 )
 
                 await send_message_to_log_channel(c, role.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_guild_role_update(self, before: Role, after: Role):
@@ -781,8 +781,8 @@ class Logging(Cog):
                     )
 
                     await send_message_to_log_channel(c, after.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_invite_create(self, invite: Invite):
@@ -828,8 +828,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, invite.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_invite_delete(self, invite: Invite):
@@ -864,8 +864,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, invite.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
@@ -880,8 +880,8 @@ class Logging(Cog):
                     color=Color.green(),
                 )
                 await send_message_to_log_channel(c, member.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_member_remove(self, member: Member):
@@ -896,8 +896,8 @@ class Logging(Cog):
                     color=Color.red(),
                 )
                 await send_message_to_log_channel(c, member.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
@@ -952,8 +952,8 @@ class Logging(Cog):
                         value=moderator.mention if moderator else "Unknown",
                     )
                     await send_message_to_log_channel(c, after.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_voice_state_update(
@@ -1066,8 +1066,8 @@ class Logging(Cog):
                                 value=mod.mention,
                             )
                         await send_message_to_log_channel(c, member.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_reaction_add(self, reaction: Reaction, user: User):
@@ -1096,8 +1096,8 @@ class Logging(Cog):
                     value=user.mention,
                 )
                 await send_message_to_log_channel(c, reaction.message.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_reaction_remove(self, reaction: Reaction, user: User):
@@ -1126,8 +1126,8 @@ class Logging(Cog):
                     value=user.mention,
                 )
                 await send_message_to_log_channel(c, reaction.message.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_reaction_clear(self, message: Message, reactions: list[Reaction]):
@@ -1150,8 +1150,8 @@ class Logging(Cog):
                     value=reactions[0].message.jump_url,
                 )
                 await send_message_to_log_channel(c, message.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_reaction_clear_emoji(self, reaction: Reaction):
@@ -1178,8 +1178,8 @@ class Logging(Cog):
                     value=str(reaction.emoji),
                 )
                 await send_message_to_log_channel(c, reaction.message.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_scheduled_event_create(self, event: ScheduledEvent):
@@ -1226,8 +1226,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, event.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_scheduled_event_update(
@@ -1281,8 +1281,8 @@ class Logging(Cog):
                         value=moderator.mention if moderator else "Unknown",
                     )
                     await send_message_to_log_channel(c, after.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_scheduled_event_delete(self, event: ScheduledEvent):
@@ -1327,8 +1327,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, event.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_thread_create(self, thread: Thread):
@@ -1360,8 +1360,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, thread.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_thread_delete(self, thread: Thread):
@@ -1388,8 +1388,8 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
                 await send_message_to_log_channel(c, thread.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_thread_update(self, before: Thread, after: Thread):
@@ -1436,8 +1436,8 @@ class Logging(Cog):
                         value=moderator.mention if moderator else "Unknown",
                     )
                     await send_message_to_log_channel(c, after.guild, embed)
-            except Exception:
-                akabot_logger.exception("An error occured:")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
 
 def setup(bot: Bot):

@@ -1,4 +1,5 @@
-from discord import Member, Forbidden, HTTPException
+import sentry_sdk
+from discord import Forbidden, HTTPException, Member
 
 from database import engine
 from logger import akabot_logger
@@ -22,11 +23,9 @@ async def apply_roles(member: Member):
             except HTTPException:
                 pass
 
-        akabot_logger.debug("Adding %d roles on join to %s", len(roles), member.display_name)
-
         try:
             await member.add_roles(*roles)
         except Forbidden:
             pass
-        except Exception:
-            akabot_logger.exception("An error occured when applying roles for %s:", member.display_name)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)

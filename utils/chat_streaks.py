@@ -1,15 +1,22 @@
 from datetime import date, timedelta
 
-from discord import Bot, Guild, Member, Message, PartialMessageable, DMChannel, ForumChannel, CategoryChannel
+import sentry_sdk
+from discord import (
+    Bot,
+    CategoryChannel,
+    DMChannel,
+    ForumChannel,
+    Guild,
+    Member,
+    Message,
+    PartialMessageable,
+)
 from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks, engine
 from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
-from utils.server_settings import (
-    ServerSetting,
-    SettingType
-)
+from utils.server_settings import ServerSetting, SettingType
 from utils.user_settings import UserSetting
 
 server_response_setting = ServerSetting(
@@ -163,7 +170,9 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
     """Handle send reply. Posts inside of bot channel or into the same channel. Returns true if posted into the same channel."""
     try:
         assert msg.guild is not None
-        assert not isinstance(msg.channel, PartialMessageable) and not isinstance(msg.channel, DMChannel)
+        assert not isinstance(msg.channel, PartialMessageable) and not isinstance(
+            msg.channel, DMChannel
+        )
 
         with engine.begin() as c:
             bot_channel_id = setting_bot_channel.get(c, msg.guild.id)
@@ -172,7 +181,9 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         if setting_response == "off":
             return None, False
 
-        bot_channel = msg.guild.get_channel(int(bot_channel_id)) if bot_channel_id != "" else None
+        bot_channel = (
+            msg.guild.get_channel(int(bot_channel_id)) if bot_channel_id != "" else None
+        )
 
         if msg.channel.permissions_for(msg.guild.me).read_message_history:
             if len(bot_channel_id.strip()) == 0:
@@ -190,8 +201,10 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         if bot_channel is None:
             return None, False
 
-        assert not isinstance(bot_channel, ForumChannel) and not isinstance(bot_channel, CategoryChannel)
+        assert not isinstance(bot_channel, ForumChannel) and not isinstance(
+            bot_channel, CategoryChannel
+        )
         return await bot_channel.send(f"{msg.author.mention} {content}"), False
     except Exception as e:
-        akabot_logger.exception("handle_send_reply exception")
+        sentry_sdk.capture_exception(e)
         return None, False

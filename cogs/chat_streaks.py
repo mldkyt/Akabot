@@ -1,26 +1,28 @@
 from datetime import date
 
+import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
     Cog,
     Member,
     Message,
-    SlashCommandGroup, option,
+    SlashCommandGroup,
+    option,
 )
 from discord.ext.pages import Paginator
 
 from database import engine
-from logger import akabot_logger
 from utils.chat_streaks import (
     get_all_streaks_for,
     get_guild_link,
     get_leaderboard,
     get_streak,
     get_unexpired_streak,
+    handle_send_reply,
     server_message_delay,
     update_for_user,
-    handle_send_reply, user_response_setting
+    user_response_setting,
 )
 from utils.message_appends import apply_appends
 
@@ -51,23 +53,32 @@ class ChatStreaks(Cog):
                 if unex_streak != prev_streak:
                     if user_response_setting.get(c, msg.author.id) in ["expiry", "on"]:
                         the_reply, reply_in_same_channel = await handle_send_reply(
-                            msg, apply_appends(msg.author.id,
-                                               f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.")
+                            msg,
+                            apply_appends(
+                                msg.author.id,
+                                f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.",
+                            ),
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
+                            await the_reply.delete(
+                                delay=int(server_message_delay.get(c, msg.guild.id))
+                            )
                     return
                 if next_streak > prev_streak:
                     if user_response_setting.get(c, msg.author.id) == "on":
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
-                            apply_appends(msg.author.id,
-                                          f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.")
+                            apply_appends(
+                                msg.author.id,
+                                f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.",
+                            ),
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
+                            await the_reply.delete(
+                                delay=int(server_message_delay.get(c, msg.guild.id))
+                            )
         except Exception as e:
-            akabot_logger.exception(e)
+            sentry_sdk.capture_exception(e)
 
     @chat_streaks.command()
     async def streak(self, ctx: ApplicationContext):
@@ -76,10 +87,13 @@ class ChatStreaks(Cog):
                 streak = get_streak(c, ctx.user)
 
                 await ctx.respond(
-                    apply_appends(ctx.user.id, f"Your current streak is {streak} days."), ephemeral=True
+                    apply_appends(
+                        ctx.user.id, f"Your current streak is {streak} days."
+                    ),
+                    ephemeral=True,
                 )
         except Exception as e:
-            akabot_logger.exception(e)
+            sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
@@ -107,7 +121,7 @@ class ChatStreaks(Cog):
                 paginator = Paginator(pages)
                 await paginator.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
-            akabot_logger.exception(e)
+            sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
@@ -159,7 +173,10 @@ class ChatStreaks(Cog):
         with engine.begin() as c:
             user_response_setting.set(c, ctx.user.id, notif_type)
 
-        await ctx.respond(f"Your notification state for chat streak alerts was set to {notif_type}", ephemeral=True)
+        await ctx.respond(
+            f"Your notification state for chat streak alerts was set to {notif_type}",
+            ephemeral=True,
+        )
 
 
 def setup(bot: Bot):

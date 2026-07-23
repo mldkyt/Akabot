@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
@@ -11,7 +12,6 @@ from discord import (
 from discord.ext.tasks import loop
 
 from database import engine
-from logger import akabot_logger
 from utils.chat_summary import (
     chat_summary,
     inc,
@@ -40,11 +40,9 @@ class ChatSummary(Cog):
                             if not isinstance(channel, TextChannel):
                                 continue
 
-                            akabot_logger.debug("[Chat Summary/Backfill] Backfilling channel %s", channel.name)
                             await perform_backfill(i, channel)
-                            akabot_logger.debug("[Chat Summary/Backfill] Backfilling channel %s finished", channel.name)
-            except Exception:
-                akabot_logger.exception("Error when backfilling channels on startup")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
             self.has_init = True
 
@@ -64,7 +62,7 @@ class ChatSummary(Cog):
                 # Count into chat summary
                 inc(c, msg)
         except Exception as e:
-            akabot_logger.exception(e)
+            sentry_sdk.capture_exception(e)
 
     @loop(minutes=1)
     async def task_summary(self):
@@ -77,8 +75,8 @@ class ChatSummary(Cog):
             try:
                 with engine.begin() as c:
                     await summarize(c, i)
-            except Exception:
-                akabot_logger.exception("Error during summarizing")
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
 
     chat_summary_commands = SlashCommandGroup(name="chat_summary")
 
@@ -94,7 +92,9 @@ class ChatSummary(Cog):
 
         with engine.begin() as c:
             if not chat_summary.is_in_list(c, ctx.guild.id, str(ctx.channel.id)):
-                await ctx.respond("This channel is not a chat summary channel", ephemeral=True)
+                await ctx.respond(
+                    "This channel is not a chat summary channel", ephemeral=True
+                )
                 return
 
         status = await ctx.respond("Backfilling channel...")

@@ -1,5 +1,6 @@
 from datetime import date, datetime
 
+import sentry_sdk
 from discord import (
     Guild,
     Message,
@@ -385,7 +386,6 @@ async def summarize(c: Connection, g: Guild):
 
 async def perform_backfill(guild: Guild, channel: TextChannel):
     try:
-        akabot_logger.debug("[Chat Summary/Backfill: Backfilling channel %s in %s", channel.name, guild.name)
         with engine.begin() as c:
             # Clear the messages
             c.execute(
@@ -424,8 +424,6 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                     & (yearly_chat_summary_channels.c.cid == str(channel.id))
                 )
             )
-
-            i = 0
 
             day_messages = 0
             month_messages = 0
@@ -710,17 +708,5 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                         )
 
                 year_messages += 1
-
-                i += 1
-                if i % 500 == 0:
-                    # Update status message
-                    akabot_logger.debug(
-                        "[Chat Summary/Backfill: Processing... %d messages today, %d this month, %d this year",
-                        day_messages, month_messages, year_messages)
-
-            akabot_logger.debug(
-                "[Chat Summary/Backfill: OK: Task finished: %d messages today, %d messages this month, %d this year",
-                day_messages, month_messages, year_messages)
-    except Exception:
-        akabot_logger.exception("Chat Summary Backfill failed:")
-        akabot_logger.debug("[Chat Summary/Backfill: An error occurred")
+    except Exception as e:
+        sentry_sdk.capture_exception(e)

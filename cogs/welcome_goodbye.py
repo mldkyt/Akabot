@@ -1,9 +1,13 @@
-from discord import Cog, Bot, Member
+from discord import Bot, Cog, Member
 from discord.ext.tasks import loop
 
 from database import engine
 from logger import akabot_logger
-from utils.welcome_goodbye import add_member_to_grace_period, handle_timed_events, send_goodbye_message
+from utils.welcome_goodbye import (
+    add_member_to_grace_period,
+    handle_timed_events,
+    send_goodbye_message,
+)
 
 
 class WelcomeGoodbye(Cog):
@@ -16,14 +20,11 @@ class WelcomeGoodbye(Cog):
     @Cog.listener()
     async def on_ready(self):
         if not self.has_init:
-            akabot_logger.debug("Welcoming: Starting timed tasks")
             self.timed_tasks.start()
-
             self.has_init = True
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
-        akabot_logger.debug("Welcome: Member joined: %s, adding to first grace period", member.display_name)
         with engine.begin() as c:
             add_member_to_grace_period(c, member)
 
