@@ -1,0 +1,40 @@
+{% extends 'page.html' %} {% block main %} {% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h1>Sticky messages</h1>
+
+<form action="/settings/sticky_messages" method="post">
+    <label for="channel">Channel</label>
+    <select name="channel" id="channel">
+        {% for text_channel in text_channels %}
+        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <label for="content">Message content</label>
+    <br />
+    <textarea rows="10" cols="50" id="content" name="content"></textarea>
+    <br />
+    <button type="submit">Add channel</button>
+</form>
+
+{% for i in sticky_messages %}
+
+<h2>Channel: #{{i.name}}</h2>
+<form action="/settings/sticky_messages" method="post">
+    <input type="hidden" name="channel" value="{{i.id}}" />
+    <span>Message content:</span><br />
+    <textarea rows="10" cols="50">{{i.content}}</textarea>
+    <br />
+    <button type="submit">Update message</button>
+</form>
+
+<form action="/settings/sticky_messages" method="post">
+    <input type="hidden" name="delete" value="{{i.id}}" />
+    <button type="submit">Delete message</button>
+</form>
+
+{% endfor %} {% endblock %}

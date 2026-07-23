@@ -348,3 +348,13 @@ suggestion_voting = Table(
     Column("member_id", VARCHAR, primary_key=True),
     Column("vote", Integer, default=0),  # 0 downvote, 1 upvote
 )
+
+sticky_messages = Table(
+    "sticky_messages",
+    md_obj,
+    Column("channel_id", VARCHAR, primary_key=True),
+    Column("guild_id", VARCHAR, nullable=False),
+    Column("content", VARCHAR, nullable=False),
+    Column("last_msg_id", VARCHAR),
+    Column("cooldown", DateTime(timezone=True)),
+)

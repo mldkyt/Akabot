@@ -18,6 +18,7 @@ from web.blueprints.meow_back import meow_back_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
 from web.blueprints.statistic_channels import statistic_channels_bp
+from web.blueprints.sticky_messages import sticky_messages_bp
 from web.blueprints.suggestions import suggestions_bp
 from web.blueprints.temporary_vcs import temporary_vcs_bp
 from web.blueprints.verification import verification_bp
@@ -48,6 +49,7 @@ app.register_blueprint(welcome_goodbye_bp)
 app.register_blueprint(fun_commands_bp)
 app.register_blueprint(feedback_bp)
 app.register_blueprint(suggestions_bp)
+app.register_blueprint(sticky_messages_bp)
 
 app.register_blueprint(main_page_bp)
 
