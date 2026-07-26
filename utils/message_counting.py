@@ -2,6 +2,13 @@ from discord import Message
 from sqlalchemy import Connection, insert, select, update
 
 from database import message_counting, message_counting_members
+from utils.server_settings import ServerSetting, SettingType
+
+setting_enable_leaderboard = ServerSetting(
+    name="Message Counting leaderboard",
+    setting_type=SettingType.NORMAL,
+    default="false",
+)
 
 
 def dec(c: Connection, m: Message):

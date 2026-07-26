@@ -12,6 +12,7 @@ from sqlalchemy import select
 from database import engine, message_counting, message_counting_members
 from utils.message_counting import (
     inc,
+    setting_enable_leaderboard,
 )
 
 
@@ -46,6 +47,14 @@ class MessageCounting(Cog):
             return
 
         with engine.begin() as c:
+            enable_leaderboard = (
+                setting_enable_leaderboard.get(c, ctx.guild.id) == "true"
+            )
+
+            if not enable_leaderboard:
+                await ctx.respond("The leaderboard is not enabled", ephemeral=True)
+                return
+
             data_total = c.execute(
                 select(message_counting.c.messages).where(
                     message_counting.c.gid == str(ctx.guild.id)
