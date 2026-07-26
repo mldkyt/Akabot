@@ -3,8 +3,11 @@ from discord import (
     ApplicationContext,
     Bot,
     Cog,
+    Member,
     Message,
     SlashCommandGroup,
+    TextChannel,
+    VoiceChannel,
 )
 from discord.ext.pages import Paginator
 from sqlalchemy import select
@@ -12,6 +15,8 @@ from sqlalchemy import select
 from database import engine, message_counting, message_counting_members
 from utils.message_counting import (
     inc,
+    reindex,
+    setting_enable_indexer,
     setting_enable_leaderboard,
 )
 
@@ -97,6 +102,38 @@ class MessageCounting(Cog):
 
             pager = Paginator(pages)
             await pager.respond(ctx.interaction, ephemeral=True)
+
+    @message_counting_cmds.command()
+    async def index(self, ctx: ApplicationContext):
+        """Reindex the current channel. Requires admin permission and the indexer to be enabled."""
+
+        if not ctx.guild or not isinstance(ctx.user, Member):
+            await ctx.respond(
+                "This command is meant to only be ran in guilds.", ephemeral=True
+            )
+            return
+
+        with engine.begin() as c:
+            if setting_enable_indexer.get(c, ctx.guild.id) != "true":
+                await ctx.respond(
+                    "The index command is disabled in the settings", ephemeral=True
+                )
+                return
+
+        if not ctx.user.guild_permissions.manage_guild:
+            await ctx.respond(
+                "This command requires Manage Guild permission.", ephemeral=True
+            )
+            return
+
+        await ctx.respond(
+            "Reindex queued. When the action is finished, a message will be sent here.",
+            ephemeral=True,
+        )
+        message_count = await reindex(ctx.guild)
+        await ctx.channel.send(
+            f"{ctx.user.mention}, server was reindexed with {message_count} messages."
+        )
 
 
 def setup(bot: Bot):

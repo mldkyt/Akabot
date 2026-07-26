@@ -1,0 +1,24 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Message Counting</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form method="post" action="/settings/message_counting">
+    <input type="checkbox" name="enable_leaderboard" id="enable_leaderboard" {% if enable_leaderboard %}checked{% endif %}>
+    <label for="enable_leaderboard">Enable the /leaderboard command</label>
+    <br/>
+    <input type="checkbox" name="enable_indexer" id="enable_indexer" {% if enable_indexer %}checked{% endif %}>
+    <label for="enable_indexer">Enable the /index command. Must be used by an admin of the server.</label>
+    <br/>
+    <br/>
+
+    <button type="submit">Save</button>
+</form>
+
+{% endblock %}

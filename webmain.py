@@ -18,6 +18,7 @@ from web.blueprints.mail import mail_bp
 from web.blueprints.main_page import main_page_bp
 from web.blueprints.markov import markov_bp
 from web.blueprints.meow_back import meow_back_bp
+from web.blueprints.message_counting import message_counting_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.periodic_messages import periodic_messages_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
@@ -69,6 +70,7 @@ app.register_blueprint(periodic_messages_bp)
 app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)
+app.register_blueprint(message_counting_bp)
 
 app.register_blueprint(main_page_bp)
 
