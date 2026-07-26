@@ -9,6 +9,7 @@ from discord import (
     TextChannel,
     VoiceChannel,
 )
+from discord.ext.commands import BucketType, cooldown
 from discord.ext.pages import Paginator
 from sqlalchemy import select
 
@@ -104,6 +105,7 @@ class MessageCounting(Cog):
             await pager.respond(ctx.interaction, ephemeral=True)
 
     @message_counting_cmds.command()
+    @cooldown(rate=1, per=3600, type=BucketType.guild)
     async def index(self, ctx: ApplicationContext):
         """Reindex the current channel. Requires admin permission and the indexer to be enabled."""
 
