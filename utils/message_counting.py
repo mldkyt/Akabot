@@ -15,6 +15,10 @@ setting_enable_indexer = ServerSetting(
     name="Enable indexer command", setting_type=SettingType.NORMAL, default="false"
 )
 
+setting_count_deletes = ServerSetting(
+    name="Count deletes", setting_type=SettingType.NORMAL, default="true"
+)
+
 
 def dec(c: Connection, m: Message):
     # Decrement for channel

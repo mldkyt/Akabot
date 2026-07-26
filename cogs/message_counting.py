@@ -15,6 +15,7 @@ from sqlalchemy import select
 
 from database import engine, message_counting, message_counting_members
 from utils.message_counting import (
+    dec,
     inc,
     reindex,
     setting_enable_indexer,
@@ -39,6 +40,20 @@ class MessageCounting(Cog):
 
                 # Count into message counting
                 inc(c, msg)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+
+    @Cog.listener()
+    async def on_message_delete(self, msg: Message):
+        try:
+            with engine.begin() as c:
+                if msg.author.bot:
+                    return
+
+                if msg.guild is None:
+                    return
+
+                dec(c, msg)
         except Exception as e:
             sentry_sdk.capture_exception(e)
 

@@ -16,6 +16,9 @@
     <input type="checkbox" name="enable_indexer" id="enable_indexer" {% if enable_indexer %}checked{% endif %}>
     <label for="enable_indexer">Enable the /index command. Must be used by an admin of the server.</label>
     <br/>
+    <input type="checkbox" name="count_deletes" id="count_deletes" {% if count_deletes %}checked{% endif %}>
+    <label for="count_deletes">(Un)count deletes</label>
+    <br/>
     <br/>
 
     <button type="submit">Save</button>
