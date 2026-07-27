@@ -1,5 +1,5 @@
 import sentry_sdk
-from discord import Guild, Message, TextChannel, VoiceChannel
+from discord import Guild, Message
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import engine, message_counting, message_counting_members
@@ -40,7 +40,7 @@ def dec(c: Connection, m: Message):
         c.execute(
             update(message_counting)
             .values(messages=a[0] - 1, name=m.guild.name)
-            .where((message_counting.c.gid == str(m.guild.id)))
+            .where(message_counting.c.gid == str(m.guild.id))
         )
 
     # Decrement for user
@@ -90,7 +90,7 @@ def inc(c: Connection, m: Message):
         c.execute(
             update(message_counting)
             .values(messages=a[0] + 1, name=m.guild.name)
-            .where((message_counting.c.gid == str(m.guild.id)))
+            .where(message_counting.c.gid == str(m.guild.id))
         )
 
     # Increment for user

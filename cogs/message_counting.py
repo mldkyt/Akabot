@@ -6,13 +6,12 @@ from discord import (
     Member,
     Message,
     SlashCommandGroup,
-    TextChannel,
-    VoiceChannel,
 )
 from discord.ext.commands import BucketType, cooldown
 from discord.ext.pages import Paginator
 from sqlalchemy import select
 
+from cogs.web import WEB_DOMAIN
 from database import engine, message_counting, message_counting_members
 from utils.message_counting import (
     dec,
@@ -95,9 +94,7 @@ class MessageCounting(Cog):
             ).fetchall()
 
             pages: list[str] = []
-            current_page = (
-                f"# Message Counting Leaderboard - {data_total[0]} messages\n\n"
-            )
+            current_page = f"# Message Counting Leaderboard - {data_total[0]} messages\n\n[Also view on website!](https://{WEB_DOMAIN}/leaderboard/{ctx.guild_id})\n\n"
 
             i = 1
             for j in data:

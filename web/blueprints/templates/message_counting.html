@@ -11,7 +11,7 @@
 
 <form method="post" action="/settings/message_counting">
     <input type="checkbox" name="enable_leaderboard" id="enable_leaderboard" {% if enable_leaderboard %}checked{% endif %}>
-    <label for="enable_leaderboard">Enable the /leaderboard command</label>
+    <label for="enable_leaderboard">Enable the /leaderboard command <a href="/leaderboard/{{session.user['guild_id']}}">Also enables the web leaderboard.</a></label>
     <br/>
     <input type="checkbox" name="enable_indexer" id="enable_indexer" {% if enable_indexer %}checked{% endif %}>
     <label for="enable_indexer">Enable the /index command. Must be used by an admin of the server.</label>
