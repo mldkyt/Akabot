@@ -1,0 +1,24 @@
+{% extends 'web_page.html' %}
+
+{% block content %}
+
+<div class="paragraph">
+    <h1>Message Counting Leaderboard for {{guild_name}}</h1>
+
+    <p>A total of {{messages}} messages.</p>
+
+    <ol start="1">
+        {% for member in members %}
+        <li>{{member.name}} with {{member.messages}} messages</li>
+        {% endfor %}
+    </ol>
+</div>
+
+<style>
+.paragraph {
+    width: 70vw;
+    margin: auto;
+}
+</style>
+
+{% endblock %}

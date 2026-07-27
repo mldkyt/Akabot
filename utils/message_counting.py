@@ -32,13 +32,14 @@ def dec(c: Connection, m: Message):
         c.execute(
             insert(message_counting).values(
                 gid=str(m.guild.id),
+                name=m.guild.name,
                 messages=0,
             )
         )
     else:
         c.execute(
             update(message_counting)
-            .values(messages=a[0] - 1)
+            .values(messages=a[0] - 1, name=m.guild.name)
             .where((message_counting.c.gid == str(m.guild.id)))
         )
 
@@ -54,13 +55,14 @@ def dec(c: Connection, m: Message):
             insert(message_counting_members).values(
                 gid=str(m.guild.id),
                 uid=str(m.author.id),
+                name=m.author.display_name,
                 messages=0,
             )
         )
     else:
         c.execute(
             update(message_counting_members)
-            .values(messages=a[0] - 1)
+            .values(messages=a[0] - 1, name=m.author.display_name)
             .where(
                 (message_counting_members.c.gid == str(m.guild.id))
                 & (message_counting_members.c.uid == str(m.author.id))
@@ -80,13 +82,14 @@ def inc(c: Connection, m: Message):
         c.execute(
             insert(message_counting).values(
                 gid=str(m.guild.id),
+                name=m.guild.name,
                 messages=1,
             )
         )
     else:
         c.execute(
             update(message_counting)
-            .values(messages=a[0] + 1)
+            .values(messages=a[0] + 1, name=m.guild.name)
             .where((message_counting.c.gid == str(m.guild.id)))
         )
 
@@ -102,13 +105,14 @@ def inc(c: Connection, m: Message):
             insert(message_counting_members).values(
                 gid=str(m.guild.id),
                 uid=str(m.author.id),
+                name=m.author.display_name,
                 messages=1,
             )
         )
     else:
         c.execute(
             update(message_counting_members)
-            .values(messages=a[0] + 1)
+            .values(messages=a[0] + 1, name=m.author.display_name)
             .where(
                 (message_counting_members.c.gid == str(m.guild.id))
                 & (message_counting_members.c.uid == str(m.author.id))

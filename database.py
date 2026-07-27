@@ -396,6 +396,7 @@ message_counting = Table(
     "message_counting",
     md_obj,
     Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("name", VARCHAR),
     Column("messages", Integer),
 )
 
@@ -404,5 +405,6 @@ message_counting_members = Table(
     md_obj,
     Column("gid", VARCHAR, primary_key=True),
     Column("uid", VARCHAR, primary_key=True),
+    Column("name", VARCHAR),
     Column("messages", Integer),
 )
