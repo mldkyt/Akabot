@@ -160,3 +160,7 @@ async def reindex(guild: Guild):
                 sentry_sdk.capture_exception(e)
 
     return final_count
+
+# async def update_rewards(m: Message):
+#     with engine.begin() as c:
+#

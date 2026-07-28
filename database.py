@@ -12,7 +12,7 @@ from sqlalchemy import (
     StaticPool,
     Table,
     UniqueConstraint,
-    create_engine,
+    create_engine, DECIMAL,
 )
 
 if not os.path.exists("data"):
@@ -407,4 +407,15 @@ message_counting_members = Table(
     Column("uid", VARCHAR, primary_key=True),
     Column("name", VARCHAR),
     Column("messages", Integer),
+)
+
+message_counting_rewards = Table(
+    "message_counting_rewards",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("messages", Integer, nullable=False),
+    Column("type", VARCHAR, nullable=False),
+    Column("rid", VARCHAR),
+    Column("multiplier", DECIMAL),
 )
