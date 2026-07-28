@@ -92,7 +92,6 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
         await ctx.respond("This command can only be used in DMs.", ephemeral=True)
         return
 
-    akabot_logger.exception("An error occurred:")
     try:
         # respond
         await ctx.respond("An error occured", ephemeral=True)

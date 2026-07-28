@@ -19,6 +19,7 @@ from utils.message_counting import (
     reindex,
     setting_enable_indexer,
     setting_enable_leaderboard,
+    update_roles, setting_count_deletes,
 )
 
 
@@ -39,6 +40,8 @@ class MessageCounting(Cog):
 
                 # Count into message counting
                 inc(c, msg)
+
+                await update_roles(c, msg)
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
@@ -52,7 +55,13 @@ class MessageCounting(Cog):
                 if msg.guild is None:
                     return
 
+                delete_setting = setting_count_deletes.get(c, msg.guild.id)
+                if delete_setting != "true":
+                    return
+
                 dec(c, msg)
+
+                await update_roles(c, msg)
         except Exception as e:
             sentry_sdk.capture_exception(e)
 

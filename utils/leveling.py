@@ -5,7 +5,7 @@ import discord
 from discord import Member
 from sqlalchemy import Connection, insert, select, update
 
-from database import leveling
+from database import leveling, message_counting_members, message_counting_rewards
 from logger import akabot_logger
 from utils.server_settings import (
     ServerSetting,
@@ -76,12 +76,30 @@ def get_multiplier(c: Connection, m: Member):
             # catch leap years, we validate against 2024 since it's a leap year
             pass
 
+    # Multipliers from message counting
+    message_count = c.execute(
+        select(message_counting_members.c.messages)
+        .where((message_counting_members.c.uid == str(m.id)) &
+               (message_counting_members.c.gid == str(m.guild.id)))
+    ).fetchone()
+
+    if message_count:
+        message_count_multipliers = c.execute(
+            select(message_counting_rewards.c.multiplier)
+            .where((message_counting_rewards.c.gid == str(m.guild.id)) &
+                   (message_counting_rewards.c.type == "multiplier"))
+        ).fetchall()
+
+        for m in message_count_multipliers:
+            multiplier += m[0]
+
     return multiplier
 
 
 def add_xp(c: Connection, member: Member):
     xp_per_msg = int(setting_xp_per_message.get(c, member.guild.id))
     xp_per_msg *= get_multiplier(c, member)
+    xp_per_msg = int(xp_per_msg)
 
     existing = c.execute(
         select(leveling.c.xp).where(
