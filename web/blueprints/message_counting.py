@@ -31,20 +31,6 @@ def message_counting_index():
 
     with engine.begin() as c:
         if request.method == "POST":
-            if request.form.get("enable_leaderboard"):
-                setting_enable_leaderboard.set(c, auth["guild"], "true")
-            else:
-                setting_enable_leaderboard.set(c, auth["guild"], "false")
-
-            if request.form.get("enable_indexer"):
-                setting_enable_indexer.set(c, auth["guild"], "true")
-            else:
-                setting_enable_indexer.set(c, auth["guild"], "false")
-
-            if request.form.get("count_deletes"):
-                setting_count_deletes.set(c, auth["guild"], "true")
-            else:
-                setting_count_deletes.set(c, auth["guild"], "false")
 
             # Delete reward
             if "remove" in request.form:
@@ -58,7 +44,7 @@ def message_counting_index():
                 )
 
             # Role Reward
-            if "type" in request.form and "messages" in request.form:
+            elif "type" in request.form and "messages" in request.form:
                 message_count = request.form["messages"]
                 if not message_count.isnumeric():
                     return quick_response("Message count is not a number", 400)
@@ -87,6 +73,22 @@ def message_counting_index():
                         insert(message_counting_rewards)
                         .values(type="role", gid=auth["guild"], rid=role[0], messages=int(message_count))
                     )
+
+            else:
+                if request.form.get("enable_leaderboard"):
+                    setting_enable_leaderboard.set(c, auth["guild"], "true")
+                else:
+                    setting_enable_leaderboard.set(c, auth["guild"], "false")
+
+                if request.form.get("enable_indexer"):
+                    setting_enable_indexer.set(c, auth["guild"], "true")
+                else:
+                    setting_enable_indexer.set(c, auth["guild"], "false")
+
+                if request.form.get("count_deletes"):
+                    setting_count_deletes.set(c, auth["guild"], "true")
+                else:
+                    setting_count_deletes.set(c, auth["guild"], "false")
 
 
         enable_leaderboard = setting_enable_leaderboard.get(c, auth["guild"]) == "true"
