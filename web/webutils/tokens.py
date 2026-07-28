@@ -1,4 +1,4 @@
-from flask import request, session, redirect, make_response
+from flask import make_response, redirect, request, session
 from sqlalchemy import select
 
 from database import engine, web_tokens
@@ -27,7 +27,8 @@ def authorize(route: str):
     session["user"] = {
         "name": token_data["user_name"],
         "avatar": token_data["user_avatar"],
-        "guild": token_data["guild_name"]
+        "guild": token_data["guild_name"],
+        "guild_id": token_data["guild"],
     }
 
     return None
@@ -36,8 +37,13 @@ def authorize(route: str):
 def get_token_data(token: str) -> dict | None:
     with engine.begin() as c:
         data = c.execute(
-            select(web_tokens.c.gid, web_tokens.c.gname, web_tokens.c.uid, web_tokens.c.uname, web_tokens.c.uavatar)
-            .where(web_tokens.c.token == token)
+            select(
+                web_tokens.c.gid,
+                web_tokens.c.gname,
+                web_tokens.c.uid,
+                web_tokens.c.uname,
+                web_tokens.c.uavatar,
+            ).where(web_tokens.c.token == token)
         ).fetchone()
 
     if data is None:
@@ -48,5 +54,5 @@ def get_token_data(token: str) -> dict | None:
         "guild_name": data[1],
         "user": data[2],
         "user_name": data[3],
-        "user_avatar": data[4]
+        "user_avatar": data[4],
     }

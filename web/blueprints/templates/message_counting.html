@@ -1,0 +1,78 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Message Counting</h1>
+
+{% for flash in get_flashed_messages() %}
+<div style="border: 1px solid blue;">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<form method="post" action="/settings/message_counting">
+    <input type="checkbox" name="enable_leaderboard" id="enable_leaderboard" {% if enable_leaderboard %}checked{% endif %}>
+    <label for="enable_leaderboard">Enable the /leaderboard command <a href="/leaderboard/{{session.user['guild_id']}}">Also enables the web leaderboard.</a></label>
+    <br/>
+    <input type="checkbox" name="enable_indexer" id="enable_indexer" {% if enable_indexer %}checked{% endif %}>
+    <label for="enable_indexer">Enable the /index command. Must be used by an admin of the server.</label>
+    <br/>
+    <input type="checkbox" name="count_deletes" id="count_deletes" {% if count_deletes %}checked{% endif %}>
+    <label for="count_deletes">(Un)count deletes</label>
+    <br/>
+    <br/>
+
+    <button type="submit">Save</button>
+</form>
+
+<h2>Rewards for message counts</h2>
+
+<h3>Add a leveling multiplier reward</h3>
+<form method="post">
+    <input type="hidden" name="type" value="multiplier">
+    <label for="messages">Message count</label>
+    <input type="number" name="messages" id="messages">
+    <br />
+    <label for="multiplier">Multiplier</label>
+    <input type="number" name="multiplier" id="multiplier" step="0.1">
+    <br />
+    <button type="submit">Create</button>
+</form>
+
+<h3>Add a role reward</h3>
+<form method="post">
+    <input type="hidden" name="type" value="role">
+    <label for="messages_1">Message count</label>
+    <input type="number" name="messages" id="messages_1">
+    <br />
+    <label for="role">Role</label>
+    <select name="role" id="role">
+        {% for role in roles %}
+        <option value="{{role.id}}">@{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <br />
+    <button type="submit">Create</button>
+</form>
+
+<h2>Manage existing rewards</h2>
+
+{% for reward in rewards %}
+{% if reward.type == "role" %}
+<p>Reward for {{reward.messages}} messages: Role @{{reward.role_name}}</p>
+<form method="post">
+    <input type="hidden" name="remove" value="{{reward.id}}">
+    <button type="submit">Remove</button>
+</form>
+{% endif %}
+{% if reward.type == "multiplier" %}
+<p>Reward for {{reward.messages}} messages: {{reward.multiplier}}x multiplier</p>
+<form method="post">
+    <input type="hidden" name="remove" value="{{reward.id}}">
+    <button type="submit">Remove</button>
+</form>
+{% endif %}
+{% else %}
+<p>No rewards yet</p>
+{% endfor %}
+
+{% endblock %}
