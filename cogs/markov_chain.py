@@ -1,10 +1,8 @@
-import datetime
-
 import markovify
 from discord import Bot, Cog, Message
-from sqlalchemy import select, update
 
-from database import engine, markov
+from database import engine
+from utils.markov import tick_markov, should_trigger_markov, post_markov_run
 
 
 class MarkovChain(Cog):
@@ -17,57 +15,35 @@ class MarkovChain(Cog):
             return
 
         with engine.begin() as c:
-            row = c.execute(
-                select(markov.c.period, markov.c.period_num).where(
-                    (markov.c.channel_id == str(message.channel.id))
-                    & (
-                        (markov.c.next_send < datetime.datetime.now())
-                        | (markov.c.next_send == None)
-                    )
-                )
-            ).fetchone()
 
-            if not row:
-                return
+            tick_markov(c, message)
 
-            history = await message.channel.history(limit=500).flatten()
-            history = [msg for msg in history if not msg.author.bot]
+            if should_trigger_markov(c, message):
+                print("running markov")
 
-            text = "\n".join([msg.content for msg in history])
-            model = markovify.NewlineText(text)
-            model.compile(inplace=True)
+                history = await message.channel.history(limit=500).flatten()
+                history = [msg for msg in history if not msg.author.bot]
 
-            output = None
-            for _ in range(10000):
-                output = model.make_sentence()
+                text = "\n".join([msg.content for msg in history])
+                model = markovify.NewlineText(text)
+                model.compile(inplace=True)
+
+                print("markov size", len(text))
+
+                output = None
+                for _ in range(10000):
+                    output = model.make_sentence()
+                    if output is not None:
+                        break
+
                 if output is not None:
-                    break
+                    await message.channel.send(output)
 
-            if output is not None:
-                await message.channel.send(output)
-
-            period, period_num = row
-            if period == "minutely":
-                next_send = datetime.datetime.now() + datetime.timedelta(
-                    minutes=period_num
-                )
-            elif period == "hourly":
-                next_send = datetime.datetime.now() + datetime.timedelta(
-                    hours=period_num
-                )
-            elif period == "daily":
-                next_send = datetime.datetime.now() + datetime.timedelta(
-                    days=period_num
-                )
-            else:
-                next_send = datetime.datetime.now() + datetime.timedelta(days=1)
-
-            c.execute(
-                update(markov)
-                .where(markov.c.channel_id == str(message.channel.id))
-                .values(next_send=next_send)
-            )
+                    post_markov_run(c, message)
+                else:
+                    print("run failed")
 
 
 def setup(bot: Bot):
-    bot.add_cog(MarkovChain(bot))
+    if bot.intents.message_content:
+        bot.add_cog(MarkovChain(bot))

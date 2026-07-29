@@ -377,9 +377,12 @@ markov = Table(
     md_obj,
     Column("channel_id", VARCHAR, primary_key=True),
     Column("guild_id", VARCHAR, nullable=False),
-    Column("period", VARCHAR, nullable=False, default="daily"),
-    Column("period_num", Integer, nullable=False, default=1),
+    Column("mode", VARCHAR, nullable=False, server_default="periodic"),
+    Column("period", VARCHAR, default="daily"),
+    Column("period_num", Integer, default=1),
     Column("next_send", DateTime(timezone=True)),
+    Column("messages_sent_since", Integer, nullable=False, server_default="0"),
+    Column("messages_num", Integer, nullable=False, server_default="0"),
 )
 
 tags = Table(
