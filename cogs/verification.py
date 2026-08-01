@@ -6,7 +6,7 @@ from discord import Cog, Bot, ButtonStyle, Button, Interaction, slash_command, A
     Message, Embed, EmbedAuthor
 from discord.ui import View, button, Modal, InputText, ViewItem
 from discord.ui.view import V
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, delete
 
 from database import engine, verification_introduction_messages
 from utils.bot_channel import setting_admin_bot_channel
@@ -129,11 +129,66 @@ class AdminIntroductionVerifyView(View):
 
     @button(label="Approve", style=ButtonStyle.green, custom_id="ver:intro:approve")
     async def approve(self, button: Button, interaction: Interaction):
-        await interaction.respond("Approve", ephemeral=True)
+        with engine.begin() as c:
+            verification_message = c.execute(
+                select(verification_introduction_messages.c.author_id, verification_introduction_messages.c.id)
+                .where(verification_introduction_messages.c.admin_message_id == str(interaction.message.id))
+            ).fetchone()
+            if verification_message is None:
+                await interaction.respond("The verification introduction message data is missing", ephemeral=True)
+                return
+
+            verification_role_id = setting_verification_role.get(c, interaction.guild.id)
+            verification_role = interaction.guild.get_role(int(verification_role_id))
+
+            author_id = verification_message[0]
+            author = await interaction.guild.fetch_member(int(author_id))
+
+            await author.add_roles(verification_role)
+
+            self.disable_all_items()
+            await interaction.edit(view=self)
+            await interaction.respond("Member verified!", ephemeral=True)
+
+            with engine.begin() as c:
+                c.execute(
+                    delete(verification_introduction_messages)
+                    .where(verification_introduction_messages.c.id == verification_message[1])
+                )
 
     @button(label="Deny", style=ButtonStyle.red, custom_id="ver:intro:deny")
     async def deny(self, button: Button, interaction: Interaction):
-        await interaction.respond("Deny", ephemeral=True)
+        with engine.begin() as c:
+            verification_message = c.execute(
+                select(verification_introduction_messages.c.introduction_message_id, verification_introduction_messages.c.author_id, verification_introduction_messages.c.id)
+                .where(verification_introduction_messages.c.admin_message_id == str(interaction.message.id))
+            ).fetchone()
+            if verification_message is None:
+                await interaction.respond("The verification introduction message data is missing", ephemeral=True)
+                return
+
+            introduction_channel_id = setting_introduction_channel.get(c, interaction.guild.id)
+            introduction_channel = interaction.guild.get_channel(int(introduction_channel_id))
+
+        try:
+            introduction_message = await introduction_channel.fetch_message(int(verification_message[0]))
+            await introduction_message.delete()
+        except Exception:
+            pass
+
+        member_id = verification_message[1]
+        member = await interaction.guild.fetch_member(int(member_id))
+
+        try:
+            await member.send(f"An admin denied your introduction in {interaction.guild.name} and you were kicked, you can rejoin.")
+        except Exception:
+            pass
+
+        await member.kick(reason="Verification failed")
+
+        self.disable_all_items()
+        await interaction.edit(view=self)
+        await interaction.respond("Member denied and kicked from the server", ephemeral=True)
 
 
 class Verification(Cog):
