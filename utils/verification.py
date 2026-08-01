@@ -14,3 +14,9 @@ setting_verification_mode = ServerSetting(
     setting_type=SettingType.NORMAL,
     default="none"
 )
+
+introduction_channel = ServerSetting(
+    name="Introduction channel",
+    setting_type=SettingType.NORMAL,
+    default=""
+)

@@ -5,3 +5,9 @@ setting_bot_channel = ServerSetting(
     setting_type=SettingType.NORMAL,
     default=""
 )
+
+setting_admin_bot_channel = ServerSetting(
+    name="Admin bot Channel",
+    setting_type=SettingType.NORMAL,
+    default=""
+)

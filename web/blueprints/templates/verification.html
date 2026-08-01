@@ -27,7 +27,16 @@
         <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3</option>
     </select>
     <br>
-    
+
+    <label for="introductionchannel">Introduction channel</label>
+    <select name="introductionchannel" id="introductionchannel">
+        <option value="unset">-- unset --</option>
+        {% for channel in text_channels %}
+        <option value="{{channel.id}}" {% if channel.id == introduction_channel %}selected{% endif %}>#{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+
     <button type="submit">Save</button>
 </form>
 
