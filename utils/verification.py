@@ -1,6 +1,3 @@
-from discord import Member
-from sqlalchemy import Connection
-
 from utils.server_settings import ServerSetting, SettingType
 
 
@@ -15,7 +12,7 @@ setting_verification_mode = ServerSetting(
     default="none"
 )
 
-introduction_channel = ServerSetting(
+setting_introduction_channel = ServerSetting(
     name="Introduction channel",
     setting_type=SettingType.NORMAL,
     default=""

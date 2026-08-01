@@ -1,11 +1,16 @@
 import random
 import re
+from ssl import cert_time_to_seconds
 
-from discord import Cog, Bot, ButtonStyle, Button, Interaction, slash_command, ApplicationContext, default_permissions
-from discord.ui import View, button, Modal, InputText
+from discord import Cog, Bot, ButtonStyle, Button, Interaction, slash_command, ApplicationContext, default_permissions, \
+    Message, Embed, EmbedAuthor
+from discord.ui import View, button, Modal, InputText, ViewItem
+from discord.ui.view import V
+from sqlalchemy import insert, select
 
-from database import engine
-from utils.verification import setting_verification_mode, setting_verification_role
+from database import engine, verification_introduction_messages
+from utils.bot_channel import setting_admin_bot_channel
+from utils.verification import setting_verification_mode, setting_verification_role, setting_introduction_channel
 
 
 class VerificationModalSilly(Modal):
@@ -118,6 +123,18 @@ class VerificationView(View):
                 await interaction.user.add_roles(verification_role)
 
 
+class AdminIntroductionVerifyView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @button(label="Approve", style=ButtonStyle.green)
+    async def approve(self, button: Button, interaction: Interaction):
+        await interaction.respond("Approve", ephemeral=True)
+
+    @button(label="Deny", style=ButtonStyle.red)
+    async def deny(self, button: Button, interaction: Interaction):
+        await interaction.respond("Deny", ephemeral=True)
+
 
 class Verification(Cog):
     def __init__(self, bot: Bot):
@@ -128,6 +145,48 @@ class Verification(Cog):
     @Cog.listener()
     async def on_ready(self):
         self.bot.add_view(VerificationView())
+        self.bot.add_view(AdminIntroductionVerifyView())
+
+    @Cog.listener()
+    async def on_message(self, msg: Message):
+        if msg.guild is None:
+            return
+
+        with engine.begin() as c:
+            verification_mode = setting_verification_mode.get(c, msg.guild.id)
+            if verification_mode != "introduction":
+                return
+
+            introduction_channel = setting_introduction_channel.get(c, msg.guild.id)
+            if str(msg.channel.id) != introduction_channel:
+                return
+
+            existing_message = c.execute(
+                select(verification_introduction_messages.c.id)
+                .where(verification_introduction_messages.c.introduction_message_id == str(msg.id))
+            ).fetchone()
+
+            if existing_message:
+                await msg.delete(reason="Member is already getting verified")
+                await msg.author.send("You are already in the process of verification, please wait until you get verified")
+                return
+
+            admin_bot_channel_id = setting_admin_bot_channel.get(c, msg.guild.id)
+            admin_bot_channel = msg.guild.get_channel(int(admin_bot_channel_id))
+
+            admin_channel_message = await admin_bot_channel.send(embed=Embed(
+                title="Member Verification",
+                author=EmbedAuthor(name=msg.author.display_name, icon_url=msg.author.display_avatar.url),
+                description=msg.clean_content
+            ), view=AdminIntroductionVerifyView())
+
+            c.execute(
+                insert(verification_introduction_messages)
+                .values(member_who_is_getting_verified_id=str(msg.author.id),
+                        admin_message_id=str(admin_channel_message.id),
+                        introduction_message_id=str(msg.id))
+            )
+
 
     @slash_command()
     @default_permissions(manage_guild=True)

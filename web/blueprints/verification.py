@@ -4,7 +4,7 @@ from flask import Blueprint, session, render_template, request, flash
 from sqlalchemy import select
 
 from database import engine, synced_roles, synced_channels
-from utils.verification import setting_verification_role, setting_verification_mode, introduction_channel
+from utils.verification import setting_verification_role, setting_verification_mode, setting_introduction_channel
 from web.webutils.discord_sync import validate_role_id, validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -18,17 +18,17 @@ def handle_save(auth):
             elif validate_role_id(request.form["verification_role"]):
                 setting_verification_role.set(c, auth["guild"], request.form["verification_role"])
 
-        if "verification_mode" in request.form and request.form["verification_mode"] in ["none", "math", "silly"]:
+        if "verification_mode" in request.form and request.form["verification_mode"] in ["none", "math", "silly", "introduction"]:
             setting_verification_mode.set(c, auth["guild"], request.form["verification_mode"])
 
         # Introduction channel
         if "introductionchannel" in request.form:
             if request.form["introductionchannel"] == "unset":
                 with engine.begin() as c:
-                    introduction_channel.set(c, auth["guild"], "")
+                    setting_introduction_channel.set(c, auth["guild"], "")
             elif validate_text_channel_id(request.form["introductionchannel"]):
                 with engine.begin() as c:
-                    introduction_channel.set(c, auth["guild"], request.form["introductionchannel"])
+                    setting_introduction_channel.set(c, auth["guild"], request.form["introductionchannel"])
             else:
                 flash("Admin bot channel property found but the value was invalid.")
 
@@ -47,7 +47,7 @@ def verification_index():
     with engine.begin() as c:
         verification_role_id = setting_verification_role.get(c, auth["guild"])
         verification_mode = setting_verification_mode.get(c, auth["guild"])
-        introduction_channel_id = introduction_channel.get(c, auth["guild"])
+        introduction_channel_id = setting_introduction_channel.get(c, auth["guild"])
 
         roles = [{
             "id": i[0],

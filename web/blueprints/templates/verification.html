@@ -25,6 +25,7 @@
         <option value="none" {% if verification_mode == "none" %}selected{% endif %}>None</option>
         <option value="math" {% if verification_mode == "math" %}selected{% endif %}>Math problem</option>
         <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3</option>
+        <option value="introduction" {% if verification_mode == "introduction" %}selected{% endif %}>introduction-based</option>
     </select>
     <br>
 
@@ -46,6 +47,7 @@
     <li><strong>None</strong>: This verification method is very simple but won't protect you from attackers who can click buttons using their accounts.</li>
     <li><strong>Math</strong>: Shows a math problem in addition of pressing the button to verify.</li>
     <li><strong>Silly</strong>: Makes the user make a bark, meow, or a fox noise to pass the check. This one is just silly and here for no reason.</li>
+    <li><strong>Introduction based</strong>: Users write an introduction and admins approve the introduction for the user to get into the server.</li>
 </ul>
 
 {% endblock %}
