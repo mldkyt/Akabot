@@ -24,6 +24,18 @@
     </select>
     <br>
     <br>
+    <label for="adminbotchannel">Admin bot channel</label>
+    <br>
+    <select id="adminbotchannel" name="adminbotchannel">
+        <option value="unset">-- Unset --</option>
+        {% for text_channel in text_channels %}
+        <option value="{{text_channel.id}}" {% if text_channel.id == current_admin_bot_channel %}selected{% endif %}>
+            {{text_channel.name}}
+        </option>
+        {% endfor %}
+    </select>
+    <br>
+    <br>
 
     <button type="submit">Save</button>
 </form>

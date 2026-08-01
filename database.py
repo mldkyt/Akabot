@@ -422,3 +422,13 @@ message_counting_rewards = Table(
     Column("rid", VARCHAR),
     Column("multiplier", DECIMAL),
 )
+
+verification_introduction_messages = Table(
+    "verification_introduction_messages",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("guild_id", VARCHAR, nullable=False),
+    Column("author_id", VARCHAR, nullable=False),
+    Column("admin_message_id", VARCHAR, nullable=False),
+    Column("introduction_message_id", VARCHAR, nullable=False),
+)
