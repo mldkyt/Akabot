@@ -127,11 +127,11 @@ class AdminIntroductionVerifyView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @button(label="Approve", style=ButtonStyle.green)
+    @button(label="Approve", style=ButtonStyle.green, custom_id="ver:intro:approve")
     async def approve(self, button: Button, interaction: Interaction):
         await interaction.respond("Approve", ephemeral=True)
 
-    @button(label="Deny", style=ButtonStyle.red)
+    @button(label="Deny", style=ButtonStyle.red, custom_id="ver:intro:deny")
     async def deny(self, button: Button, interaction: Interaction):
         await interaction.respond("Deny", ephemeral=True)
 
@@ -151,6 +151,8 @@ class Verification(Cog):
     async def on_message(self, msg: Message):
         if msg.guild is None:
             return
+        if msg.author.bot:
+            return
 
         with engine.begin() as c:
             verification_mode = setting_verification_mode.get(c, msg.guild.id)
@@ -163,12 +165,14 @@ class Verification(Cog):
 
             existing_message = c.execute(
                 select(verification_introduction_messages.c.id)
-                .where(verification_introduction_messages.c.introduction_message_id == str(msg.id))
+                .where((verification_introduction_messages.c.author_id == str(msg.author.id)) &
+                       (verification_introduction_messages.c.guild_id == str(msg.guild.id)))
             ).fetchone()
 
-            if existing_message:
+            if existing_message is not None:
                 await msg.delete(reason="Member is already getting verified")
-                await msg.author.send("You are already in the process of verification, please wait until you get verified")
+                tmp = await msg.channel.send(f"{msg.author.mention}, you are already in the process of verification.")
+                await tmp.delete(delay=5)
                 return
 
             admin_bot_channel_id = setting_admin_bot_channel.get(c, msg.guild.id)
@@ -182,7 +186,8 @@ class Verification(Cog):
 
             c.execute(
                 insert(verification_introduction_messages)
-                .values(member_who_is_getting_verified_id=str(msg.author.id),
+                .values(author_id=str(msg.author.id),
+                        guild_id=str(msg.guild.id),
                         admin_message_id=str(admin_channel_message.id),
                         introduction_message_id=str(msg.id))
             )
