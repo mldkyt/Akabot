@@ -3,14 +3,18 @@ import re
 from ssl import cert_time_to_seconds
 
 from discord import Cog, Bot, ButtonStyle, Button, Interaction, slash_command, ApplicationContext, default_permissions, \
-    Message, Embed, EmbedAuthor
+    Message, Embed, EmbedAuthor, Member
+from discord.ext.pages import Paginator
+from discord.ext.tasks import loop
 from discord.ui import View, button, Modal, InputText, ViewItem
 from discord.ui.view import V
+from sentry_sdk import capture_exception
 from sqlalchemy import insert, select, delete
 
 from database import engine, verification_introduction_messages
 from utils.bot_channel import setting_admin_bot_channel
-from utils.verification import setting_verification_mode, setting_verification_role, setting_introduction_channel
+from utils.verification import setting_verification_mode, setting_verification_role, setting_introduction_channel, \
+    unverified_members, setting_kick_unverified_users
 
 
 class VerificationModalSilly(Modal):
@@ -266,6 +270,26 @@ class Verification(Cog):
         await ctx.channel.send("Please verify yourself to access this server", view=VerificationView())
         await ctx.respond("Sent", ephemeral=True)
 
+    @loop(hours=1)
+    async def kick_unverified_members(self):
+        for guild in self.bot.guilds:
+            with engine.begin() as c:
+                kick_unverified_users = setting_kick_unverified_users.get(c, guild.id) == "true"
+
+            if not kick_unverified_users:
+                continue
+
+            async for member in unverified_members(guild):
+                if guild.me.guild_permissions.kick_members:
+                    try:
+                        await member.send(f"You have been kicked from {guild.name} for not verifying in 24 hours, you can rejoin.")
+                    except Exception:
+                        pass
+
+                    try:
+                        await member.kick(reason="Verification failed")
+                    except Exception as e:
+                        capture_exception(e)
 
 def setup(bot: Bot):
     bot.add_cog(Verification(bot))

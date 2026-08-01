@@ -4,7 +4,8 @@ from flask import Blueprint, session, render_template, request, flash
 from sqlalchemy import select
 
 from database import engine, synced_roles, synced_channels
-from utils.verification import setting_verification_role, setting_verification_mode, setting_introduction_channel
+from utils.verification import setting_verification_role, setting_verification_mode, setting_introduction_channel, \
+    setting_kick_unverified_users
 from web.webutils.discord_sync import validate_role_id, validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -24,13 +25,16 @@ def handle_save(auth):
         # Introduction channel
         if "introductionchannel" in request.form:
             if request.form["introductionchannel"] == "unset":
-                with engine.begin() as c:
-                    setting_introduction_channel.set(c, auth["guild"], "")
+                setting_introduction_channel.set(c, auth["guild"], "")
             elif validate_text_channel_id(request.form["introductionchannel"]):
-                with engine.begin() as c:
-                    setting_introduction_channel.set(c, auth["guild"], request.form["introductionchannel"])
+                setting_introduction_channel.set(c, auth["guild"], request.form["introductionchannel"])
             else:
                 flash("Admin bot channel property found but the value was invalid.")
+
+        if request.form.get("kickunverified") == "on":
+            setting_kick_unverified_users.set(c, auth["guild"], "true")
+        else:
+            setting_kick_unverified_users.set(c, auth["guild"], "false")
 
 @verification_bp.route("/settings/verification", methods=["GET", "POST"])
 def verification_index():
@@ -48,6 +52,7 @@ def verification_index():
         verification_role_id = setting_verification_role.get(c, auth["guild"])
         verification_mode = setting_verification_mode.get(c, auth["guild"])
         introduction_channel_id = setting_introduction_channel.get(c, auth["guild"])
+        kick_unverified_users = setting_kick_unverified_users.get(c, auth["guild"]) == "true"
 
         roles = [{
             "id": i[0],
@@ -67,4 +72,5 @@ def verification_index():
 
     return render_template("verification.html", verification_role=verification_role_id,
                            verification_mode=verification_mode, roles=roles, text_channels=text_channels,
-                           introduction_channel=introduction_channel_id)
+                           introduction_channel=introduction_channel_id, kick_unverified_users=kick_unverified_users)
+

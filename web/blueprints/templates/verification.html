@@ -38,6 +38,11 @@
     </select>
     <br>
 
+    <!-- Kick unverified users -->
+    <input type="checkbox" name="kickunverified" id="kickunverified" {% if kick_unverified_users %}checked{% endif %}>
+    <label for="kickunverified">Kick unverified users in 24 hours</label>
+    <br>
+
     <button type="submit">Save</button>
 </form>
 
