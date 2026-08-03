@@ -14,12 +14,10 @@ load_dotenv()
 
 if os.getenv("SENTRY_SDK"):
     sentry_sdk.init(
-        os.getenv("SENTRY_SDK"),
-        send_default_pii=True,
-        max_request_body_size="always",
-        traces_sample_rate=0,
-        send_client_reports=False,
+        dsn=os.getenv("SENTRY_SDK"),
+        traces_sample_rate=1,
         auto_session_tracking=False,
+        send_default_pii=True,
     )
 
 BOT_VERSION = "@VERSION@"
