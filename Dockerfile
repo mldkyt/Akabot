@@ -32,4 +32,6 @@ RUN chmod +x docker-entrypoint.sh
 RUN rm -r .git
 RUN apk --no-cache del git bash
 
+STOPSIGNAL SIGKILL
+
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
