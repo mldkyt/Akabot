@@ -10,6 +10,15 @@
 </div>
 {% endfor %}
 
+<script type="text/javascript">
+function activateAllButtons(id) {
+  $(`.logging_${id}`).prop("checked", true);
+}
+function deactivateAllButtons(id) {
+  $(`.logging_${id}`).prop("checked", false);
+}
+</script>
+
 <h2>Logging channels</h2>
 
 {% for logging_channel in logging_channels %}
@@ -21,10 +30,13 @@
        <input type="hidden" name="channel_id" value="{{logging_channel.id}}">
 
        {% for setting in settings %}
-       <input type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.key in logging_channel.enabled %}checked{% endif %}>
+       <input class="logging_{{logging_channel.id}}" type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.key in logging_channel.enabled %}checked{% endif %}>
        <label for="{{setting.key}}">Log {{setting.name}}</label>
        <br>
        {% endfor %}
+
+       <button type="button" onclick="activateAllButtons('{{logging_channel.id}}')">Check all</button>
+       <button type="button" onclick="deactivateAllButtons('{{logging_channel.id}}')">Uncheck all</button>
 
        <br>
        <button type="submit">Update</button>
@@ -54,10 +66,13 @@
         <br>
 
         {% for setting in settings %}
-        <input type="checkbox" name="{{setting.key}}" id="{{setting.key}}" checked>
+        <input class="logging_add" type="checkbox" name="{{setting.key}}" id="{{setting.key}}" checked>
         <label for="{{setting.key}}">Log {{setting.name}}</label>
         <br>
         {% endfor %}
+
+        <button type="button" onclick="activateAllButtons('add')">Enable all</button>
+        <button type="button" onclick="deactivateAllButtons('add')">Disable all</button>\
 
         <br>
         <button type="submit">Save</button>
