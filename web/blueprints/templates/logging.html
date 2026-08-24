@@ -10,24 +10,58 @@
 </div>
 {% endfor %}
 
-<form method="post" action="/settings/logging">
-    <label for="logging_channel">Logging channel</label>
-    <select id="logging_channel" name="logging_channel">
-        <option value="unset">-- Unset --</option>
-        {% for channel in channels %}
-        <option value="{{channel.id}}" {% if logging_channel == channel.id %}selected{% endif %}>#{{channel.name}}</option>
+<h2>Logging channels</h2>
+
+{% for logging_channel in logging_channels %}
+
+<details>
+   <summary>Logging channel #{{logging_channel.name}}</summary>
+
+   <form method="post" action="/settings/logging">
+       <input type="hidden" name="channel_id" value="{{logging_channel.id}}">
+
+       {% for setting in settings %}
+       <input type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.key in logging_channel.enabled %}checked{% endif %}>
+       <label for="{{setting.key}}">Log {{setting.name}}</label>
+       <br>
+       {% endfor %}
+
+       <br>
+       <button type="submit">Update</button>
+   </form>
+   <form method="post" action="/settings/logging">
+       <input type="hidden" name="delete" value="{{logging_channel.id}}">
+
+       <button type="submit">Delete</button>
+   </form>
+</details>
+
+{% else %}
+<p>No logging channels configured. Please create one</p>
+{% endfor %}
+
+<details>
+    <summary>Add a new channel</summary>
+
+    <form method="post" action="/settings/logging">
+        <label for="channel_id">Logging channel</label>
+        <select id="channel_id" name="channel_id">
+            <option value="unset">-- Unset --</option>
+            {% for channel in channels %}
+            <option value="{{channel.id}}">#{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        {% for setting in settings %}
+        <input type="checkbox" name="{{setting.key}}" id="{{setting.key}}" checked>
+        <label for="{{setting.key}}">Log {{setting.name}}</label>
+        <br>
         {% endfor %}
-    </select>
-    <br>
 
-    {% for setting in logging_settings %}
-    <input type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.value %}checked{% endif %}>
-    <label for="{{setting.key}}">{{setting.name}}</label>
-    <br>
-    {% endfor %}
-
-    <br>
-    <button type="submit">Save</button>
-</form>
+        <br>
+        <button type="submit">Save</button>
+    </form>
+</details>
 
 {% endblock %}

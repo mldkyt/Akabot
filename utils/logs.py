@@ -8,8 +8,9 @@ from discord import (
     Sticker,
     TextChannel,
 )
-from sqlalchemy import Connection
+from sqlalchemy import Connection, select
 
+from database import logging_channels
 from logger import akabot_logger
 from utils.server_settings import (
     ServerSetting,
@@ -21,9 +22,7 @@ logging_channel = ServerSetting(
     setting_type=SettingType.NORMAL,
 )
 
-logging_settings: list[tuple[str, ServerSetting]] = []
-
-for i in [
+logging_settings: list[tuple[str, str]] = [
     ("emoji_create", "emoji creates"),
     ("emoji_delete", "emoji deletes"),
     ("emoji_update", "emoji updates"),
@@ -62,42 +61,28 @@ for i in [
     ("thread_create", "thread creates"),
     ("thread_update", "thread updates"),
     ("thread_delete", "thread deletes"),
-]:
-    logging_settings.append(
-        (
-            i[0],
-            ServerSetting(
-                name=f"Logging: Log {i[1]}",
-                setting_type=SettingType.NORMAL,
-            ),
-        )
-    )
-
-
-def is_logging_enabled(c: Connection, g: Guild, logging_type: str) -> bool:
-    for i in logging_settings:
-        if i[0] == logging_type:
-            return i[1].get(c, g.id) == "true"
-
-    akabot_logger.warning("Unable to find %s logging type!", logging_type)
-    return True
+]
 
 
 async def send_message_to_log_channel(
-    c: Connection, guild: Guild, message: str | Embed
+    c: Connection, guild: Guild, msg_type: str, message: str | Embed
 ):
-    channel_id = logging_channel.get(c, guild.id)
-    if not isinstance(channel_id, str):
-        return
+    channel_data = c.execute(
+        select(logging_channels.c.cid).where(
+            (logging_channels.c.gid == str(guild.id))
+            & (logging_channels.c.type == msg_type)
+        )
+    ).fetchall()
 
-    channel = guild.get_channel(int(channel_id))
-    if not isinstance(channel, TextChannel):
-        return
+    for channel in channel_data:
+        channel = guild.get_channel(int(channel[0]))
+        if not isinstance(channel, TextChannel):
+            return
 
-    if isinstance(message, str):
-        await channel.send(embed=Embed(description=message, color=Color.red()))
-    else:
-        await channel.send(embed=message)
+        if isinstance(message, str):
+            await channel.send(embed=Embed(description=message, color=Color.red()))
+        else:
+            await channel.send(embed=message)
 
 
 def str_channel_type(channel_type: ChannelType) -> str:
@@ -121,9 +106,6 @@ async def handle_sticker(
     c: Connection, guild: Guild, before: Sticker | None, after: Sticker | None
 ):
     if before is None and after is not None:
-        if not is_logging_enabled(c, guild, "sticker_create"):
-            return
-
         triggering_user = None
         if guild.me.guild_permissions.view_audit_log:
             async for action in guild.audit_logs(
@@ -139,12 +121,9 @@ async def handle_sticker(
             value=triggering_user.mention if triggering_user else "Unknown",
             inline=False,
         )
-        await send_message_to_log_channel(c, guild, embed)
+        await send_message_to_log_channel(c, guild, "sticker_create", embed)
 
     if before is not None and after is None:
-        if not is_logging_enabled(c, guild, "sticker_delete"):
-            return
-
         triggering_user = None
         if guild.me.guild_permissions.view_audit_log:
             async for action in guild.audit_logs(
@@ -160,12 +139,9 @@ async def handle_sticker(
             value=triggering_user.mention if triggering_user else "Unknown",
             inline=False,
         )
-        await send_message_to_log_channel(c, guild, embed)
+        await send_message_to_log_channel(c, guild, "sticker_delete", embed)
 
     if before is not None and after is not None:
-        if not is_logging_enabled(c, guild, "sticker_update"):
-            return
-
         triggering_user = None
         if guild.me.guild_permissions.view_audit_log:
             async for action in guild.audit_logs(
@@ -196,16 +172,13 @@ async def handle_sticker(
                 value=triggering_user.mention if triggering_user else "Unknown",
                 inline=False,
             )
-        await send_message_to_log_channel(c, guild, embed)
+        await send_message_to_log_channel(c, guild, "sticker_update", embed)
 
 
 async def handle_emoji(
     c: Connection, guild: Guild, before: Emoji | None, after: Emoji | None
 ):
     if before is None and after is not None:
-        if not is_logging_enabled(c, guild, "emoji_create"):
-            return
-
         triggering_user = None
         if guild.me.guild_permissions.view_audit_log:
             async for action in guild.audit_logs(
@@ -227,12 +200,9 @@ async def handle_emoji(
             value=triggering_user.mention if triggering_user else "Unknown",
             inline=False,
         )
-        await send_message_to_log_channel(c, guild, embed)
+        await send_message_to_log_channel(c, guild, "emoji_create", embed)
 
     if before is not None and after is None:
-        if not is_logging_enabled(c, guild, "emoji_delete"):
-            return
-
         triggering_user = None
         if guild.me.guild_permissions.view_audit_log:
             async for action in guild.audit_logs(
@@ -255,12 +225,9 @@ async def handle_emoji(
             value=triggering_user.mention if triggering_user else "Unknown",
             inline=False,
         )
-        await send_message_to_log_channel(c, guild, embed)
+        await send_message_to_log_channel(c, guild, "emoji_delete", embed)
 
     if before is not None and after is not None:
-        if not is_logging_enabled(c, guild, "emoji_update"):
-            return
-
         triggering_user = None
         if guild.me.guild_permissions.view_audit_log:
             async for action in guild.audit_logs(
@@ -281,4 +248,4 @@ async def handle_emoji(
                 value=triggering_user.mention if triggering_user else "Unknown",
                 inline=False,
             )
-            await send_message_to_log_channel(c, guild, embed)
+            await send_message_to_log_channel(c, guild, "emoji_update", embed)

@@ -3,6 +3,7 @@ import os.path
 
 from sqlalchemy import (
     DATE,
+    DECIMAL,
     VARCHAR,
     Column,
     DateTime,
@@ -12,7 +13,7 @@ from sqlalchemy import (
     StaticPool,
     Table,
     UniqueConstraint,
-    create_engine, DECIMAL,
+    create_engine,
 )
 
 if not os.path.exists("data"):
@@ -431,4 +432,13 @@ verification_introduction_messages = Table(
     Column("author_id", VARCHAR, nullable=False),
     Column("admin_message_id", VARCHAR, nullable=False),
     Column("introduction_message_id", VARCHAR, nullable=False),
+)
+
+logging_channels = Table(
+    "logging_channels",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    Column("type", VARCHAR, nullable=False),
 )
