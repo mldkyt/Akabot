@@ -61,6 +61,9 @@ logging_settings: list[tuple[str, str]] = [
     ("thread_create", "thread creates"),
     ("thread_update", "thread updates"),
     ("thread_delete", "thread deletes"),
+    ("automod_kick", "Automod Actions kick"),
+    ("automod_ban", "Automod Actions ban"),
+    ("automod_mute", "Automod Actions mute"),
 ]
 
 
