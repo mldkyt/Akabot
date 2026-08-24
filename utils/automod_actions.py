@@ -55,6 +55,7 @@ async def handle_automod_action(
         await send_message_to_log_channel(
             c,
             payload.guild,
+            "automod_kick",
             Embed(
                 title="Automod has Kicked a Member!",
                 description="Akabot has kicked a member after AutoMod action execution",
@@ -76,6 +77,7 @@ async def handle_automod_action(
         await send_message_to_log_channel(
             c,
             payload.guild,
+            "automod_ban",
             Embed(
                 title="Automod has Banned a Member!",
                 description="Akabot has banned a member after AutoMod action execution",
@@ -99,6 +101,7 @@ async def handle_automod_action(
         await send_message_to_log_channel(
             c,
             payload.guild,
+            "automod_mute",
             Embed(
                 title="Automod has Muted a Member!",
                 description="Akabot has muted a member after AutoMod action execution",

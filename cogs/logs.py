@@ -31,7 +31,6 @@ from utils.logs import (
     format_perm_name,
     handle_emoji,
     handle_sticker,
-    is_logging_enabled,
     send_message_to_log_channel,
 )
 
@@ -100,9 +99,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, rule.guild, "automod_create"):
-                    return
-
                 moderator = None
                 if rule.guild.me.guild_permissions.view_audit_log:
                     async for entry in rule.guild.audit_logs(
@@ -119,7 +115,9 @@ class Logging(Cog):
                     name="Created by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, rule.guild, embed)
+                await send_message_to_log_channel(
+                    c, rule.guild, "automod_create", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -130,9 +128,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, rule.guild, "automod_delete"):
-                    return
-
                 moderator = None
                 if rule.guild.me.guild_permissions.view_audit_log:
                     async for entry in rule.guild.audit_logs(
@@ -148,7 +143,9 @@ class Logging(Cog):
                     name="Deleted by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, rule.guild, embed)
+                await send_message_to_log_channel(
+                    c, rule.guild, "automod_delete", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -159,9 +156,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, rule.guild, "automod_update"):
-                    return
-
                 moderator = None
                 if rule.guild.me.guild_permissions.view_audit_log:
                     async for entry in rule.guild.audit_logs(
@@ -177,7 +171,9 @@ class Logging(Cog):
                     name="Edited by",
                     value=moderator.mention if moderator else "Unkown",
                 )
-                await send_message_to_log_channel(c, rule.guild, embed)
+                await send_message_to_log_channel(
+                    c, rule.guild, "automod_update", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -185,9 +181,6 @@ class Logging(Cog):
     async def on_member_ban(self, guild: Guild, user: User):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, guild, "member_ban"):
-                    return
-
                 reason = None
                 moderator = None
 
@@ -214,7 +207,7 @@ class Logging(Cog):
                     name="Reason of ban",
                     value=reason if reason else "*Not specified*",
                 )
-                await send_message_to_log_channel(c, guild, embed)
+                await send_message_to_log_channel(c, guild, "member_ban", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -222,9 +215,6 @@ class Logging(Cog):
     async def on_member_unban(self, guild: Guild, user: User):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, guild, "member_unban"):
-                    return
-
                 reason = None
                 moderator = None
 
@@ -251,7 +241,7 @@ class Logging(Cog):
                     name="Reason of unban",
                     value=reason if reason else "*Not specified*",
                 )
-                await send_message_to_log_channel(c, guild, embed)
+                await send_message_to_log_channel(c, guild, "member_unban", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -259,9 +249,6 @@ class Logging(Cog):
     async def on_guild_channel_update(self, before: GuildChannel, after: GuildChannel):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, after.guild, "channel_update"):
-                    return
-
                 moderator = None
                 if before.guild.me.guild_permissions.view_audit_log:
                     async for entry in before.guild.audit_logs(
@@ -405,7 +392,7 @@ class Logging(Cog):
                         )
 
                         await send_message_to_log_channel(
-                            c, after.guild, overwrite_embed
+                            c, after.guild, "channel_update", overwrite_embed
                         )
 
                 if len(embed.fields) > 1:
@@ -413,7 +400,9 @@ class Logging(Cog):
                         name="Edited by",
                         value=moderator.mention if moderator else "Unknown",
                     )
-                    await send_message_to_log_channel(c, after.guild, embed)
+                    await send_message_to_log_channel(
+                        c, after.guild, "channel_update", embed
+                    )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -421,9 +410,6 @@ class Logging(Cog):
     async def on_guild_channel_create(self, channel: GuildChannel):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, channel.guild, "channel_create"):
-                    return
-
                 moderator = None
                 if channel.guild.me.guild_permissions.view_audit_log:
                     async for entry in channel.guild.audit_logs(
@@ -443,7 +429,9 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
 
-                await send_message_to_log_channel(c, channel.guild, embed)
+                await send_message_to_log_channel(
+                    c, channel.guild, "channel_create", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -451,9 +439,6 @@ class Logging(Cog):
     async def on_guild_channel_delete(self, channel: GuildChannel):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, channel.guild, "channel_delete"):
-                    return
-
                 moderator = None
                 if channel.guild.me.guild_permissions.view_audit_log:
                     async for entry in channel.guild.audit_logs(
@@ -473,7 +458,9 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
 
-                await send_message_to_log_channel(c, channel.guild, embed)
+                await send_message_to_log_channel(
+                    c, channel.guild, "channel_delete", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -481,9 +468,6 @@ class Logging(Cog):
     async def on_guild_update(self, before: Guild, after: Guild):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, after, "guild_update"):
-                    return
-
                 moderator = None
                 if after.me.guild_permissions.view_audit_log:
                     async for entry in after.audit_logs(
@@ -639,7 +623,7 @@ class Logging(Cog):
                         value=moderator.mention if moderator else "Unknown",
                     )
 
-                    await send_message_to_log_channel(c, after, embed)
+                    await send_message_to_log_channel(c, after, "guild_update", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -647,9 +631,6 @@ class Logging(Cog):
     async def on_guild_role_create(self, role: Role):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, role.guild, "role_create"):
-                    return
-
                 moderator = None
                 if role.guild.me.guild_permissions.view_audit_log:
                     async for entry in role.guild.audit_logs(
@@ -669,7 +650,7 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
 
-                await send_message_to_log_channel(c, role.guild, embed)
+                await send_message_to_log_channel(c, role.guild, "role_create", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -677,9 +658,6 @@ class Logging(Cog):
     async def on_guild_role_delete(self, role: Role):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, role.guild, "role_delete"):
-                    return
-
                 if (
                     role.guild.self_role is not None
                     and role.guild.self_role.id == role.id
@@ -705,7 +683,7 @@ class Logging(Cog):
                     value=moderator.mention if moderator else "Unknown",
                 )
 
-                await send_message_to_log_channel(c, role.guild, embed)
+                await send_message_to_log_channel(c, role.guild, "role_delete", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -713,9 +691,6 @@ class Logging(Cog):
     async def on_guild_role_update(self, before: Role, after: Role):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, after.guild, "role_update"):
-                    return
-
                 moderator = None
                 if after.guild.me.guild_permissions.view_audit_log:
                     async for entry in after.guild.audit_logs(
@@ -780,7 +755,9 @@ class Logging(Cog):
                         value=moderator.mention if moderator else "Unknown",
                     )
 
-                    await send_message_to_log_channel(c, after.guild, embed)
+                    await send_message_to_log_channel(
+                        c, after.guild, "role_update", embed
+                    )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -791,9 +768,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, invite.guild, "invite_create"):
-                    return
-
                 moderator = None
                 if invite.guild.me.guild_permissions.view_audit_log:
                     async for entry in invite.guild.audit_logs(
@@ -827,7 +801,9 @@ class Logging(Cog):
                     name="Created by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, invite.guild, embed)
+                await send_message_to_log_channel(
+                    c, invite.guild, "invite_create", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -838,9 +814,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, invite.guild, "invite_delete"):
-                    return
-
                 moderator = None
                 if invite.guild.me.guild_permissions.view_audit_log:
                     async for entry in invite.guild.audit_logs(
@@ -863,7 +836,9 @@ class Logging(Cog):
                     name="Deleted by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, invite.guild, embed)
+                await send_message_to_log_channel(
+                    c, invite.guild, "invite_delete", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -871,15 +846,12 @@ class Logging(Cog):
     async def on_member_join(self, member: Member):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, member.guild, "member_join"):
-                    return
-
                 embed = Embed(
                     title="Member Joined",
                     description=f"The member {member.mention} joined the server.",
                     color=Color.green(),
                 )
-                await send_message_to_log_channel(c, member.guild, embed)
+                await send_message_to_log_channel(c, member.guild, "member_join", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -887,15 +859,14 @@ class Logging(Cog):
     async def on_member_remove(self, member: Member):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, member.guild, "member_leave"):
-                    return
-
                 embed = Embed(
                     title="Member Left",
                     description=f"The member {member.mention} left the server.",
                     color=Color.red(),
                 )
-                await send_message_to_log_channel(c, member.guild, embed)
+                await send_message_to_log_channel(
+                    c, member.guild, "member_leave", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -903,9 +874,6 @@ class Logging(Cog):
     async def on_member_update(self, before: Member, after: Member):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, after.guild, "member_update"):
-                    return
-
                 if after.id == after.guild.me.id:
                     return  # avoid "Unknown Guild" when the self member gets banned
 
@@ -951,7 +919,9 @@ class Logging(Cog):
                         name="Updated by",
                         value=moderator.mention if moderator else "Unknown",
                     )
-                    await send_message_to_log_channel(c, after.guild, embed)
+                    await send_message_to_log_channel(
+                        c, after.guild, "member_update", embed
+                    )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -962,47 +932,41 @@ class Logging(Cog):
         with engine.begin() as c:
             try:
                 if before.channel is None and after.channel is not None:
-                    if not is_logging_enabled(c, member.guild, "voice_join"):
-                        return
-
                     # joined a channel
                     embed = Embed(
                         title="User joined Voice Channel",
                         description=f"The member {member.mention} joined the voice channel {after.channel.mention}.",
                         color=Color.green(),
                     )
-                    await send_message_to_log_channel(c, member.guild, embed)
+                    await send_message_to_log_channel(
+                        c, member.guild, "voice_join", embed
+                    )
 
                 if before.channel is not None and after.channel is None:
-                    if not is_logging_enabled(c, member.guild, "voice_leave"):
-                        return
-
                     # left a channel
                     embed = Embed(
                         title="User left Voice Channel",
                         description=f"The member {member.mention} left the voice channel {before.channel.mention}.",
                         color=Color.red(),
                     )
-                    await send_message_to_log_channel(c, member.guild, embed)
+                    await send_message_to_log_channel(
+                        c, member.guild, "voice_leave", embed
+                    )
 
                 if before.channel is not None and after.channel is not None:
                     # moved to a different channel or was muted/deafened by admin
                     if before.channel != after.channel:
-                        if not is_logging_enabled(c, member.guild, "voice_move"):
-                            return
-
                         embed = Embed(
                             title="User moved Voice Channels",
                             description=f"Member {member.mention} moved from {before.channel.mention} to {after.channel.mention}.",
                             color=Color.blue(),
                         )
-                        await send_message_to_log_channel(c, member.guild, embed)
+                        await send_message_to_log_channel(
+                            c, member.guild, "voice_move", embed
+                        )
                         return
 
                     if before.mute != after.mute:
-                        if not is_logging_enabled(c, member.guild, "voice_mute"):
-                            return
-
                         mod = None
                         if member.guild.me.guild_permissions.view_audit_log:
                             async for entry in member.guild.audit_logs(
@@ -1031,12 +995,11 @@ class Logging(Cog):
                                 name="Moderator",
                                 value=mod.mention,
                             )
-                        await send_message_to_log_channel(c, member.guild, embed)
+                        await send_message_to_log_channel(
+                            c, member.guild, "voice_mute", embed
+                        )
 
                     if before.deaf != after.deaf:
-                        if not is_logging_enabled(c, member.guild, "voice_deafen"):
-                            return
-
                         mod = None
                         if member.guild.me.guild_permissions.view_audit_log:
                             async for entry in member.guild.audit_logs(
@@ -1065,7 +1028,9 @@ class Logging(Cog):
                                 name="Moderator",
                                 value=mod.mention,
                             )
-                        await send_message_to_log_channel(c, member.guild, embed)
+                        await send_message_to_log_channel(
+                            c, member.guild, "voice_deafen", embed
+                        )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1076,9 +1041,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, reaction.message.guild, "reaction_add"):
-                    return
-
                 embed = Embed(
                     title="Reaction Added",
                     color=Color.green(),
@@ -1095,7 +1057,9 @@ class Logging(Cog):
                     name="User",
                     value=user.mention,
                 )
-                await send_message_to_log_channel(c, reaction.message.guild, embed)
+                await send_message_to_log_channel(
+                    c, reaction.message.guild, "reaction_add", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1106,9 +1070,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, reaction.message.guild, "reaction_remove"):
-                    return
-
                 embed = Embed(
                     title="Reaction Removed",
                     color=Color.red(),
@@ -1125,7 +1086,9 @@ class Logging(Cog):
                     name="User",
                     value=user.mention,
                 )
-                await send_message_to_log_channel(c, reaction.message.guild, embed)
+                await send_message_to_log_channel(
+                    c, reaction.message.guild, "reaction_remove", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1136,9 +1099,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, message.guild, "reaction_clear_all"):
-                    return
-
                 if len(reactions) < 1:
                     return
                 embed = Embed(
@@ -1149,7 +1109,9 @@ class Logging(Cog):
                     name="Message",
                     value=reactions[0].message.jump_url,
                 )
-                await send_message_to_log_channel(c, message.guild, embed)
+                await send_message_to_log_channel(
+                    c, message.guild, "reaction_clear_all", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1160,11 +1122,6 @@ class Logging(Cog):
 
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(
-                    c, reaction.message.guild, "reaction_clear_emoji"
-                ):
-                    return
-
                 embed = Embed(
                     title="Reactions Cleared for Emoji",
                     color=Color.red(),
@@ -1177,7 +1134,9 @@ class Logging(Cog):
                     name="Emoji",
                     value=str(reaction.emoji),
                 )
-                await send_message_to_log_channel(c, reaction.message.guild, embed)
+                await send_message_to_log_channel(
+                    c, reaction.message.guild, "reaction_clear_emoji", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1185,9 +1144,6 @@ class Logging(Cog):
     async def on_scheduled_event_create(self, event: ScheduledEvent):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, event.guild, "event_create"):
-                    return
-
                 moderator = None
                 if event.guild.me.guild_permissions.view_audit_log:
                     async for entry in event.guild.audit_logs(
@@ -1225,7 +1181,7 @@ class Logging(Cog):
                     name="Created by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, event.guild, embed)
+                await send_message_to_log_channel(c, event.guild, "event_create", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1235,9 +1191,6 @@ class Logging(Cog):
     ):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, after.guild, "event_update"):
-                    return
-
                 moderator = None
                 if after.guild.me.guild_permissions.view_audit_log:
                     async for entry in after.guild.audit_logs(
@@ -1280,7 +1233,9 @@ class Logging(Cog):
                         name="Updated by",
                         value=moderator.mention if moderator else "Unknown",
                     )
-                    await send_message_to_log_channel(c, after.guild, embed)
+                    await send_message_to_log_channel(
+                        c, after.guild, "event_update", embed
+                    )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1288,9 +1243,6 @@ class Logging(Cog):
     async def on_scheduled_event_delete(self, event: ScheduledEvent):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, event.guild, "event_delete"):
-                    return
-
                 moderator = None
                 if event.guild.me.guild_permissions.view_audit_log:
                     async for entry in event.guild.audit_logs(
@@ -1326,7 +1278,7 @@ class Logging(Cog):
                     name="Deleted by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, event.guild, embed)
+                await send_message_to_log_channel(c, event.guild, "event_delete", embed)
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1334,9 +1286,6 @@ class Logging(Cog):
     async def on_thread_create(self, thread: Thread):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, thread.guild, "thread_create"):
-                    return
-
                 moderator = None
                 if thread.guild.me.guild_permissions.view_audit_log:
                     async for entry in thread.guild.audit_logs(
@@ -1359,7 +1308,9 @@ class Logging(Cog):
                     name="Created by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, thread.guild, embed)
+                await send_message_to_log_channel(
+                    c, thread.guild, "thread_create", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1367,9 +1318,6 @@ class Logging(Cog):
     async def on_thread_delete(self, thread: Thread):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, thread.guild, "thread_delete"):
-                    return
-
                 moderator = None
                 if thread.guild.me.guild_permissions.view_audit_log:
                     async for entry in thread.guild.audit_logs(
@@ -1387,7 +1335,9 @@ class Logging(Cog):
                     name="Deleted by",
                     value=moderator.mention if moderator else "Unknown",
                 )
-                await send_message_to_log_channel(c, thread.guild, embed)
+                await send_message_to_log_channel(
+                    c, thread.guild, "thread_delete", embed
+                )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
@@ -1395,9 +1345,6 @@ class Logging(Cog):
     async def on_thread_update(self, before: Thread, after: Thread):
         with engine.begin() as c:
             try:
-                if not is_logging_enabled(c, after.guild, "thread_update"):
-                    return
-
                 moderator = None
                 if before.guild.me.guild_permissions.view_audit_log:
                     async for entry in before.guild.audit_logs(
@@ -1435,7 +1382,9 @@ class Logging(Cog):
                         name="Moderator",
                         value=moderator.mention if moderator else "Unknown",
                     )
-                    await send_message_to_log_channel(c, after.guild, embed)
+                    await send_message_to_log_channel(
+                        c, after.guild, "thread_update", embed
+                    )
             except Exception as e:
                 sentry_sdk.capture_exception(e)
 
