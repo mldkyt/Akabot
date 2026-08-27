@@ -1,8 +1,7 @@
 from discord import ApplicationContext, Bot, Cog, slash_command
-from sqlalchemy import select
 
-from database import engine, vote_points
 from utils.ads import VoteBotAd
+from utils.voting import get_voting_points
 
 
 class Voting(Cog):
@@ -24,19 +23,8 @@ class Voting(Cog):
     async def vote_points(self, ctx: ApplicationContext):
         """See how many vote points you have!"""
 
-        with engine.begin() as c:
-            p = c.execute(
-                select(vote_points.c.points).where(
-                    vote_points.c.uid == str(ctx.user.id)
-                )
-            ).fetchone()
-
-            if not p:
-                p = [0]
-
-            p = p[0]
-
-        await ctx.respond(f"You currently have {p} Vote Points.", ephemeral=True)
+        points = get_voting_points(str(ctx.user.id))
+        await ctx.respond(f"You currently have {points} Vote Points.", ephemeral=True)
 
 
 def setup(bot: Bot):

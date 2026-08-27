@@ -17,6 +17,7 @@ from utils.chat_streaks import (
     get_all_streaks_for,
     get_guild_link,
     get_leaderboard,
+    get_raw_streak,
     get_streak,
     get_unexpired_streak,
     handle_send_reply,
@@ -25,6 +26,7 @@ from utils.chat_streaks import (
     user_response_setting,
 )
 from utils.message_appends import apply_appends
+from utils.voting import ReviveChatStreakView, get_voting_points
 
 
 class ChatStreaks(Cog):
@@ -46,20 +48,32 @@ class ChatStreaks(Cog):
 
             with engine.begin() as c:
                 unex_streak = get_unexpired_streak(c, msg.author)
+                raw_streak = get_raw_streak(c, msg.author)
                 prev_streak = get_streak(c, msg.author)
                 update_for_user(c, msg.author)
                 next_streak = get_streak(c, msg.author)
 
                 if unex_streak != prev_streak:
                     if user_response_setting.get(c, msg.author.id) in ["expiry", "on"]:
+                        p = get_voting_points(str(msg.author.id))
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
                             apply_appends(
                                 msg.author.id,
                                 f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.",
                             ),
+                            view=(
+                                ReviveChatStreakView(str(msg.author.id), unex_streak)
+                                if p > 10 and raw_streak - unex_streak <= 2
+                                else None
+                            ),
                         )
-                        if the_reply is not None and reply_in_same_channel:
+                        if (
+                            the_reply is not None
+                            and reply_in_same_channel
+                            and p <= 10
+                            and raw_streak - unex_streak > 2
+                        ):
                             await the_reply.delete(
                                 delay=int(server_message_delay.get(c, msg.guild.id))
                             )
