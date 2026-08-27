@@ -28,6 +28,7 @@ from web.blueprints.suggestions import suggestions_bp
 from web.blueprints.tags import tags_bp
 from web.blueprints.temporary_vcs import temporary_vcs_bp
 from web.blueprints.verification import verification_bp
+from web.blueprints.voting import voting_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
 
 load_dotenv()
@@ -71,6 +72,9 @@ app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)
 app.register_blueprint(message_counting_bp)
+
+if os.getenv("TOPGG_WEBHOOK_SECRET") is not None:
+    app.register_blueprint(voting_bp)
 
 app.register_blueprint(main_page_bp)
 

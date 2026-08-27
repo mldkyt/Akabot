@@ -442,3 +442,11 @@ logging_channels = Table(
     Column("cid", VARCHAR, nullable=False),
     Column("type", VARCHAR, nullable=False),
 )
+
+vote_points = Table(
+    "vote_points",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("points", Integer, nullable=False, default="0"),
+    Column("last_vote", DateTime),
+)
