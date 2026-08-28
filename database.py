@@ -3,6 +3,7 @@ import os.path
 
 from sqlalchemy import (
     DATE,
+    DATETIME,
     DECIMAL,
     VARCHAR,
     Column,
@@ -91,6 +92,7 @@ chat_summary_members = Table(
     Column("cid", VARCHAR, primary_key=True),
     Column("uid", VARCHAR, primary_key=True),
     Column("messages", Integer),
+    Column("last_message", DATETIME),
 )
 
 monthly_chat_summary_channels = Table(
@@ -109,6 +111,7 @@ monthly_chat_summary_members = Table(
     Column("cid", VARCHAR, primary_key=True),
     Column("uid", VARCHAR, primary_key=True),
     Column("messages", Integer),
+    Column("last_message", DATETIME),
 )
 
 yearly_chat_summary_channels = Table(
@@ -127,6 +130,7 @@ yearly_chat_summary_members = Table(
     Column("cid", VARCHAR, primary_key=True),
     Column("uid", VARCHAR, primary_key=True),
     Column("messages", Integer),
+    Column("last_message", DATETIME),
 )
 
 chat_streaks = Table(

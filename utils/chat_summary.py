@@ -1,4 +1,4 @@
-from datetime import date, datetime
+import datetime
 
 import sentry_sdk
 from discord import (
@@ -102,12 +102,15 @@ def inc(c: Connection, m: Message):
                     cid=str(m.channel.id),
                     uid=str(m.author.id),
                     messages=1,
+                    last_message=datetime.datetime.now(datetime.UTC),
                 )
             )
         else:
             c.execute(
                 update(chat_summary_members)
-                .values(messages=a[0] + 1)
+                .values(
+                    messages=a[0] + 1, last_message=datetime.datetime.now(datetime.UTC)
+                )
                 .where(
                     (chat_summary_members.c.gid == str(m.guild.id))
                     & (chat_summary_members.c.cid == str(m.channel.id))
@@ -243,7 +246,7 @@ def inc(c: Connection, m: Message):
 
 
 async def summarize(c: Connection, g: Guild):
-    now = datetime.now()
+    now = datetime.datetime.now()
     chat_summaries = chat_summary.get(c, g.id)
     extra = chat_summary_extra.get(c, g.id)
     for i in chat_summaries:
@@ -267,7 +270,10 @@ async def summarize(c: Connection, g: Guild):
                         (yearly_chat_summary_members.c.gid == str(g.id))
                         & (yearly_chat_summary_members.c.cid == str(channel.id))
                     )
-                    .order_by(desc(yearly_chat_summary_members.c.messages))
+                    .order_by(
+                        desc(yearly_chat_summary_members.c.messages),
+                        desc(yearly_chat_summary_members.c.last_message),
+                    )
                 ).fetchall()
             ]
             msg_begin = "# Yearly Chat Summary"
@@ -290,7 +296,10 @@ async def summarize(c: Connection, g: Guild):
                         (monthly_chat_summary_members.c.gid == str(g.id))
                         & (monthly_chat_summary_members.c.cid == str(channel.id))
                     )
-                    .order_by(desc(monthly_chat_summary_members.c.messages))
+                    .order_by(
+                        desc(monthly_chat_summary_members.c.messages),
+                        desc(monthly_chat_summary_members.c.last_message),
+                    )
                 ).fetchall()
             ]
             msg_begin = "# Monthly Chat Summary"
@@ -310,7 +319,10 @@ async def summarize(c: Connection, g: Guild):
                         (chat_summary_members.c.gid == str(g.id))
                         & (chat_summary_members.c.cid == str(channel.id))
                     )
-                    .order_by(desc(chat_summary_members.c.messages))
+                    .order_by(
+                        desc(chat_summary_members.c.messages),
+                        desc(chat_summary_members.c.last_message),
+                    )
                 ).fetchall()
             ]
             msg_begin = "# Chat Summary"
@@ -429,7 +441,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
             month_messages = 0
             year_messages = 0
 
-            today = date.today()
+            today = datetime.date.today()
             async for message in channel.history(limit=None):
                 if message.author.bot:
                     continue
@@ -498,7 +510,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                                     cid=str(message.channel.id),
                                     uid=str(message.author.id),
                                     messages=1,
-                                )
+                                )  # Not updating last_message here because message history is from newest to oldest
                             )
                         else:
                             c.execute(
@@ -518,7 +530,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                                         == str(message.author.id)
                                     )
                                 )
-                            )
+                            )  # Not updating last_message here because message history is from newest to oldest
 
                     day_messages += 1
                 if message.created_at.month == today.month:
