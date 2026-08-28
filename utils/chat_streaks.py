@@ -1,3 +1,4 @@
+import datetime
 from datetime import date, timedelta
 
 import sentry_sdk
@@ -10,7 +11,9 @@ from discord import (
     Member,
     Message,
     PartialMessageable,
+    TextChannel,
 )
+from discord.ui import BaseView, View
 from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks, engine
@@ -127,6 +130,22 @@ def get_unexpired_streak(c: Connection, u: Member):
     return (last_message_date - start_date).days
 
 
+def get_raw_streak(c: Connection, u: Member):
+    """Get raw streak"""
+    a = c.execute(
+        select(chat_streaks.c.start_date).where(
+            (chat_streaks.c.uid == str(u.id)) & (chat_streaks.c.gid == str(u.guild.id))
+        )
+    ).fetchone()
+
+    if a is None:
+        return 0
+
+    start_date = a[0]
+
+    return (datetime.datetime.now(datetime.UTC).date() - start_date).days
+
+
 def get_leaderboard(c: Connection, u: Member):
     """Leaderboard"""
 
@@ -166,7 +185,9 @@ def get_guild_link(g: Guild):
     return None
 
 
-async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None, bool]:
+async def handle_send_reply(
+    msg: Message, content: str, view: BaseView | None = None
+) -> tuple[Message | None, bool]:
     """Handle send reply. Posts inside of bot channel or into the same channel. Returns true if posted into the same channel."""
     try:
         assert msg.guild is not None
@@ -188,23 +209,23 @@ async def handle_send_reply(msg: Message, content: str) -> tuple[Message | None,
         if msg.channel.permissions_for(msg.guild.me).read_message_history:
             if len(bot_channel_id.strip()) == 0:
                 if setting_response == "on":
-                    return await msg.reply(content), True
+                    return await msg.reply(content, view=view), True
                 else:
                     return None, False
 
             if bot_channel is None:
                 if setting_response == "on":
-                    return await msg.reply(content), True
+                    return await msg.reply(content, view=view), True
                 else:
                     return None, False
 
         if bot_channel is None:
             return None, False
 
-        assert not isinstance(bot_channel, ForumChannel) and not isinstance(
-            bot_channel, CategoryChannel
-        )
-        return await bot_channel.send(f"{msg.author.mention} {content}"), False
+        assert isinstance(bot_channel, TextChannel)
+        return await bot_channel.send(
+            f"{msg.author.mention} {content}", view=view
+        ), False
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return None, False

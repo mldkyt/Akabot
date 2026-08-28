@@ -1,11 +1,16 @@
-from datetime import datetime
+import datetime
 from typing import Any
 
 import discord
 from discord import Member
 from sqlalchemy import Connection, insert, select, update
 
-from database import leveling, message_counting_members, message_counting_rewards
+from database import (
+    leveling,
+    message_counting_members,
+    message_counting_rewards,
+    vote_points,
+)
 from logger import akabot_logger
 from utils.server_settings import (
     ServerSetting,
@@ -56,7 +61,7 @@ def get_multiplier(c: Connection, m: Member):
 
     multiplier = 1
 
-    now = datetime.now()
+    now = datetime.datetime.now()
 
     for i in multipliers:
         s: list[str] = i.split(";")
@@ -64,11 +69,11 @@ def get_multiplier(c: Connection, m: Member):
         (end_month, end_day) = s[1].split("-")
 
         try:
-            start_dt = datetime(now.year, int(start_month), int(start_day))
-            end_dt = datetime(now.year, int(end_month), int(end_day))
+            start_dt = datetime.datetime(now.year, int(start_month), int(start_day))
+            end_dt = datetime.datetime(now.year, int(end_month), int(end_day))
 
             if start_dt > end_dt:
-                end_dt = datetime(now.year + 1, int(end_month), int(end_day))
+                end_dt = datetime.datetime(now.year + 1, int(end_month), int(end_day))
 
             if start_dt <= now <= end_dt:
                 multiplier *= int(s[2])
@@ -78,20 +83,32 @@ def get_multiplier(c: Connection, m: Member):
 
     # Multipliers from message counting
     message_count = c.execute(
-        select(message_counting_members.c.messages)
-        .where((message_counting_members.c.uid == str(m.id)) &
-               (message_counting_members.c.gid == str(m.guild.id)))
+        select(message_counting_members.c.messages).where(
+            (message_counting_members.c.uid == str(m.id))
+            & (message_counting_members.c.gid == str(m.guild.id))
+        )
     ).fetchone()
 
     if message_count:
         message_count_multipliers = c.execute(
-            select(message_counting_rewards.c.multiplier)
-            .where((message_counting_rewards.c.gid == str(m.guild.id)) &
-                   (message_counting_rewards.c.type == "multiplier"))
+            select(message_counting_rewards.c.multiplier).where(
+                (message_counting_rewards.c.gid == str(m.guild.id))
+                & (message_counting_rewards.c.type == "multiplier")
+            )
         ).fetchall()
 
         for m in message_count_multipliers:
             multiplier += m[0]
+
+    # Voting multiplier
+    voting = c.execute(
+        select(vote_points.c.last_vote).where(vote_points.c.uid == str(m.id))
+    ).fetchone()
+    if voting is not None and voting[0] is not None:
+        now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+        last_vote: datetime.datetime = voting[0]
+        if (now - last_vote).total_seconds() < 12 * 3600:
+            multiplier *= 2
 
     return multiplier
 
@@ -132,16 +149,14 @@ def edit_xp(c: Connection, member: Member, xp: int, existing: Any | None = None)
     if existing is None:
         existing = c.execute(
             select(leveling.c.xp).where(
-                (leveling.c.uid == str(member.id)) &
-                (leveling.c.gid == str(member.guild.id))
+                (leveling.c.uid == str(member.id))
+                & (leveling.c.gid == str(member.guild.id))
             )
         ).fetchone()
 
     if existing is None:
         c.execute(
-            insert(leveling).values(
-                uid=str(member.id), gid=str(member.guild.id), xp=xp
-            )
+            insert(leveling).values(uid=str(member.id), gid=str(member.guild.id), xp=xp)
         )
         return
 
@@ -159,16 +174,25 @@ def edit_xp_rel(c: Connection, member: Member, xp: int):
     """ADD or REMOVE xp from a member"""
     existing = c.execute(
         select(leveling.c.xp).where(
-            (leveling.c.uid == str(member.id)) &
-            (leveling.c.gid == str(member.guild.id))
+            (leveling.c.uid == str(member.id))
+            & (leveling.c.gid == str(member.guild.id))
         )
     ).fetchone()
 
     if existing is not None and existing[0] + xp < 0:
-        print("existing XP is", existing[0], "XP is", xp, "subtraction is", existing[0] + xp)
+        print(
+            "existing XP is",
+            existing[0],
+            "XP is",
+            xp,
+            "subtraction is",
+            existing[0] + xp,
+        )
         return False, "Unable to set XP to a negative number"
 
-    edit_xp(c, member, (existing[0] if existing is not None else 0) + xp, existing=existing)
+    edit_xp(
+        c, member, (existing[0] if existing is not None else 0) + xp, existing=existing
+    )
     return True, None
 
 
