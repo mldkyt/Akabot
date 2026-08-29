@@ -130,7 +130,7 @@ class ChatStreaks(Cog):
                             msg,
                             apply_appends(
                                 msg.author.id,
-                                f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/user_settings`.",
+                                f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/chat_streaks alerts`.",
                             ),
                         )
                         if the_reply is not None and reply_in_same_channel:
