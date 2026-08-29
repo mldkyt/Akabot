@@ -2,11 +2,13 @@ import datetime
 import uuid
 
 import sentry_sdk
-from discord import Color, Embed, EmbedFooter, Member
+from discord import Color, Embed, EmbedFooter, HTTPException, Member
 from sqlalchemy import Connection
+from sqlalchemy.util.langhelpers import MemoizedSlots
 
 from database import engine
 from logger import akabot_logger
+from utils.logs import send_message_to_log_channel
 from utils.server_settings import ServerSetting, SettingType
 
 # Welcome
@@ -86,7 +88,22 @@ async def send_welcome_message(c: Connection, member: Member):
     msg = msg.replace("%U", member.display_name)
     msg = msg.replace("%s", member.guild.name)
 
-    chan = await member.guild.fetch_channel(int(chan))
+    try:
+        chan = await member.guild.fetch_channel(int(chan))
+    except HTTPException:
+        await send_message_to_log_channel(
+            c,
+            member.guild,
+            "alert",
+            Embed(
+                title="Welcome Channel Unset",
+                description="The welcome channel for this server was unset due to it not being found. Please set the welcome channel again.",
+            ),
+        )
+
+        welcome_channel.set(c, member.guild.id, "")
+        return
+
     if msg_type == "embed":
         message = await chan.send(
             embed=Embed(
@@ -151,7 +168,22 @@ async def send_goodbye_message(c: Connection, member: Member):
     msg = msg.replace("%U", member.display_name)
     msg = msg.replace("%s", member.guild.name)
 
-    chan = await member.guild.fetch_channel(int(chan))
+    try:
+        chan = await member.guild.fetch_channel(int(chan))
+    except HTTPException:
+        await send_message_to_log_channel(
+            c,
+            member.guild,
+            "alert",
+            Embed(
+                title="Goodbye Channel Unset",
+                description="The goodbye channel for this server was unset because of it not being found. Please set the channel again.",
+                color=Color.red(),
+            ),
+        )
+        goodbye_channel.set(c, member.guild.id, "")
+        return
+
     if msg_type == "embed":
         await chan.send(embed=Embed(title=title, description=msg, color=Color.red()))
     elif msg_type == "text":
