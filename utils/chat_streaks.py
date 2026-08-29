@@ -219,7 +219,8 @@ async def handle_send_reply(
             msg.guild.get_channel(int(bot_channel_id)) if bot_channel_id != "" else None
         )
 
-        if msg.channel.permissions_for(msg.guild.me).read_message_history:
+        chan_perm = msg.channel.permissions_for(msg.guild.me)
+        if chan_perm.read_message_history and chan_perm.send_messages:
             if len(bot_channel_id.strip()) == 0:
                 if setting_response == "on":
                     return await msg.reply(content, view=view), True
@@ -236,6 +237,9 @@ async def handle_send_reply(
             return None, False
 
         assert isinstance(bot_channel, TextChannel)
+        if not bot_channel.permissions_for(msg.guild.me).send_messages:
+            return None, False
+
         return await bot_channel.send(
             f"{msg.author.mention} {content}", view=view
         ), False
