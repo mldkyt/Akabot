@@ -14,7 +14,7 @@ from discord import (
     TextChannel,
 )
 from discord.ui import BaseView, View
-from sqlalchemy import Connection, desc, insert, select, update
+from sqlalchemy import Connection, desc, func, insert, select, update
 
 from database import chat_streaks, engine
 from logger import akabot_logger
@@ -174,6 +174,17 @@ def get_all_streaks_for(c: Connection, b: Bot, m: Member):
     ).fetchall()
 
     return a
+
+
+async def get_expiring_streaks(c: Connection):
+    streaks = c.execute(
+        select(chat_streaks.c.gid, chat_streaks.c.uid, chat_streaks.c.last_message_date)
+    ).fetchall()
+
+    today = datetime.datetime.now(datetime.UTC).date()
+    for streak in streaks:
+        if (today - streak[2]).days == 1:
+            yield (streak[0], streak[1])
 
 
 def get_guild_link(g: Guild):

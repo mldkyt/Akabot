@@ -1,3 +1,4 @@
+import datetime
 from datetime import date
 
 import sentry_sdk
@@ -5,16 +6,20 @@ from discord import (
     ApplicationContext,
     Bot,
     Cog,
+    Forbidden,
+    HTTPException,
     Member,
     Message,
     SlashCommandGroup,
     option,
 )
 from discord.ext.pages import Paginator
+from discord.ext.tasks import loop
 
 from database import engine
 from utils.chat_streaks import (
     get_all_streaks_for,
+    get_expiring_streaks,
     get_guild_link,
     get_leaderboard,
     get_raw_streak,
@@ -35,6 +40,10 @@ class ChatStreaks(Cog):
         self.bot = bot
 
     chat_streaks = SlashCommandGroup(name="chat_streaks")
+
+    @Cog.listener()
+    async def on_ready(self):
+        self.chat_streak_reminders.start()
 
     @Cog.listener()
     async def on_message(self, msg: Message):
@@ -191,6 +200,47 @@ class ChatStreaks(Cog):
             f"Your notification state for chat streak alerts was set to {notif_type}",
             ephemeral=True,
         )
+
+    @chat_streaks.command()
+    async def temporary_chat_streak_reminders(self, ctx: ApplicationContext):
+        await ctx.defer(ephemeral=True)
+        await self.run_chat_streak_reminders()
+        await ctx.respond("Done")
+
+    async def run_chat_streak_reminders(self):
+        with engine.begin() as c:
+            async for gid, uid in get_expiring_streaks(c):
+                guild = self.bot.get_guild(int(gid))
+                if guild is None:
+                    continue
+
+                member = guild.get_member(int(uid))
+                if member is None:
+                    try:
+                        member = await guild.fetch_member(int(uid))
+                    except HTTPException:
+                        continue
+
+                streak = get_streak(c, member)
+
+                try:
+                    await member.send(
+                        f"Your {streak} day streak in {guild.name} is about to expire! Save it before it expires."
+                    )
+                except Forbidden:
+                    pass
+
+    @loop(seconds=60)
+    async def chat_streak_reminders(self):
+        try:
+            now = datetime.datetime.now(datetime.UTC)
+
+            if now.hour != 12 or now.minute != 0:
+                return
+
+            await self.run_chat_streak_reminders()
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
 
 def setup(bot: Bot):
