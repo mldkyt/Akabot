@@ -33,14 +33,10 @@ from utils.chat_streaks import (
     server_message_delay,
     update_for_user,
     user_response_setting,
+    user_setting_receive_notifications,
 )
 from utils.message_appends import apply_appends
-from utils.user_settings import UserSetting
-from utils.voting import ReviveChatStreakView, get_voting_points
-
-user_setting_receive_notifications = UserSetting(
-    name="Remind about chat streaks in DM's", default="true"
-)
+from utils.voting import ChatStreakExpireView, get_voting_points
 
 
 class UnsubscribeDMNotificationsView(View):
@@ -109,8 +105,12 @@ class ChatStreaks(Cog):
                                 f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.",
                             ),
                             view=(
-                                ReviveChatStreakView(str(msg.author.id), unex_streak)
-                                if p > 10 and raw_streak - unex_streak <= 2
+                                ChatStreakExpireView(str(msg.author.id), unex_streak)
+                                if (p > 10 and raw_streak - unex_streak <= 2)
+                                or user_setting_receive_notifications.get(
+                                    c, msg.author.id
+                                )
+                                == "true"
                                 else None
                             ),
                         )
@@ -277,6 +277,9 @@ class ChatStreaks(Cog):
                     continue
 
                 streak = get_streak(c, member)
+
+                if streak < 3:  # Remind only of streaks that are worth something
+                    continue
 
                 try:
                     await member.send(

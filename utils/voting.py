@@ -4,6 +4,7 @@ from discord import ButtonStyle, Interaction
 from discord.ui import Button, View, button
 from sqlalchemy import select, update
 
+from cogs.chat_streaks import user_setting_receive_notifications
 from database import chat_streaks, engine, vote_points
 
 
@@ -30,18 +31,32 @@ def add_voting_points(user_id: str, points: int):
         )
 
 
-class ReviveChatStreakView(View):
+class ChatStreakExpireView(View):
     def __init__(self, user_id: str, days: int):
         super().__init__(timeout=1800, disable_on_timeout=True)
+
+        with engine.begin() as c:
+            points = get_voting_points(user_id)
+            dm_notifications = (
+                user_setting_receive_notifications.get(c, int(user_id)) == "true"
+            )
 
         self.days = days
         self.user_id = user_id
 
-        self.revive_streak_btn = Button(
-            label=f"Revive my {days} day streak!", style=ButtonStyle.secondary
-        )
-        self.revive_streak_btn.callback = self.revive_chat_streak
-        self.add_item(self.revive_streak_btn)
+        if points >= 10:
+            self.revive_streak_btn = Button(
+                label=f"Revive my {days} day streak!", style=ButtonStyle.secondary
+            )
+            self.revive_streak_btn.callback = self.revive_chat_streak
+            self.add_item(self.revive_streak_btn)
+
+        if not dm_notifications:
+            self.enable_notifications_btn = Button(
+                label="Enable DM notifications", style=ButtonStyle.secondary
+            )
+            self.enable_notifications_btn.callback = self.enable_notifications
+            self.add_item(self.enable_notifications_btn)
 
     async def revive_chat_streak(self, interaction: Interaction):
         if str(interaction.user.id) != self.user_id:
@@ -82,6 +97,19 @@ class ReviveChatStreakView(View):
             ephemeral=True,
         )
 
-        self.disable_all_items()
-        self.stop()
+        self.revive_streak_btn.disabled = True
         await interaction.message.edit(view=self)
+
+    async def enable_notifications(self, interaction: Interaction):
+        assert interaction.user is not None
+
+        with engine.begin() as c:
+            if user_setting_receive_notifications.get(c, interaction.user.id) == "true":
+                await interaction.respond(
+                    "Your DM notifications are already enabled", ephemeral=True
+                )
+                return
+
+            user_setting_receive_notifications.set(c, interaction.user.id, "true")
+
+        await interaction.respond("DM notifications were enabled", ephemeral=True)

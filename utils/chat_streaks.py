@@ -4,20 +4,17 @@ from datetime import date, timedelta
 import sentry_sdk
 from discord import (
     Bot,
-    CategoryChannel,
     DMChannel,
-    ForumChannel,
     Guild,
     Member,
     Message,
     PartialMessageable,
     TextChannel,
 )
-from discord.ui import BaseView, View
-from sqlalchemy import Connection, desc, func, insert, select, update
+from discord.ui import BaseView
+from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streaks, engine
-from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import ServerSetting, SettingType
 from utils.user_settings import UserSetting
@@ -38,6 +35,11 @@ server_message_delay = ServerSetting(
     "Chat streaks message duration",
     setting_type=SettingType.NORMAL,
     default="5",
+)
+
+
+user_setting_receive_notifications = UserSetting(
+    name="Remind about chat streaks in DM's", default="true"
 )
 
 
@@ -169,7 +171,7 @@ def get_all_streaks_for(c: Connection, b: Bot, m: Member):
             chat_streaks.c.start_date,
             chat_streaks.c.last_message_date,
         )
-        .where((chat_streaks.c.gid == str(m.guild.id)))
+        .where(chat_streaks.c.gid == str(m.guild.id))
         .order_by(desc(chat_streaks.c.last_message_date - chat_streaks.c.start_date))
     ).fetchall()
 
