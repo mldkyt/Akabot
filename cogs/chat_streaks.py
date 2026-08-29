@@ -1,20 +1,29 @@
+import datetime
 from datetime import date
 
 import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
+    ButtonStyle,
     Cog,
+    Forbidden,
+    HTTPException,
+    Interaction,
     Member,
     Message,
     SlashCommandGroup,
+    User,
     option,
 )
 from discord.ext.pages import Paginator
+from discord.ext.tasks import loop
+from discord.ui import View, button
 
 from database import engine
 from utils.chat_streaks import (
     get_all_streaks_for,
+    get_expiring_streaks,
     get_guild_link,
     get_leaderboard,
     get_raw_streak,
@@ -24,9 +33,36 @@ from utils.chat_streaks import (
     server_message_delay,
     update_for_user,
     user_response_setting,
+    user_setting_receive_notifications,
 )
 from utils.message_appends import apply_appends
-from utils.voting import ReviveChatStreakView, get_voting_points
+from utils.voting import ChatStreakExpireView, get_voting_points
+
+
+class UnsubscribeDMNotificationsView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @button(
+        label="Disable DM notifications",
+        style=ButtonStyle.red,
+        custom_id="chatstreaksdmdisable",
+    )
+    async def disable_dm_notifications(self, button, interaction: Interaction):
+        assert isinstance(interaction.user, User)
+
+        with engine.begin() as c:
+            if user_setting_receive_notifications.get(c, interaction.user.id) != "true":
+                await interaction.respond(
+                    "DM notifications are already disabled", ephemeral=True
+                )
+                return
+
+            user_setting_receive_notifications.set(c, interaction.user.id, "false")
+
+        await interaction.respond(
+            "DM notifications were disabled. You can re-enable them using `/chat_streaks dm_notifications`."
+        )
 
 
 class ChatStreaks(Cog):
@@ -35,6 +71,12 @@ class ChatStreaks(Cog):
         self.bot = bot
 
     chat_streaks = SlashCommandGroup(name="chat_streaks")
+
+    @Cog.listener()
+    async def on_ready(self):
+        self.chat_streak_reminders.start()
+
+        self.bot.add_view(UnsubscribeDMNotificationsView())
 
     @Cog.listener()
     async def on_message(self, msg: Message):
@@ -63,8 +105,12 @@ class ChatStreaks(Cog):
                                 f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.",
                             ),
                             view=(
-                                ReviveChatStreakView(str(msg.author.id), unex_streak)
-                                if p > 10 and raw_streak - unex_streak <= 2
+                                ChatStreakExpireView(str(msg.author.id), unex_streak)
+                                if (p > 10 and raw_streak - unex_streak <= 2)
+                                or user_setting_receive_notifications.get(
+                                    c, msg.author.id
+                                )
+                                == "true"
                                 else None
                             ),
                         )
@@ -191,6 +237,63 @@ class ChatStreaks(Cog):
             f"Your notification state for chat streak alerts was set to {notif_type}",
             ephemeral=True,
         )
+
+    @chat_streaks.command()
+    @option("notif_type", choices=["on", "off"])
+    async def dm_notifications(self, ctx: ApplicationContext, notif_type: str):
+        """Set DM notifications preference to another setting"""
+        with engine.begin() as c:
+            user_setting_receive_notifications.set(
+                c, ctx.user.id, "true" if notif_type == "on" else "false"
+            )
+
+        await ctx.respond(
+            f"DM reminders from all servers are now {notif_type}",
+            ephemeral=True,
+        )
+
+    async def run_chat_streak_reminders(self):
+        with engine.begin() as c:
+            async for gid, uid in get_expiring_streaks(c):
+                guild = self.bot.get_guild(int(gid))
+                if guild is None:
+                    continue
+
+                member = guild.get_member(int(uid))
+                if member is None:
+                    try:
+                        member = await guild.fetch_member(int(uid))
+                    except HTTPException:
+                        continue
+
+                dm_preference = user_setting_receive_notifications.get(c, member.id)
+                if dm_preference != "true":
+                    continue
+
+                streak = get_streak(c, member)
+
+                if streak < 3:  # Remind only of streaks that are worth something
+                    continue
+
+                try:
+                    await member.send(
+                        f"Your {streak} day streak in {guild.name} is about to expire! Save it before it expires.",
+                        view=UnsubscribeDMNotificationsView(),
+                    )
+                except Forbidden:
+                    pass
+
+    @loop(seconds=60)
+    async def chat_streak_reminders(self):
+        try:
+            now = datetime.datetime.now(datetime.UTC)
+
+            if now.hour != 12 or now.minute != 0:
+                return
+
+            await self.run_chat_streak_reminders()
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
 
 def setup(bot: Bot):
