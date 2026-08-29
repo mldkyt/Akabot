@@ -164,6 +164,9 @@ async def sync_roles(c: Connection, guild: Guild):
 
 
 async def sync_automod_actions(c: Connection, guild: Guild):
+    if not guild.me.guild_permissions.manage_guild:
+        return
+
     automod_rules = await guild.fetch_auto_moderation_rules()
     automod_rule_ids = [i.id for i in automod_rules]
     db_automod_rules = [
