@@ -252,12 +252,6 @@ class ChatStreaks(Cog):
             ephemeral=True,
         )
 
-    @chat_streaks.command()
-    async def temporary_chat_streak_reminders(self, ctx: ApplicationContext):
-        await ctx.defer(ephemeral=True)
-        await self.run_chat_streak_reminders()
-        await ctx.respond("Done")
-
     async def run_chat_streak_reminders(self):
         with engine.begin() as c:
             async for gid, uid in get_expiring_streaks(c):
