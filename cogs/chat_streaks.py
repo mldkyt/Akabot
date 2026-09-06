@@ -158,6 +158,10 @@ class ChatStreaks(Cog):
 
     @chat_streaks.command()
     async def leaderboard(self, ctx: ApplicationContext):
+        if ctx.guild is None:
+            await ctx.respond("This is not a command for DM's", ephemeral=True)
+            return
+
         try:
             with engine.begin() as c:
                 lb = get_leaderboard(c, ctx.user)
