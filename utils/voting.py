@@ -1,11 +1,11 @@
 import datetime
 
 from discord import ButtonStyle, Interaction
-from discord.ui import Button, View, button
+from discord.ui import Button, View
 from sqlalchemy import select, update
 
-from cogs.chat_streaks import user_setting_receive_notifications
 from database import chat_streaks, engine, vote_points
+from utils.chat_streaks import user_setting_receive_notifications
 
 
 def get_voting_points(user_id: str) -> int:
