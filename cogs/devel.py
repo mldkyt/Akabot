@@ -1,19 +1,22 @@
 import datetime
 import os
 
-from discord import Bot, Cog, SlashCommandGroup, ApplicationContext, option, guild_only
-from sqlalchemy import select, insert, update
+from discord import ApplicationContext, Bot, Cog, SlashCommandGroup, guild_only, option
+from sqlalchemy import insert, select, update
 
-from database import engine, chat_streaks
+from database import chat_streaks, engine
 from logger import akabot_logger
 from utils.ads import get_ad
+from utils.chat_streaks import handle_send_reply
 
 
 class Devel(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    devel_group = SlashCommandGroup(name="devel", guild_ids=[int(os.getenv("DEVEL_GUILD_ID", "0"))])
+    devel_group = SlashCommandGroup(
+        name="devel", guild_ids=[int(os.getenv("DEVEL_GUILD_ID", "0"))]
+    )
 
     @devel_group.command()
     async def ad_test(self, ctx: ApplicationContext):
@@ -27,8 +30,12 @@ class Devel(Cog):
 
         with engine.begin() as c:
             existing = c.execute(
-                select(chat_streaks.c.start_date, chat_streaks.c.last_message_date)
-                .where((chat_streaks.c.gid == str(ctx.guild.id)) & (chat_streaks.c.uid == str(ctx.user.id)))
+                select(
+                    chat_streaks.c.start_date, chat_streaks.c.last_message_date
+                ).where(
+                    (chat_streaks.c.gid == str(ctx.guild.id))
+                    & (chat_streaks.c.uid == str(ctx.user.id))
+                )
             ).fetchone()
 
             if not existing:
@@ -47,7 +54,9 @@ class Devel(Cog):
                 start_date = existing[0]
                 last_message_date = existing[1]
 
-            msg = f"Old: start_date={start_date}, last_message_date={last_message_date}\n"
+            msg = (
+                f"Old: start_date={start_date}, last_message_date={last_message_date}\n"
+            )
 
             if mode == "zero":
                 start_date = datetime.date.today() - datetime.timedelta(days=7)
@@ -59,16 +68,29 @@ class Devel(Cog):
                 start_date = datetime.date.today() - datetime.timedelta(days=7)
                 last_message_date = datetime.date.today() - datetime.timedelta(days=3)
 
-            msg += f"New: start_date={start_date}, last_message_date={last_message_date}\n"
+            msg += (
+                f"New: start_date={start_date}, last_message_date={last_message_date}\n"
+            )
 
             c.execute(
                 update(chat_streaks)
                 .values(start_date=start_date, last_message_date=last_message_date)
-                .where((chat_streaks.c.gid == str(ctx.guild.id)) & (chat_streaks.c.uid == str(ctx.user.id)))
+                .where(
+                    (chat_streaks.c.gid == str(ctx.guild.id))
+                    & (chat_streaks.c.uid == str(ctx.user.id))
+                )
             )
 
         await ctx.respond(msg, ephemeral=True)
 
+    @devel_group.command()
+    @guild_only()
+    async def test_reply(self, ctx: ApplicationContext):
+        msg = await ctx.channel.send("Sample message")
+
+        await handle_send_reply(msg, "This is a test reply")
+
+        await ctx.respond("OK", ephemeral=True)
 
 
 def setup(bot: Bot):
@@ -76,7 +98,9 @@ def setup(bot: Bot):
         return
 
     if len(os.getenv("DEVEL_GUILD_ID", "").strip()) == 0:
-        akabot_logger.warning("Devel mode is on, but commands were not loaded due to missing guild id.")
+        akabot_logger.warning(
+            "Devel mode is on, but commands were not loaded due to missing guild id."
+        )
         return
 
     bot.add_cog(Devel(bot))

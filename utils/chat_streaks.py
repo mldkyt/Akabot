@@ -224,14 +224,13 @@ async def handle_send_reply(
             if len(bot_channel_id.strip()) == 0:
                 if setting_response == "on":
                     return await msg.reply(content, view=view), True
-                else:
-                    return None, False
 
             if bot_channel is None:
                 if setting_response == "on":
                     return await msg.reply(content, view=view), True
-                else:
-                    return None, False
+
+        if "bot" not in setting_response:
+            return None, False
 
         if bot_channel is None:
             return None, False
@@ -240,9 +239,10 @@ async def handle_send_reply(
         if not bot_channel.permissions_for(msg.guild.me).send_messages:
             return None, False
 
-        return await bot_channel.send(
-            f"{msg.author.mention} {content}", view=view
-        ), False
+        if setting_response != "bot_noping":
+            content = f"{msg.author.mention} {content}"
+
+        return await bot_channel.send(content, view=view), False
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return None, False

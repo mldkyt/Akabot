@@ -3,7 +3,7 @@ import random
 import string
 
 import sentry_sdk
-from discord import Forbidden, Guild, Member
+from discord import Guild, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import (
@@ -13,7 +13,6 @@ from database import (
     synced_roles,
     web_tokens,
 )
-from logger import akabot_logger
 
 
 async def sync_text_channels(c: Connection, guild: Guild):
@@ -122,7 +121,7 @@ async def sync_roles(c: Connection, guild: Guild):
     db_roles = [
         int(i[0])
         for i in c.execute(
-            select(synced_roles.c.rid).where((synced_roles.c.gid == str(guild.id)))
+            select(synced_roles.c.rid).where(synced_roles.c.gid == str(guild.id))
         ).fetchall()
     ]
     guild_roles = [i.id for i in guild.roles]
@@ -173,7 +172,7 @@ async def sync_automod_actions(c: Connection, guild: Guild):
         int(i[0])
         for i in c.execute(
             select(synced_automod_rules.c.aid).where(
-                (synced_automod_rules.c.gid == str(guild.id))
+                synced_automod_rules.c.gid == str(guild.id)
             )
         ).fetchall()
     ]
@@ -223,7 +222,6 @@ async def sync_guild(guild: Guild):
             await sync_automod_actions(c, guild)
     except Exception as e:
         sentry_sdk.capture_exception(e)
-        pass
 
 
 def generate_token(guild: Guild, member: Member) -> str:
