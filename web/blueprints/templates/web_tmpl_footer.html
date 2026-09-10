@@ -1,51 +1,15 @@
-
 <footer class="footer">
     <img src="/static/akabot.png" alt="Akabot logo" />
-    <div>
-        <a href="/">Home</a>
-        <a href="/features">Features</a>
-        <a href="/support-me">Support the developer</a>
-        <a href="/support-bot">Support for the bot</a>
-    </div>
-    <div>
-        <a href="/tos">Terms of Service</a>
-        <a href="/privacy">Privacy Policy</a>
+    <div class="footer_links">
+        <div class="footer_column">
+            <a href="/">Home</a>
+            <a href="/features">Features</a>
+            <a href="/support-bot">Support</a>
+            <a href="/support-me">Developer</a>
+        </div>
+        <div class="footer_column">
+            <a href="/tos">Terms of Service</a>
+            <a href="/privacy">Privacy Policy</a>
+        </div>
     </div>
 </footer>
-<style>
-
-.footer {
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 25px;
-    width: 70vw;
-    display: flex;
-    flex-direction: row;
-    gap: 50px;
-    align-items: center;
-}
-
-@media screen and (max-width: 1000px) {
-    .footer {
-        flex-direction: column;
-        padding-bottom: 100px;
-    }
-}
-
-.footer div {
-    display: flex;
-    flex-direction: column;
-}
-
-.footer div a {
-    text-decoration: none;
-    color: white;
-    transition: 300ms;
-}
-
-.footer div a:hover {
-    color: rgb(99, 99, 237);
-    transition: 300ms;
-}
-
-</style>

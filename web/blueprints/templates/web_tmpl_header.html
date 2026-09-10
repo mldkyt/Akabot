@@ -1,55 +1,12 @@
 <nav class="navbar">
     <div class="logowrapper">
-        <span>Akabot Discord Bot</span>
+        <img src="/static/akabot.png" alt="Akabot logo" />
+        <span>Akabot</span>
     </div>
     <div class="navbar_buttons">
         <a href="/">Home</a>
         <a href="/features">Features</a>
-        <a href="/support-bot">Support for the bot</a>
-        <a href="/support-me">Support the developer</a>
+        <a href="/support-bot">Support</a>
+        <a href="/support-me">Developer</a>
     </div>
 </nav>
-
-<style>
-
-.navbar {
-    width: 80vw;
-    margin: auto;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    height: 50px;
-}
-
-@media screen and (max-width: 1000px) {
-    .navbar {
-        flex-direction: column;
-        justify-content: unset;
-    }
-}
-
-.navbar > div {
-    align-content: center;
-}
-
-.navbar_buttons > a {
-    margin: 0 10px;
-    transition: 300ms;
-    text-decoration: none;
-    color: white;
-}
-
-.navbar_buttons > a:hover {
-    cursor: pointer;
-    color: rgb(99, 99, 238);
-    transition: 300ms;
-}
-
-.disclaimer {
-    text-align: center;
-    background-color: rgb(80, 80, 52);
-    padding: 6px;
-}
-
-</style>

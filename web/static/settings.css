@@ -69,7 +69,8 @@ html, body {
     margin-bottom: 4px;
 }
 
-.sidebar-user .pfp {
+.sidebar-user .pfp,
+.pfp {
     width: 32px;
     height: 32px;
     border-radius: 50%;

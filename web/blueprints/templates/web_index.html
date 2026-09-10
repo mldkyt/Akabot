@@ -2,169 +2,55 @@
 
 {% block content %}
 
-<div class="landerStyles_grid">
-    <div class="landerStyles_lefttext">
-        <h1 class="landerStyles_title">Akabot</h1>
-        <p class="landerStyles_subtitle">A featureful bot for free</p>
+<div class="hero">
+    <div class="hero_text">
+        <h1 class="hero_title">Akabot</h1>
+        <p class="hero_subtitle">A featureful Discord bot, for free.</p>
+        <div class="btn_group btn_group--left">
+            <a href="https://discord.com/discovery/applications/1172922944033411243" class="btn btn_primary">Invite Akabot</a>
+            <a href="https://codeberg.org/Akabot" class="btn btn_secondary">View Source</a>
+        </div>
     </div>
-    <div class="landerStyles_image">
+    <div class="hero_image">
         <img src="/static/akabot.png" alt="Akabot logo" />
     </div>
 </div>
 
-<div class="invite_wrapper">
-    <a href="https://discord.com/discovery/applications/1172922944033411243">
-        <button class="invite_invitebtn">Invite Akabot Today!</button>
-    </a>
-    <a href="https://codeberg.org/Akabot">
-        <button class="invite_sourcebtn">View the source code</button>
-    </a>
-</div>
+<div class="features_section">
+    <h2>Feature Highlights</h2>
+    <p>Some of the things Akabot can do for your server:</p>
 
-<div class="features_main">
-    <h2>Feature list</h2>
-    <p>The bot has some really cool features, here are some picks:</p>
-    <br />
-
-    <!-- Web UI -->
-    <div class="features_featright">
+    <div class="feature_card">
         <h3>Web UI</h3>
-        <p>All the bot's features can be configured using a web UI now! Use <code>/settings</code> from the bot to get a link to the website!</p>
+        <p>All features can be configured through a web dashboard. Use <code>/settings</code> from the bot to get a link!</p>
     </div>
 
-    <!-- Temporary voice channels -->
-    <div class="features_featright">
-        <h3>Temporary voice channels</h3>
-        <p>With temporary voice channels, you can let your members create as many temporary voice channels as they want.</p>
+    <div class="feature_card feature_card--right">
+        <h3>Temporary Voice Channels</h3>
+        <p>Let your members create as many temporary voice channels as they want, without asking admins.</p>
     </div>
 
-    <!-- Chat Summaries -->
-    <div class="features_featleft">
+    <div class="feature_card">
         <h3>Chat Summaries</h3>
-        <p>Chat Summaries every midnight! No AI, these summaries give counts of messages at the end of the day.</p>
+        <p>Daily summaries at midnight with message counts and top chatters. No AI involved.</p>
     </div>
 
-    <!-- Chat Streaks -->
-    <div class="features_featright">
+    <div class="feature_card feature_card--right">
         <h3>Chat Streaks</h3>
-        <p>Count how many consencutive days a member has been active in your server.</p>
+        <p>Count consecutive days of activity per member. Encourage consistent engagement.</p>
     </div>
 
-    <!-- More! -->
-    <a href="/features" style="text-decoration: none; color: white;">
-        <div class="features_featleft">
-            <h3>More!</h3>
-            <p>Check out the full list on the features page.</p>
+    <a href="/features" class="feature_card--link">
+        <div class="feature_card">
+            <h3>And more...</h3>
+            <p>Check out the full feature list for everything Akabot offers.</p>
         </div>
     </a>
 </div>
-<br>
-<div class="invite_wrapper">
-    <a href="https://discord.com/discovery/applications/1172922944033411243">
-        <button class="invite_invitebtn">Invite Akabot Today!</button>
-    </a>
-    <a href="https://codeberg.org/Akabot">
-        <button class="invite_sourcebtn">View the source code</button>
-    </a>
+
+<div class="btn_group">
+    <a href="https://discord.com/discovery/applications/1172922944033411243" class="btn btn_primary">Invite Akabot</a>
+    <a href="https://codeberg.org/Akabot" class="btn btn_secondary">View Source</a>
 </div>
-
-<style>
-.landerStyles_grid {
-    display: grid;
-    grid-template-rows: 2;
-    margin: auto;
-    width: 70vw;
-}
-
-.landerStyles_lefttext {
-    grid-column: 1;
-    width: 100%;
-}
-
-.landerStyles_image {
-    grid-column: 2;
-    width: 100%; 
-}
-
-.landerStyles_title {
-    font-size: 60px;
-    color: rgb(99, 99, 238);
-}
-
-.landerStyles_subtitle {
-    margin-left: 50px;
-    font-size: 24px;
-}
-
-@media screen and (max-width: 800px) {
-    .landerStyles_image {
-        display: none;
-    }
-}
-    
-.invite_invitebtn {
-    background-color: rgb(92, 92, 202);
-    border: none;
-    padding: 16px 20px;
-    border-radius: 12px;
-}
-
-.invite_sourcebtn {
-    background-color: rgb(77, 77, 77);
-    border: none;
-    padding: 16px 20px;
-    border-radius: 12px;
-}
-
-.invite_wrapper {
-    text-align: center;
-    margin: auto;
-}
-
-.invite_wrapper button {
-    cursor: pointer;
-}
-
-.invite_wrapper a {
-    text-decoration: none;
-}
-
-.features_main {
-    width: 80vw;
-    margin: auto;
-}
-
-h2 {
-    font-size: 28px;
-    color: rgb(99, 99, 238);
-}
-
-h2 ~ p {
-    margin-left: 10px;
-}
-
-.features_newfeat {
-    color: red;
-}
-
-h3 {
-    color: rgb(99, 99, 238);
-    font-size: larger;
-}
-
-.features_featleft,
-.features_featright {
-    margin: 8px 32px;
-    padding: 0px 16px;
-    width: 70vw;
-    border: 1px solid white;
-    border-radius: 10px;
-    background-color: #181818;
-}
-
-.features_featright {
-    text-align: right;
-}
-</style>
 
 {% endblock %}
