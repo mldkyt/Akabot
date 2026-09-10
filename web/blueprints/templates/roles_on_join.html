@@ -5,7 +5,7 @@
 <p>Here you can add and remove roles that get applied when a member joins the server.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -27,7 +27,7 @@
 <h2>Existing roles</h2>
 
 {% for role in roles_on_join %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <ul>
         <li>Role: {{role.name}}</li>
     </ul>

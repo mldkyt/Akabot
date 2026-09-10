@@ -5,7 +5,7 @@
 <p>You can configure the verify role here. The message can be sent using a slash command in Discord in your verification channel. You can also configure the verification mode here.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}

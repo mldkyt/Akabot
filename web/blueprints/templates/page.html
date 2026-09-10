@@ -2,38 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Akabot Settings</title>
-    <style>
-        .container {
-            display: flex;
-            flex-direction: row;
-        }
-
-        .sidebar {
-            width: 25vw;
-        }
-
-        .main {
-            width: 75vw;
-        }
-
-        .pfp {
-            width: 32px;
-            height: 32px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/settings.css">
     <script src="/static/jquery.min.js" type="text/javascript"></script>
 </head>
 <body>
-<h1>Akabot settings page experimental</h1>
-<div class="container">
-    <div class="sidebar">
+<div class="layout">
+    <aside class="sidebar">
         {% include 'sidebar.html' %}
-    </div>
-
-    <div class="main">
+    </aside>
+    <main class="main">
         {% block main %}{% endblock %}
-    </div>
+    </main>
 </div>
 </body>
 </html>

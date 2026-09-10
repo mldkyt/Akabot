@@ -5,7 +5,7 @@
 <p>You can configure channels that make VCs when joined, and move people in. These channels are fully managed by Akabot afterwards.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -27,7 +27,7 @@
 <h2>Existing channel</h2>
 
 {% for temporary_vc in temporary_vcs %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <ul>
         <li>Channel: {{temporary_vc.name}}</li>
     </ul>

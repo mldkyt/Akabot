@@ -5,7 +5,7 @@
 <p>Here you can configure additional actions to perform when an Automod Rule gets triggered within Discord. </p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -46,7 +46,7 @@
 <h2>Existing actions</h2>
 
 {% for action in automod_actions %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <form action="/settings/automod_actions/edit/{{action.id}}" method="post">
         <label for="rule">Rule name</label>
         <select id="rule" name="rule" required>

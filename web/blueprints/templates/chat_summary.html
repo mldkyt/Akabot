@@ -5,7 +5,7 @@
 <p>Get a count of messages (summary) of who chatted the most. Per-day, per-month and per-year chat summaries!</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -56,7 +56,7 @@
 <h2>Existing chat summaries</h2>
 
 {% for chat_summary in chat_summaries %}
-<div style="border: 1px solid black; margin: 1px;">
+<div class="data-card">
     <ul>
         <li>Channel: {{chat_summary.channel}}</li>
     </ul>

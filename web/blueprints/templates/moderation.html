@@ -5,7 +5,7 @@
 <p>Here you can configure things related to Akabot moderation.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -26,7 +26,7 @@
 <h2>Existing moderator roles</h2>
 
 {% for moderator_role in moderator_roles %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <ul>
         <li>Moderator role: {{moderator_role.name}}</li>
     </ul>

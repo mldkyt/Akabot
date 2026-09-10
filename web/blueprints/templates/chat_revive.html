@@ -5,7 +5,7 @@
 <p>Revive channels to keep your server active! If a channel is not active for long enough, the bot will ping a role</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -47,7 +47,7 @@
 <h2>Existing chat revives</h2>
 
 {% for chat_revive in chat_revives %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <form action="/settings/chat_revive/edit/{{chat_revive.index}}" method="post">
         <label for="channel">Channel</label>
         <select id="channel" name="channel" required>

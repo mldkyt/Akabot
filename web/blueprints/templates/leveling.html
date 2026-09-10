@@ -5,7 +5,7 @@
 <p>Make chatting more fun using leveling. Set rewards for active chatters, and set event multipliers here.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -53,7 +53,7 @@
 <hr>
 
 {% for reward in reward_roles %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <form action="/settings/leveling/edit/reward/{{reward.index}}" method="post">
         <label for="reward_role">Role to add</label>
         <select name="reward_role" id="reward_role">
@@ -96,7 +96,7 @@
 <hr>
 
 {% for multiplier in multipliers %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <form action="/settings/leveling/edit/multiplier/{{multiplier.index}}" method="post">
         <label for="start">Start date</label>
         <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.start}}">

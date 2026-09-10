@@ -16,13 +16,14 @@
         <input id="author" name="author" type="text">
         <br>
         <label for="post">Post (Markdown is supported)</label>
+        <br>
         <textarea id="post" name="post"></textarea>
         <br>
         <button type="submit">Create mail post</button>
     </form>
 
     {% for mail in all %}
-    <div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <div class="data-card">
         <form action="/settings/mail/edit/{{mail.id}}" method="post">
 
             <label for="author_{{mail.id}}">Author: </label>
@@ -41,7 +42,7 @@
 
 {% else %}
     {% for message in unread_messages %}
-    <div style="font-weight: bolder; border: 1px solid black; padding: 3px; margin: 1px;">
+    <div class="data-card data-card--unread">
         <p>{{message.text|safe}}</p>
         <p><small>Posted by {{message.author}} on {{message.created_at}}</small></p>
     </div>
@@ -58,7 +59,7 @@
     <h2>Past messages</h2>
 
     {% for message in past_messages %}
-    <div style="border: 1px solid black; padding: 3px; margin: 1px;">
+    <div class="data-card">
         <p>{{message.text|safe}}</p>
         <p><small>Posted by {{message.author}} on {{message.created_at}}</small></p>
     </div>

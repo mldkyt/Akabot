@@ -1,6 +1,12 @@
 {% extends 'page.html' %} {% block main %}
 <h1>Periodic Messages</h1>
 
+{% for flash in get_flashed_messages() %}
+<div class="flash">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
 <form action="/settings/periodic_messages" method="post">
     <label for="channel">Channel</label>
     <select name="channel" id="channel">

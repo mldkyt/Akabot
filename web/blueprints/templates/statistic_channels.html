@@ -5,7 +5,7 @@
 <p>Statistic channels allow you to display the stats of your Discord server using voice channels conveniently in the channel list.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -44,7 +44,7 @@
 <h2>Statistic channels settings</h2>
 
 {% for statistic_channel in statistic_channels %}
-<div style="border: 1px solid black; padding: 3px; margin: 1px;">
+<div class="data-card">
     <form action="/settings/statistic_channels/edit/{{statistic_channel.index}}" method="post">
         <label for="channel">Voice channel</label>
         <select name="channel" id="channel">

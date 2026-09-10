@@ -1,28 +1,40 @@
-<p>Logged in as <img alt="User avatar for {{session.user.name}}" class="pfp" src="{{session.user.avatar}}" /> {{session.user.name}}</p>
-<p>Editing server settings for {{session.user.guild}}</p>
-
-<a href="/settings">Home</a><br />
-<a href="/settings/anti_raid">Anti Raid</a><br />
-<a href="/settings/automod_actions">Automod Actions</a><br />
-<a href="/settings/chat_revive">Chat Revive</a><br />
-<a href="/settings/chat_summary">Chat Summary</a><br />
-<a href="/settings/counting">Counting</a><br />
-<a href="/settings/leveling">Leveling</a><br />
-<a href="/settings/logging">Logging</a><br />
-<a href="/settings/mail">Mail</a><br />
-<a href="/settings/meow_back">Meow back</a><br />
-<a href="/settings/moderation">Moderation</a><br />
-<a href="/settings/roles_on_join">Roles on Join</a><br />
-<a href="/settings/statistic_channels">Statistic Channels</a><br />
-<a href="/settings/temporary_vcs">Temporary VCs</a><br />
-<a href="/settings/verification">Verification</a><br />
-<a href="/settings/welcome_goodbye">Welcome & Goodbye</a><br />
-<a href="/settings/fun">Fun commands</a><br />
-<a href="/settings/suggestions">Suggestion channels</a> <br />
-<a href="/settings/sticky_messages">Sticky messages</a> <br />
-<a href="/settings/periodic_messages">Periodic Messages</a> <br />
-<a href="/settings/markov">Markov chains</a> <br />
-<a href="/settings/tags">Tags</a> <br />
-<a href="/settings/message_counting">Message Counting</a> <br />
-<a href="/settings/feedback">Send feedback</a><br />
-<a href="https://ko-fi.com/c4tgirl">Donate</a><br />
+<div class="sidebar-header">
+    <div class="sidebar-user">
+        <img alt="User avatar for {{session.user.name}}" class="pfp" src="{{session.user.avatar}}">
+        <span class="name">{{session.user.name}}</span>
+    </div>
+    <div class="sidebar-guild">{{session.user.guild}}</div>
+</div>
+<nav class="sidebar-nav">
+    <ul>
+        <li><a href="/settings">Home</a></li>
+        <li class="nav-section">Moderation</li>
+        <li><a href="/settings/anti_raid">Anti Raid</a></li>
+        <li><a href="/settings/automod_actions">Automod Actions</a></li>
+        <li><a href="/settings/moderation">Moderation</a></li>
+        <li><a href="/settings/verification">Verification</a></li>
+        <li class="nav-section">Channels</li>
+        <li><a href="/settings/counting">Counting</a></li>
+        <li><a href="/settings/chat_revive">Chat Revive</a></li>
+        <li><a href="/settings/chat_summary">Chat Summary</a></li>
+        <li><a href="/settings/logging">Logging</a></li>
+        <li><a href="/settings/meow_back">Meow Back</a></li>
+        <li><a href="/settings/markov">Markov Chains</a></li>
+        <li><a href="/settings/message_counting">Message Counting</a></li>
+        <li><a href="/settings/roles_on_join">Roles on Join</a></li>
+        <li><a href="/settings/statistic_channels">Statistic Channels</a></li>
+        <li><a href="/settings/sticky_messages">Sticky Messages</a></li>
+        <li><a href="/settings/suggestions">Suggestions</a></li>
+        <li><a href="/settings/tags">Tags</a></li>
+        <li><a href="/settings/periodic_messages">Periodic Messages</a></li>
+        <li class="nav-section">Features</li>
+        <li><a href="/settings/leveling">Leveling</a></li>
+        <li><a href="/settings/fun">Fun Commands</a></li>
+        <li><a href="/settings/welcome_goodbye">Welcome & Goodbye</a></li>
+        <li><a href="/settings/temporary_vcs">Temporary VCs</a></li>
+        <li class="nav-section">Other</li>
+        <li><a href="/settings/mail">Mail</a></li>
+        <li><a href="/settings/feedback">Send Feedback</a></li>
+        <li><a href="https://ko-fi.com/c4tgirl">Donate</a></li>
+    </ul>
+</nav>

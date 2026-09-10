@@ -5,7 +5,7 @@
 <p>Here you can configure welcoming of new members and saying goodbye to those who leave.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}

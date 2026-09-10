@@ -5,7 +5,7 @@
 <p>Here you can enable and disable the fun commands.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
@@ -16,7 +16,7 @@
     <br>
 
     <input type="checkbox" name="yaoi" id="yaoi" {% if yaoi %}checked{% endif %}>
-    <label for="yuri">Enable the yaoi command</label>
+    <label for="yaoi">Enable the yaoi command</label>
     <br>
 
     <input type="checkbox" name="rp" id="rp" {% if rp %}checked{% endif %}>

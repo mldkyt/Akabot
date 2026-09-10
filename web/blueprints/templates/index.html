@@ -5,7 +5,7 @@
 <p>Welcome to Akabot settings! On the left you can choose the features of Akabot and configure them.</p>
 
 {% for flash in get_flashed_messages() %}
-<div style="border: 1px solid blue;">
+<div class="flash">
     <p>{{flash}}</p>
 </div>
 {% endfor %}
