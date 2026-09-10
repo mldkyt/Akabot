@@ -39,6 +39,33 @@ from utils.message_appends import apply_appends
 from utils.voting import ChatStreakExpireView, get_voting_points
 
 
+class EnableDMNotificationsView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @button(
+        label="Enable DM notifications",
+        style=ButtonStyle.green,
+        custom_id="chatstreaksdmenable",
+    )
+    async def enable_dm_notifications(self, button, interaction: Interaction):
+        assert isinstance(interaction.user, User)
+
+        with engine.begin() as c:
+            if user_setting_receive_notifications.get(c, interaction.user.id) == "true":
+                await interaction.respond(
+                    "DM notifications are already enabled", ephemeral=True
+                )
+                return
+
+            user_setting_receive_notifications.set(c, interaction.user.id, "true")
+
+        await interaction.respond(
+            "DM notifications were enabled. You can disable them using `/chat_streaks dm_notifications`.",
+            ephemeral=True,
+        )
+
+
 class UnsubscribeDMNotificationsView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -77,6 +104,7 @@ class ChatStreaks(Cog):
         self.chat_streak_reminders.start()
 
         self.bot.add_view(UnsubscribeDMNotificationsView())
+        self.bot.add_view(EnableDMNotificationsView())
 
     @Cog.listener()
     async def on_message(self, msg: Message):
@@ -126,11 +154,20 @@ class ChatStreaks(Cog):
                     return
                 if next_streak > prev_streak:
                     if user_response_setting.get(c, msg.author.id) == "on":
+                        dm_notifications_enabled = (
+                            user_setting_receive_notifications.get(c, msg.author.id)
+                            == "true"
+                        )
                         the_reply, reply_in_same_channel = await handle_send_reply(
                             msg,
                             apply_appends(
                                 msg.author.id,
                                 f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/chat_streaks alerts`.",
+                            ),
+                            view=(
+                                EnableDMNotificationsView()
+                                if not dm_notifications_enabled
+                                else None
                             ),
                         )
                         if the_reply is not None and reply_in_same_channel:

@@ -39,7 +39,7 @@ server_message_delay = ServerSetting(
 
 
 user_setting_receive_notifications = UserSetting(
-    name="Remind about chat streaks in DM's", default="true"
+    name="Remind about chat streaks in DM's", default="false"
 )
 
 
