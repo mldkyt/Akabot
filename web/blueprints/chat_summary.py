@@ -2,7 +2,7 @@ from flask import Blueprint, session, render_template, request, flash, redirect
 from sqlalchemy import select
 
 from database import engine, synced_channels
-from utils.chat_summary import chat_summary, chat_summary_extra, chat_summary_rows, chat_summary_rows_extra, \
+from utils.chat_summary import chat_summary, chat_summary_extra, chat_summary_history, chat_summary_rows, chat_summary_rows_extra, \
     chat_summary_unique
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
@@ -29,6 +29,11 @@ def handle_settings(auth):
             chat_summary_extra.set(c, auth["guild"], "true")
         else:
             chat_summary_extra.set(c, auth["guild"], "false")
+
+        if request.form.get("history") == "on":
+            chat_summary_history.set(c, auth["guild"], "true")
+        else:
+            chat_summary_history.set(c, auth["guild"], "false")
 
         if "row_count_extra" in request.form and request.form["row_count_extra"].isnumeric():
             if 10 >= int(request.form["row_count_extra"]) >= 2:
@@ -86,11 +91,12 @@ def chat_summary_index():
         row_count = chat_summary_rows.get(c, auth["guild"])
         row_count_extra = chat_summary_rows_extra.get(c, auth["guild"])
         unique_mode = chat_summary_unique.get(c, auth["guild"]) == "true"
+        history = chat_summary_history.get(c, auth["guild"]) == "true"
 
     return render_template("chat_summary.html", channels=chans,
                            chat_summaries=chat_summaries, extra=extra,
                            row_count=row_count, row_count_extra=row_count_extra,
-                           unique_mode=unique_mode)
+                           unique_mode=unique_mode, history=history)
 
 @chat_summary_bp.route("/settings/chat_summary/delete/<index>")
 def chat_summary_delete(index: str):

@@ -13,6 +13,7 @@ from discord.ext.tasks import loop
 
 from database import engine
 from utils.chat_summary import (
+    SummaryHistoryView,
     chat_summary,
     inc,
     perform_backfill,
@@ -33,6 +34,8 @@ class ChatSummary(Cog):
             self.task_summary.start()
 
             try:
+                self.bot.add_cog(SummaryHistoryView())
+
                 with engine.begin() as c:
                     async for i in self.bot.fetch_guilds(limit=None):
                         for j in chat_summary.get(c, i.id):

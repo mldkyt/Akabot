@@ -1,13 +1,23 @@
 import datetime
 import os
 
-from discord import ApplicationContext, Bot, Cog, SlashCommandGroup, guild_only, option
-from sqlalchemy import insert, select, update
+from discord import ApplicationContext, Bot, Cog, SlashCommandGroup, TextChannel, guild_only, option
+from sqlalchemy import delete, insert, select, update
 
-from database import chat_streaks, engine
+from database import (
+    chat_streaks,
+    chat_summary_channels,
+    chat_summary_members,
+    engine,
+    monthly_chat_summary_channels,
+    monthly_chat_summary_members,
+    yearly_chat_summary_channels,
+    yearly_chat_summary_members,
+)
 from logger import akabot_logger
 from utils.ads import get_ad
 from utils.chat_streaks import handle_send_reply
+from utils.chat_summary import chat_summary, summarize
 
 
 class Devel(Cog):
@@ -82,6 +92,108 @@ class Devel(Cog):
             )
 
         await ctx.respond(msg, ephemeral=True)
+
+    @devel_group.command()
+    @guild_only()
+    @option(name="members", description="Number of fake leaderboard entries", type=int, default=15)
+    async def test_chat_summary(self, ctx: ApplicationContext, members: int = 15):
+        """Seed fake data and post a chat summary in the current channel"""
+
+        if not isinstance(ctx.channel, TextChannel):
+            await ctx.respond("This command only works in a text channel", ephemeral=True)
+            return
+
+        members = max(1, members)
+        member_ids = [str(m.id) for m in ctx.guild.members[:members]]
+        if not member_ids:
+            member_ids = [str(ctx.user.id)]
+
+        member_ids = member_ids[:members]
+
+        gid = str(ctx.guild.id)
+        cid = str(ctx.channel.id)
+        now = datetime.datetime.now(datetime.UTC)
+        total = sum(range(1, len(member_ids) + 1))
+
+        with engine.begin() as c:
+            chat_summary.add_to_list(c, ctx.guild.id, cid, silent=True)
+
+            c.execute(
+                delete(chat_summary_channels).where(
+                    (chat_summary_channels.c.gid == gid)
+                    & (chat_summary_channels.c.cid == cid)
+                )
+            )
+            c.execute(
+                delete(chat_summary_members).where(
+                    (chat_summary_members.c.gid == gid)
+                    & (chat_summary_members.c.cid == cid)
+                )
+            )
+            c.execute(
+                delete(monthly_chat_summary_channels).where(
+                    (monthly_chat_summary_channels.c.gid == gid)
+                    & (monthly_chat_summary_channels.c.cid == cid)
+                )
+            )
+            c.execute(
+                delete(monthly_chat_summary_members).where(
+                    (monthly_chat_summary_members.c.gid == gid)
+                    & (monthly_chat_summary_members.c.cid == cid)
+                )
+            )
+            c.execute(
+                delete(yearly_chat_summary_channels).where(
+                    (yearly_chat_summary_channels.c.gid == gid)
+                    & (yearly_chat_summary_channels.c.cid == cid)
+                )
+            )
+            c.execute(
+                delete(yearly_chat_summary_members).where(
+                    (yearly_chat_summary_members.c.gid == gid)
+                    & (yearly_chat_summary_members.c.cid == cid)
+                )
+            )
+
+            for table in (
+                chat_summary_channels,
+                monthly_chat_summary_channels,
+                yearly_chat_summary_channels,
+            ):
+                c.execute(
+                    insert(table).values(
+                        gid=gid,
+                        cid=cid,
+                        messages=total,
+                        last_member=member_ids[0],
+                    )
+                )
+
+            for idx, uid in enumerate(member_ids, start=1):
+                messages = len(member_ids) - idx + 1
+                c.execute(
+                    insert(chat_summary_members).values(
+                        gid=gid, cid=cid, uid=uid, messages=messages, last_message=now
+                    )
+                )
+                c.execute(
+                    insert(monthly_chat_summary_members).values(
+                        gid=gid, cid=cid, uid=uid, messages=messages, last_message=now
+                    )
+                )
+                c.execute(
+                    insert(yearly_chat_summary_members).values(
+                        gid=gid, cid=cid, uid=uid, messages=messages, last_message=now
+                    )
+                )
+
+        await ctx.respond(
+            f"Seeded {len(member_ids)} fake entries for <#{cid}> (total {total}) and posting the summary...",
+            ephemeral=True,
+        )
+
+        with engine.begin() as c:
+            await summarize(c, ctx.guild)
 
     @devel_group.command()
     @guild_only()

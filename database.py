@@ -133,6 +133,28 @@ yearly_chat_summary_members = Table(
     Column("last_message", DateTime(timezone=True)),
 )
 
+past_chat_summaries = Table(
+    "past_chat_summaries",
+    md_obj,
+    Column("id", VARCHAR, primary_key=True, comment="Message ID"),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    Column("kind", VARCHAR, nullable=False),
+    Column("period", VARCHAR, nullable=False),
+    Column("total_messages", Integer, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+
+past_chat_summaries_rows = Table(
+    "past_chat_summaries_rows",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("summary_id", VARCHAR, ForeignKey("past_chat_summaries.id", ondelete="CASCADE"), nullable=False),
+    Column("uid", VARCHAR, nullable=False),
+    Column("messages", Integer, nullable=False),
+    Column("rank", Integer, nullable=False),
+)
+
 chat_streaks = Table(
     "chat_streaks",
     md_obj,
