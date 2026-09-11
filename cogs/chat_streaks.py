@@ -22,15 +22,20 @@ from discord.ui import View, button
 
 from database import engine
 from utils.chat_streaks import (
+    count_message,
     get_all_streaks_for,
     get_expiring_streaks,
     get_guild_link,
     get_leaderboard,
+    get_message_count,
     get_raw_streak,
     get_streak,
     get_unexpired_streak,
     handle_send_reply,
     server_message_delay,
+    server_streak_minimum,
+    server_streak_minimum_enabled,
+    server_streak_same_member_check,
     update_for_user,
     user_response_setting,
     user_setting_receive_notifications,
@@ -117,6 +122,18 @@ class ChatStreaks(Cog):
                 return
 
             with engine.begin() as c:
+                if server_streak_minimum_enabled.get(c, msg.guild.id) == "true":
+                    same_member_check = (
+                        server_streak_same_member_check.get(c, msg.guild.id) == "true"
+                    )
+                    message_count = count_message(
+                        c, msg.author, msg.channel.id, same_member_check
+                    )
+                    if message_count < int(
+                        server_streak_minimum.get(c, msg.guild.id)
+                    ):
+                        return
+
                 unex_streak = get_unexpired_streak(c, msg.author)
                 raw_streak = get_raw_streak(c, msg.author)
                 prev_streak = get_streak(c, msg.author)
@@ -183,10 +200,20 @@ class ChatStreaks(Cog):
             with engine.begin() as c:
                 streak = get_streak(c, ctx.user)
 
+                msg = f"Your current streak is {streak} days."
+
+                if (
+                    ctx.guild is not None
+                    and server_streak_minimum_enabled.get(c, ctx.guild.id) == "true"
+                ):
+                    sent_messages = get_message_count(c, ctx.user)
+                    min_messages = int(server_streak_minimum.get(c, ctx.guild.id))
+                    msg += (
+                        f" You have {sent_messages}/{min_messages} messages sent today to keep your streak."
+                    )
+
                 await ctx.respond(
-                    apply_appends(
-                        ctx.user.id, f"Your current streak is {streak} days."
-                    ),
+                    apply_appends(ctx.user.id, msg),
                     ephemeral=True,
                 )
         except Exception as e:
@@ -316,9 +343,16 @@ class ChatStreaks(Cog):
                 if streak < 3:  # Remind only of streaks that are worth something
                     continue
 
+                reminder = f"Your {streak} day streak in {guild.name} is about to expire! Save it before it expires."
+
+                if server_streak_minimum_enabled.get(c, guild.id) == "true":
+                    sent_messages = get_message_count(c, member)
+                    min_messages = int(server_streak_minimum.get(c, guild.id))
+                    reminder += f"\nYou have {sent_messages}/{min_messages} messages sent in {guild.name} today."
+
                 try:
                     await member.send(
-                        f"Your {streak} day streak in {guild.name} is about to expire! Save it before it expires.",
+                        reminder,
                         view=UnsubscribeDMNotificationsView(),
                     )
                 except Forbidden:

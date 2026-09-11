@@ -1,0 +1,31 @@
+{% extends 'page.html' %}
+
+{% block main %}
+<h1>Chat Streaks</h1>
+<p>Chat streaks require members to send a minimum amount of messages each day before their streak is counted.</p>
+
+{% for flash in get_flashed_messages() %}
+<div class="flash">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+<h2>Settings</h2>
+
+<form action="/settings/chat_streaks" method="post">
+    <label for="streakminimumenable">Enable minimum message requirement</label>
+    <input type="checkbox" id="streakminimumenable" name="streakminimumenable" {% if minimum_enabled == "true" %}checked{% endif %}>
+    <br>
+
+    <label for="streakminimum">Minimum messages per day</label>
+    <input type="number" id="streakminimum" name="streakminimum" min="1" value="{{minimum_messages}}">
+    <br>
+
+    <label for="streaksamemember">Count same member sending multiple messages as one message</label>
+    <input type="checkbox" id="streaksamemember" name="streaksamemember" {% if same_member_check == "true" %}checked{% endif %}>
+    <br>
+
+    <button type="submit">Save settings</button>
+</form>
+
+{% endblock %}

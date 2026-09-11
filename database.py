@@ -162,6 +162,17 @@ chat_streaks = Table(
     Column("uid", VARCHAR, primary_key=True),
     Column("start_date", DATE, nullable=False, comment="YYYY-MM-DD"),
     Column("last_message_date", DATE, nullable=False, comment="YYYY-MM-DD"),
+    Column("message_count", Integer, nullable=False, server_default="0", comment="Counted messages for the count date"),
+    Column("message_count_date", DATE, comment="YYYY-MM-DD. Day the message count belongs to"),
+)
+
+chat_streak_last_members = Table(
+    "chat_streak_last_members",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("date", DATE, primary_key=True, comment="YYYY-MM-DD"),
+    Column("uid", VARCHAR, nullable=False, comment="User ID"),
 )
 
 counting_channels = Table(

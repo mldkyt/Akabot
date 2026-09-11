@@ -7,6 +7,7 @@ from flask import Flask
 from web.blueprints.anti_raid import anti_raid_bp
 from web.blueprints.automod_actions import automod_actions_bp
 from web.blueprints.chat_revive import chat_revive_bp
+from web.blueprints.chat_streaks import chat_streaks_bp
 from web.blueprints.chat_summary import chat_summary_bp
 from web.blueprints.counting import counting_bp
 from web.blueprints.feedback import feedback_bp
@@ -51,6 +52,7 @@ app.secret_key = os.getenv("WEB_SECRET", "1234")
 app.register_blueprint(settings_index_bp)
 app.register_blueprint(automod_actions_bp)
 app.register_blueprint(chat_revive_bp)
+app.register_blueprint(chat_streaks_bp)
 app.register_blueprint(chat_summary_bp)
 app.register_blueprint(counting_bp)
 app.register_blueprint(leveling_bp)

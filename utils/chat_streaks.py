@@ -14,7 +14,7 @@ from discord import (
 from discord.ui import BaseView
 from sqlalchemy import Connection, desc, insert, select, update
 
-from database import chat_streaks, engine
+from database import chat_streak_last_members, chat_streaks, engine
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import ServerSetting, SettingType
 from utils.user_settings import UserSetting
@@ -35,6 +35,24 @@ server_message_delay = ServerSetting(
     "Chat streaks message duration",
     setting_type=SettingType.NORMAL,
     default="5",
+)
+
+server_streak_minimum_enabled = ServerSetting(
+    "Chat streaks minimum enabled",
+    setting_type=SettingType.NORMAL,
+    default="false",
+)
+
+server_streak_minimum = ServerSetting(
+    "Chat streaks minimum messages",
+    setting_type=SettingType.NORMAL,
+    default="5",
+)
+
+server_streak_same_member_check = ServerSetting(
+    "Chat streaks same member check",
+    setting_type=SettingType.NORMAL,
+    default="false",
 )
 
 
@@ -67,6 +85,7 @@ def update_for_user(c: Connection, u: Member):
         )
     else:
         # Check days split
+        start_date = a[0]
         last_message_date = a[1]
         diff = now - last_message_date
 
@@ -79,6 +98,15 @@ def update_for_user(c: Connection, u: Member):
                     & (chat_streaks.c.gid == str(u.guild.id))
                 )
                 .values(start_date=yesterday, last_message_date=now)
+            )
+        elif diff.days == 0 and start_date == now:
+            c.execute(
+                update(chat_streaks)
+                .where(
+                    (chat_streaks.c.uid == str(u.id))
+                    & (chat_streaks.c.gid == str(u.guild.id))
+                )
+                .values(start_date=yesterday)
             )
         elif diff.days == 1:
             # Update
@@ -113,6 +141,93 @@ def get_streak(c: Connection, u: Member):
         return 0
 
     return (last_message_date - start_date).days
+
+
+def get_message_count(c: Connection, u: Member):
+    """Get the amount of counted messages sent today"""
+    now = date.today()
+
+    a = c.execute(
+        select(chat_streaks.c.message_count, chat_streaks.c.message_count_date).where(
+            (chat_streaks.c.uid == str(u.id)) & (chat_streaks.c.gid == str(u.guild.id))
+        )
+    ).fetchone()
+
+    if a is None or a[1] != now:
+        return 0
+
+    return a[0] or 0
+
+
+def count_message(c: Connection, u: Member, cid: int, same_member_check: bool):
+    """Count a message toward the daily minimum. Returns the updated count."""
+    today = date.today()
+    gid = str(u.guild.id)
+    uid = str(u.id)
+    cid = str(cid)
+
+    if same_member_check:
+        a = c.execute(
+            select(chat_streak_last_members.c.uid).where(
+                (chat_streak_last_members.c.gid == gid)
+                & (chat_streak_last_members.c.cid == cid)
+                & (chat_streak_last_members.c.date == today)
+            )
+        ).fetchone()
+
+        if a is not None:
+            if a[0] == uid:
+                return get_message_count(c, u)
+
+            c.execute(
+                update(chat_streak_last_members)
+                .values(uid=uid)
+                .where(
+                    (chat_streak_last_members.c.gid == gid)
+                    & (chat_streak_last_members.c.cid == cid)
+                    & (chat_streak_last_members.c.date == today)
+                )
+            )
+        else:
+            c.execute(
+                insert(chat_streak_last_members).values(
+                    gid=gid, cid=cid, date=today, uid=uid
+                )
+            )
+
+    a = c.execute(
+        select(
+            chat_streaks.c.start_date,
+            chat_streaks.c.last_message_date,
+            chat_streaks.c.message_count,
+            chat_streaks.c.message_count_date,
+        ).where((chat_streaks.c.uid == uid) & (chat_streaks.c.gid == gid))
+    ).fetchone()
+
+    if a is None:
+        c.execute(
+            insert(chat_streaks).values(
+                gid=gid,
+                uid=uid,
+                start_date=today,
+                last_message_date=today,
+                message_count=1,
+                message_count_date=today,
+            )
+        )
+        return 1
+
+    if a[3] == today:
+        new_count = (a[2] or 0) + 1
+    else:
+        new_count = 1
+
+    c.execute(
+        update(chat_streaks)
+        .values(message_count=new_count, message_count_date=today)
+        .where((chat_streaks.c.uid == uid) & (chat_streaks.c.gid == gid))
+    )
+    return new_count
 
 
 def get_unexpired_streak(c: Connection, u: Member):

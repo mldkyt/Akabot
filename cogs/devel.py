@@ -58,6 +58,8 @@ class Devel(Cog):
                         uid=str(ctx.user.id),
                         start_date=start_date,
                         last_message_date=last_message_date,
+                        message_count=0,
+                        message_count_date=datetime.date.today(),
                     )
                 )
             else:
@@ -84,7 +86,12 @@ class Devel(Cog):
 
             c.execute(
                 update(chat_streaks)
-                .values(start_date=start_date, last_message_date=last_message_date)
+                .values(
+                    start_date=start_date,
+                    last_message_date=last_message_date,
+                    message_count=0,
+                    message_count_date=datetime.date.today(),
+                )
                 .where(
                     (chat_streaks.c.gid == str(ctx.guild.id))
                     & (chat_streaks.c.uid == str(ctx.user.id))
