@@ -64,6 +64,7 @@ logging_settings: list[tuple[str, str]] = [
     ("automod_kick", "Automod Actions kick"),
     ("automod_ban", "Automod Actions ban"),
     ("automod_mute", "Automod Actions mute"),
+    ("anti_raid_mrbeast", "MrBeast scam detection"),
 ]
 
 

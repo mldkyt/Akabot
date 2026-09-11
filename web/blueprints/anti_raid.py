@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, request, session
 
 from database import engine
-from utils.anti_raid import setting_minimum_age, setting_no_avatar
+from utils.anti_raid import (
+    setting_minimum_age,
+    setting_mrbeast_action,
+    setting_mrbeast_scam,
+    setting_no_avatar,
+)
 from web.webutils.tokens import authorize, get_token_data
 
 anti_raid_bp = Blueprint("anti_raid", __name__, template_folder="templates")
@@ -30,9 +35,23 @@ def anti_raid_index():
             ):
                 setting_minimum_age.set(c, auth["guild"], request.form["kick_min_age"])
 
+            if request.form.get("mrbeast_scam"):
+                setting_mrbeast_scam.set(c, auth["guild"], "true")
+            else:
+                setting_mrbeast_scam.set(c, auth["guild"], "false")
+
+            if request.form.get("mrbeast_action") in ("timeout", "kick", "ban"):
+                setting_mrbeast_action.set(c, auth["guild"], request.form["mrbeast_action"])
+
         kick_no_pfp = setting_no_avatar.get(c, auth["guild"]) == "true"
         kick_min_age = setting_minimum_age.get(c, auth["guild"])
+        mrbeast_scam = setting_mrbeast_scam.get(c, auth["guild"]) == "true"
+        mrbeast_action = setting_mrbeast_action.get(c, auth["guild"])
 
     return render_template(
-        "anti_raid.html", kick_no_pfp=kick_no_pfp, kick_min_age=kick_min_age
+        "anti_raid.html",
+        kick_no_pfp=kick_no_pfp,
+        kick_min_age=kick_min_age,
+        mrbeast_scam=mrbeast_scam,
+        mrbeast_action=mrbeast_action,
     )

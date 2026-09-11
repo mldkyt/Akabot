@@ -17,6 +17,18 @@
     <input type="number" name="kick_min_age" id="kick_min_age" value="{{kick_min_age}}">
     <br/>
 
+    <h2>MrBeast scam detection</h2>
+    <input type="checkbox" name="mrbeast_scam" id="mrbeast_scam" {% if mrbeast_scam %}checked{% endif %}>
+    <label for="mrbeast_scam">Detect members posting the same media into 3 or more channels within 10 seconds</label>
+    <br/>
+    <label for="mrbeast_action">Action</label>
+    <select name="mrbeast_action" id="mrbeast_action">
+        <option value="timeout" {% if mrbeast_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if mrbeast_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if mrbeast_action == "ban" %}selected{% endif %}>Ban</option>
+    </select>
+    <br/>
+
     <button type="submit">Save</button>
 </form>
 
