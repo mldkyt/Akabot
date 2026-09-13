@@ -52,7 +52,7 @@ DEFAULT_DUPLICATE_REASON = (
 )
 DEFAULT_MENTIONS_REASON = "Mass mentions: {count} mentions in a single message"
 DEFAULT_INVITE_REASON = (
-    "Invite/link spam: {count} messages with links in {window} seconds"
+    "Invite spam: {count} messages with links in {window} seconds"
 )
 DEFAULT_CAPS_REASON = "Caps flood: {percentage}% uppercase in {characters} characters"
 DEFAULT_EMOJI_REASON = "Emoji flood: {count} emojis in {window} seconds"
@@ -103,6 +103,12 @@ setting_mrbeast_reason = ServerSetting(
     default=DEFAULT_MR_BEAST_REASON,
 )
 
+setting_mrbeast_delete = ServerSetting(
+    name="MrBeast scam detection delete messages",
+    setting_type=SettingType.NORMAL,
+    default="true",
+)
+
 setting_flood_enabled = ServerSetting(
     name="Anti Raid: Flood enabled", setting_type=SettingType.NORMAL, default="false"
 )
@@ -129,6 +135,12 @@ setting_flood_reason = ServerSetting(
     name="Anti Raid: Flood reason",
     setting_type=SettingType.NORMAL,
     default=DEFAULT_FLOOD_REASON,
+)
+
+setting_flood_delete = ServerSetting(
+    name="Anti Raid: Flood delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
 )
 
 setting_flood_count = ServerSetting(
@@ -167,6 +179,12 @@ setting_duplicate_reason = ServerSetting(
     default=DEFAULT_DUPLICATE_REASON,
 )
 
+setting_duplicate_delete = ServerSetting(
+    name="Anti Raid: Duplicate delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
+)
+
 setting_duplicate_count = ServerSetting(
     name="Anti Raid: Duplicate count", setting_type=SettingType.NORMAL, default="5"
 )
@@ -203,6 +221,12 @@ setting_mentions_reason = ServerSetting(
     default=DEFAULT_MENTIONS_REASON,
 )
 
+setting_mentions_delete = ServerSetting(
+    name="Anti Raid: Mentions delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
+)
+
 setting_mentions_count = ServerSetting(
     name="Anti Raid: Mentions count", setting_type=SettingType.NORMAL, default="5"
 )
@@ -233,6 +257,12 @@ setting_invite_reason = ServerSetting(
     name="Anti Raid: Invite reason",
     setting_type=SettingType.NORMAL,
     default=DEFAULT_INVITE_REASON,
+)
+
+setting_invite_delete = ServerSetting(
+    name="Anti Raid: Invite delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
 )
 
 setting_invite_count = ServerSetting(
@@ -271,6 +301,12 @@ setting_caps_reason = ServerSetting(
     default=DEFAULT_CAPS_REASON,
 )
 
+setting_caps_delete = ServerSetting(
+    name="Anti Raid: Caps delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
+)
+
 setting_caps_percentage = ServerSetting(
     name="Anti Raid: Caps percentage", setting_type=SettingType.NORMAL, default="80"
 )
@@ -307,6 +343,12 @@ setting_emoji_reason = ServerSetting(
     default=DEFAULT_EMOJI_REASON,
 )
 
+setting_emoji_delete = ServerSetting(
+    name="Anti Raid: Emoji delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
+)
+
 setting_emoji_count = ServerSetting(
     name="Anti Raid: Emoji count", setting_type=SettingType.NORMAL, default="10"
 )
@@ -341,6 +383,12 @@ setting_sticker_reason = ServerSetting(
     name="Anti Raid: Sticker reason",
     setting_type=SettingType.NORMAL,
     default=DEFAULT_STICKER_REASON,
+)
+
+setting_sticker_delete = ServerSetting(
+    name="Anti Raid: Sticker delete messages",
+    setting_type=SettingType.NORMAL,
+    default="false",
 )
 
 setting_sticker_count = ServerSetting(
@@ -396,15 +444,15 @@ class MediaPost:
 
 mrbeast_media_posts: dict[int, dict[int, list[MediaPost]]] = {}
 
-flood_messages: dict[int, dict[int, list[float]]] = {}
+flood_messages: dict[int, dict[int, list[tuple[float, Message]]]] = {}
 
-duplicate_messages: dict[int, dict[int, list[tuple[float, str]]]] = {}
+duplicate_messages: dict[int, dict[int, list[tuple[float, Message]]]] = {}
 
-invite_spam_messages: dict[int, dict[int, list[float]]] = {}
+invite_spam_messages: dict[int, dict[int, list[tuple[float, Message]]]] = {}
 
-emoji_flood_messages: dict[int, dict[int, list[float]]] = {}
+emoji_flood_messages: dict[int, dict[int, list[tuple[float, Message]]]] = {}
 
-sticker_flood_messages: dict[int, dict[int, list[float]]] = {}
+sticker_flood_messages: dict[int, dict[int, list[tuple[float, Message]]]] = {}
 
 join_burst_joins: dict[int, list[tuple[float, int]]] = {}
 
@@ -476,8 +524,28 @@ def _format_template(template: str, member: Member, values: dict[str, str]) -> s
     return template
 
 
-def _prune_window(items: list[float], window: float, now: float) -> list[float]:
-    return [t for t in items if now - t <= window]
+def _prune_messages(
+    items: list[tuple[float, Message]], window: float, now: float
+) -> list[tuple[float, Message]]:
+    return [(t, m) for t, m in items if now - t <= window]
+
+
+async def _delete_messages(messages: list[Message]):
+    by_channel = {}
+    for message in messages:
+        by_channel.setdefault(message.channel, []).append(message)
+
+    for channel, channel_messages in by_channel.items():
+        unique = list({m.id: m for m in channel_messages}.values())
+        try:
+            for i in range(0, len(unique), 100):
+                await channel.delete_messages(unique[i : i + 100])
+        except Exception:
+            for message in unique:
+                try:
+                    await message.delete()
+                except Exception:
+                    pass
 
 
 async def verify_member(member: Member):
@@ -513,6 +581,7 @@ async def handle_mrbeast_scam(message: Message):
             return
         action = setting_mrbeast_action.get(c, message.guild.id)
         dm = setting_mrbeast_dm.get(c, message.guild.id) == "true"
+        delete = setting_mrbeast_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_mrbeast_timeout.get(c, message.guild.id))
         dm_template = (
             setting_mrbeast_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -587,11 +656,8 @@ async def handle_mrbeast_scam(message: Message):
             ),
         )
 
-    for scam_message in scam_messages:
-        try:
-            await scam_message.delete()
-        except Exception:
-            pass
+    if delete:
+        await _delete_messages(scam_messages)
 
     guild_posts.pop(member.id, None)
 
@@ -602,6 +668,7 @@ async def handle_flood(message: Message):
             return
         action = setting_flood_action.get(c, message.guild.id)
         dm = setting_flood_dm.get(c, message.guild.id) == "true"
+        delete = setting_flood_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_flood_timeout.get(c, message.guild.id))
         dm_template = (
             setting_flood_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -620,9 +687,9 @@ async def handle_flood(message: Message):
 
     guild_msgs = flood_messages.setdefault(message.guild.id, {})
     member_msgs = guild_msgs.setdefault(member.id, [])
-    member_msgs.append(now)
+    member_msgs.append((now, message))
 
-    member_msgs = _prune_window(member_msgs, window, now)
+    member_msgs = _prune_messages(member_msgs, window, now)
     guild_msgs[member.id] = member_msgs
 
     if len(member_msgs) < threshold:
@@ -637,6 +704,9 @@ async def handle_flood(message: Message):
         )
 
     action_name = await perform_action(member, action, reason, timeout)
+
+    if delete:
+        await _delete_messages([m for _, m in member_msgs])
 
     with engine.begin() as c:
         await send_anti_raid_log(
@@ -655,6 +725,7 @@ async def handle_duplicate(message: Message):
             return
         action = setting_duplicate_action.get(c, message.guild.id)
         dm = setting_duplicate_dm.get(c, message.guild.id) == "true"
+        delete = setting_duplicate_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_duplicate_timeout.get(c, message.guild.id))
         dm_template = (
             setting_duplicate_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -678,12 +749,14 @@ async def handle_duplicate(message: Message):
 
     guild_msgs = duplicate_messages.setdefault(message.guild.id, {})
     member_msgs = guild_msgs.setdefault(member.id, [])
-    member_msgs.append((now, content_hash))
+    member_msgs.append((now, message))
 
-    member_msgs = [(t, h) for t, h in member_msgs if now - t <= window]
+    member_msgs = _prune_messages(member_msgs, window, now)
     guild_msgs[member.id] = member_msgs
 
-    same_count = sum(1 for _, h in member_msgs if h == content_hash)
+    same_count = sum(
+        1 for _, m in member_msgs if hashlib.md5(m.content.encode()).hexdigest() == content_hash
+    )
     if same_count < threshold:
         return
 
@@ -696,6 +769,9 @@ async def handle_duplicate(message: Message):
         )
 
     action_name = await perform_action(member, action, reason, timeout)
+
+    if delete:
+        await _delete_messages([m for _, m in member_msgs])
 
     with engine.begin() as c:
         await send_anti_raid_log(
@@ -714,6 +790,7 @@ async def handle_mass_mentions(message: Message):
             return
         action = setting_mentions_action.get(c, message.guild.id)
         dm = setting_mentions_dm.get(c, message.guild.id) == "true"
+        delete = setting_mentions_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_mentions_timeout.get(c, message.guild.id))
         dm_template = (
             setting_mentions_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -745,6 +822,9 @@ async def handle_mass_mentions(message: Message):
 
     action_name = await perform_action(member, action, reason, timeout)
 
+    if delete:
+        await _delete_messages([message])
+
     with engine.begin() as c:
         await send_anti_raid_log(
             c, message.guild, member, action_name, reason,
@@ -760,6 +840,7 @@ async def handle_invite_spam(message: Message):
             return
         action = setting_invite_action.get(c, message.guild.id)
         dm = setting_invite_dm.get(c, message.guild.id) == "true"
+        delete = setting_invite_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_invite_timeout.get(c, message.guild.id))
         dm_template = (
             setting_invite_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -782,9 +863,9 @@ async def handle_invite_spam(message: Message):
 
     guild_msgs = invite_spam_messages.setdefault(message.guild.id, {})
     member_msgs = guild_msgs.setdefault(member.id, [])
-    member_msgs.append(now)
+    member_msgs.append((now, message))
 
-    member_msgs = _prune_window(member_msgs, window, now)
+    member_msgs = _prune_messages(member_msgs, window, now)
     guild_msgs[member.id] = member_msgs
 
     if len(member_msgs) < threshold:
@@ -799,6 +880,9 @@ async def handle_invite_spam(message: Message):
         )
 
     action_name = await perform_action(member, action, reason, timeout)
+
+    if delete:
+        await _delete_messages([m for _, m in member_msgs])
 
     with engine.begin() as c:
         await send_anti_raid_log(
@@ -817,6 +901,7 @@ async def handle_caps(message: Message):
             return
         action = setting_caps_action.get(c, message.guild.id)
         dm = setting_caps_dm.get(c, message.guild.id) == "true"
+        delete = setting_caps_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_caps_timeout.get(c, message.guild.id))
         dm_template = (
             setting_caps_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -855,6 +940,9 @@ async def handle_caps(message: Message):
 
     action_name = await perform_action(member, action, reason, timeout)
 
+    if delete:
+        await message.delete()
+
     with engine.begin() as c:
         await send_anti_raid_log(
             c, message.guild, member, action_name, reason,
@@ -870,6 +958,7 @@ async def handle_emoji_flood(message: Message):
             return
         action = setting_emoji_action.get(c, message.guild.id)
         dm = setting_emoji_dm.get(c, message.guild.id) == "true"
+        delete = setting_emoji_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_emoji_timeout.get(c, message.guild.id))
         dm_template = (
             setting_emoji_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -894,9 +983,9 @@ async def handle_emoji_flood(message: Message):
     member_msgs = guild_msgs.setdefault(member.id, [])
 
     for _ in range(emoji_count):
-        member_msgs.append(now)
+        member_msgs.append((now, message))
 
-    member_msgs = _prune_window(member_msgs, window, now)
+    member_msgs = _prune_messages(member_msgs, window, now)
     guild_msgs[member.id] = member_msgs
 
     if len(member_msgs) < threshold:
@@ -911,6 +1000,9 @@ async def handle_emoji_flood(message: Message):
         )
 
     action_name = await perform_action(member, action, reason, timeout)
+
+    if delete:
+        await _delete_messages([m for _, m in member_msgs])
 
     with engine.begin() as c:
         await send_anti_raid_log(
@@ -929,6 +1021,7 @@ async def handle_sticker_flood(message: Message):
             return
         action = setting_sticker_action.get(c, message.guild.id)
         dm = setting_sticker_dm.get(c, message.guild.id) == "true"
+        delete = setting_sticker_delete.get(c, message.guild.id) == "true"
         timeout = int(setting_sticker_timeout.get(c, message.guild.id))
         dm_template = (
             setting_sticker_dm_message.get(c, message.guild.id) or DEFAULT_DM_MESSAGE
@@ -947,9 +1040,9 @@ async def handle_sticker_flood(message: Message):
 
     guild_msgs = sticker_flood_messages.setdefault(message.guild.id, {})
     member_msgs = guild_msgs.setdefault(member.id, [])
-    member_msgs.append(now)
+    member_msgs.append((now, message))
 
-    member_msgs = _prune_window(member_msgs, window, now)
+    member_msgs = _prune_messages(member_msgs, window, now)
     guild_msgs[member.id] = member_msgs
 
     if len(member_msgs) < threshold:
@@ -964,6 +1057,9 @@ async def handle_sticker_flood(message: Message):
         )
 
     action_name = await perform_action(member, action, reason, timeout)
+
+    if delete:
+        await _delete_messages([m for _, m in member_msgs])
 
     with engine.begin() as c:
         await send_anti_raid_log(
