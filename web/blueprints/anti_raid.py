@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, session
 
 from database import engine
 from utils.anti_raid import (
+    message_intent_enabled,
     setting_caps_action,
     setting_caps_dm,
     setting_caps_dm_message,
@@ -120,6 +121,8 @@ DETECTORS = [
     ("joinburst", setting_joinburst_timeout, setting_joinburst_dm_message, setting_joinburst_reason),
 ]
 
+CONTENT_DETECTORS = frozenset({"duplicate", "mentions", "invite", "caps", "emoji"})
+
 
 def _set_number(c, guild, setting, form_key):
     value = request.form.get(form_key)
@@ -151,6 +154,8 @@ def anti_raid_index():
 
     auth = get_token_data(session["token"])
     assert auth is not None
+
+    message_intent = message_intent_enabled()
 
     with engine.begin() as c:
         if request.method == "POST":
@@ -184,54 +189,55 @@ def anti_raid_index():
             _set_number(c, auth["guild"], setting_flood_count, "flood_count")
             _set_number(c, auth["guild"], setting_flood_window, "flood_window")
 
-            if request.form.get("duplicate_enabled"):
-                setting_duplicate_enabled.set(c, auth["guild"], "true")
-            else:
-                setting_duplicate_enabled.set(c, auth["guild"], "false")
-            if request.form.get("duplicate_action") in VALID_ACTIONS:
-                setting_duplicate_action.set(c, auth["guild"], request.form["duplicate_action"])
-            _set_checkbox(c, auth["guild"], setting_duplicate_dm, "duplicate_dm")
-            _set_number(c, auth["guild"], setting_duplicate_count, "duplicate_count")
-            _set_number(c, auth["guild"], setting_duplicate_window, "duplicate_window")
+            if message_intent:
+                if request.form.get("duplicate_enabled"):
+                    setting_duplicate_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_duplicate_enabled.set(c, auth["guild"], "false")
+                if request.form.get("duplicate_action") in VALID_ACTIONS:
+                    setting_duplicate_action.set(c, auth["guild"], request.form["duplicate_action"])
+                _set_checkbox(c, auth["guild"], setting_duplicate_dm, "duplicate_dm")
+                _set_number(c, auth["guild"], setting_duplicate_count, "duplicate_count")
+                _set_number(c, auth["guild"], setting_duplicate_window, "duplicate_window")
 
-            if request.form.get("mentions_enabled"):
-                setting_mentions_enabled.set(c, auth["guild"], "true")
-            else:
-                setting_mentions_enabled.set(c, auth["guild"], "false")
-            if request.form.get("mentions_action") in VALID_ACTIONS:
-                setting_mentions_action.set(c, auth["guild"], request.form["mentions_action"])
-            _set_checkbox(c, auth["guild"], setting_mentions_dm, "mentions_dm")
-            _set_number(c, auth["guild"], setting_mentions_count, "mentions_count")
+                if request.form.get("mentions_enabled"):
+                    setting_mentions_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_mentions_enabled.set(c, auth["guild"], "false")
+                if request.form.get("mentions_action") in VALID_ACTIONS:
+                    setting_mentions_action.set(c, auth["guild"], request.form["mentions_action"])
+                _set_checkbox(c, auth["guild"], setting_mentions_dm, "mentions_dm")
+                _set_number(c, auth["guild"], setting_mentions_count, "mentions_count")
 
-            if request.form.get("invite_enabled"):
-                setting_invite_enabled.set(c, auth["guild"], "true")
-            else:
-                setting_invite_enabled.set(c, auth["guild"], "false")
-            if request.form.get("invite_action") in VALID_ACTIONS:
-                setting_invite_action.set(c, auth["guild"], request.form["invite_action"])
-            _set_checkbox(c, auth["guild"], setting_invite_dm, "invite_dm")
-            _set_number(c, auth["guild"], setting_invite_count, "invite_count")
-            _set_number(c, auth["guild"], setting_invite_window, "invite_window")
+                if request.form.get("invite_enabled"):
+                    setting_invite_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_invite_enabled.set(c, auth["guild"], "false")
+                if request.form.get("invite_action") in VALID_ACTIONS:
+                    setting_invite_action.set(c, auth["guild"], request.form["invite_action"])
+                _set_checkbox(c, auth["guild"], setting_invite_dm, "invite_dm")
+                _set_number(c, auth["guild"], setting_invite_count, "invite_count")
+                _set_number(c, auth["guild"], setting_invite_window, "invite_window")
 
-            if request.form.get("caps_enabled"):
-                setting_caps_enabled.set(c, auth["guild"], "true")
-            else:
-                setting_caps_enabled.set(c, auth["guild"], "false")
-            if request.form.get("caps_action") in VALID_ACTIONS:
-                setting_caps_action.set(c, auth["guild"], request.form["caps_action"])
-            _set_checkbox(c, auth["guild"], setting_caps_dm, "caps_dm")
-            _set_number(c, auth["guild"], setting_caps_percentage, "caps_percentage")
-            _set_number(c, auth["guild"], setting_caps_min_length, "caps_min_length")
+                if request.form.get("caps_enabled"):
+                    setting_caps_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_caps_enabled.set(c, auth["guild"], "false")
+                if request.form.get("caps_action") in VALID_ACTIONS:
+                    setting_caps_action.set(c, auth["guild"], request.form["caps_action"])
+                _set_checkbox(c, auth["guild"], setting_caps_dm, "caps_dm")
+                _set_number(c, auth["guild"], setting_caps_percentage, "caps_percentage")
+                _set_number(c, auth["guild"], setting_caps_min_length, "caps_min_length")
 
-            if request.form.get("emoji_enabled"):
-                setting_emoji_enabled.set(c, auth["guild"], "true")
-            else:
-                setting_emoji_enabled.set(c, auth["guild"], "false")
-            if request.form.get("emoji_action") in VALID_ACTIONS:
-                setting_emoji_action.set(c, auth["guild"], request.form["emoji_action"])
-            _set_checkbox(c, auth["guild"], setting_emoji_dm, "emoji_dm")
-            _set_number(c, auth["guild"], setting_emoji_count, "emoji_count")
-            _set_number(c, auth["guild"], setting_emoji_window, "emoji_window")
+                if request.form.get("emoji_enabled"):
+                    setting_emoji_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_emoji_enabled.set(c, auth["guild"], "false")
+                if request.form.get("emoji_action") in VALID_ACTIONS:
+                    setting_emoji_action.set(c, auth["guild"], request.form["emoji_action"])
+                _set_checkbox(c, auth["guild"], setting_emoji_dm, "emoji_dm")
+                _set_number(c, auth["guild"], setting_emoji_count, "emoji_count")
+                _set_number(c, auth["guild"], setting_emoji_window, "emoji_window")
 
             if request.form.get("sticker_enabled"):
                 setting_sticker_enabled.set(c, auth["guild"], "true")
@@ -254,6 +260,8 @@ def anti_raid_index():
             _set_number(c, auth["guild"], setting_joinburst_window, "joinburst_window")
 
             for prefix, timeout_setting, dm_message_setting, reason_setting in DETECTORS:
+                if not message_intent and prefix in CONTENT_DETECTORS:
+                    continue
                 _set_number(c, auth["guild"], timeout_setting, f"{prefix}_timeout")
                 _set_text(c, auth["guild"], dm_message_setting, f"{prefix}_dm_message")
                 _set_text(c, auth["guild"], reason_setting, f"{prefix}_reason")
@@ -363,5 +371,6 @@ def anti_raid_index():
         joinburst_dm=joinburst_dm,
         joinburst_count=joinburst_count,
         joinburst_window=joinburst_window,
+        message_intent=message_intent,
         **template_data,
     )

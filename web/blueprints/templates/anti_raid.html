@@ -86,6 +86,7 @@
     <input type="number" name="flood_window" id="flood_window" value="{{flood_window}}">
     <br/>
 
+    {% if message_intent %}
     <h2>Duplicate message spam</h2>
     <input type="checkbox" name="duplicate_enabled" id="duplicate_enabled" {% if duplicate_enabled %}checked{% endif %}>
     <label for="duplicate_enabled">Detect members sending the same message repeatedly</label>
@@ -237,6 +238,7 @@
     <label for="emoji_window">Window in seconds</label>
     <input type="number" name="emoji_window" id="emoji_window" value="{{emoji_window}}">
     <br/>
+    {% endif %}
 
     <h2>Sticker flood</h2>
     <input type="checkbox" name="sticker_enabled" id="sticker_enabled" {% if sticker_enabled %}checked{% endif %}>

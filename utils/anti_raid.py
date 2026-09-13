@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -36,6 +37,10 @@ _EMOJI_RE = re.compile("[" + "".join(_EMOJI_RANGES) + "]")
 
 def _count_emojis(text: str) -> int:
     return len(_EMOJI_RE.findall(text))
+
+
+def message_intent_enabled() -> bool:
+    return os.getenv("MESSAGE_INTENT", "0") == "1"
 
 DEFAULT_DM_MESSAGE = "You have been flagged by {guild}'s anti raid system: {reason}"
 DEFAULT_MR_BEAST_REASON = (
@@ -642,6 +647,9 @@ async def handle_flood(message: Message):
 
 
 async def handle_duplicate(message: Message):
+    if not message_intent_enabled():
+        return
+
     with engine.begin() as c:
         if setting_duplicate_enabled.get(c, message.guild.id) != "true":
             return
@@ -698,6 +706,9 @@ async def handle_duplicate(message: Message):
 
 
 async def handle_mass_mentions(message: Message):
+    if not message_intent_enabled():
+        return
+
     with engine.begin() as c:
         if setting_mentions_enabled.get(c, message.guild.id) != "true":
             return
@@ -741,6 +752,9 @@ async def handle_mass_mentions(message: Message):
 
 
 async def handle_invite_spam(message: Message):
+    if not message_intent_enabled():
+        return
+
     with engine.begin() as c:
         if setting_invite_enabled.get(c, message.guild.id) != "true":
             return
@@ -795,6 +809,9 @@ async def handle_invite_spam(message: Message):
 
 
 async def handle_caps(message: Message):
+    if not message_intent_enabled():
+        return
+
     with engine.begin() as c:
         if setting_caps_enabled.get(c, message.guild.id) != "true":
             return
@@ -845,6 +862,9 @@ async def handle_caps(message: Message):
 
 
 async def handle_emoji_flood(message: Message):
+    if not message_intent_enabled():
+        return
+
     with engine.begin() as c:
         if setting_emoji_enabled.get(c, message.guild.id) != "true":
             return
