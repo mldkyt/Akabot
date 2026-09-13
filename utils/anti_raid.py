@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import hashlib
 import os
@@ -6,6 +7,7 @@ import time
 from dataclasses import dataclass
 from datetime import timedelta
 
+import sentry_sdk
 from discord import Embed, EmbedField, Member, Message
 
 from database import engine
@@ -33,10 +35,11 @@ _EMOJI_RANGES = (
     "\U000025FB-\U000025FE",
 )
 _EMOJI_RE = re.compile("[" + "".join(_EMOJI_RANGES) + "]")
+_CUSTOM_EMOJI_RE = re.compile(r"<(?:a)?:[^:>]+:[0-9]{17,20}>")
 
 
 def _count_emojis(text: str) -> int:
-    return len(_EMOJI_RE.findall(text))
+    return len(_EMOJI_RE.findall(text)) + len(_CUSTOM_EMOJI_RE.findall(text))
 
 
 def message_intent_enabled() -> bool:
@@ -465,22 +468,34 @@ ACTION_NAMES = {
 }
 
 
+async def _parallel_report(*coros):
+    results = await asyncio.gather(*coros, return_exceptions=True)
+    for result in results:
+        if isinstance(result, Exception):
+            sentry_sdk.capture_exception(result)
+
+
 async def perform_action(member: Member, action: str, reason: str, timeout: int = 3600) -> str:
+    permissions = member.guild.me.guild_permissions
     if action == "log":
         return "Log"
     elif action == "timeout":
-        await member.timeout_for(timedelta(seconds=timeout), reason=reason)
+        if permissions.mute_members:
+            await member.timeout_for(timedelta(seconds=timeout), reason=reason)
     elif action == "kick":
-        await member.kick(reason=reason)
+        if permissions.kick_members:
+            await member.kick(reason=reason)
     elif action == "ban":
-        await member.ban(reason=reason, delete_message_seconds=0)
+        if permissions.ban_members:
+            await member.ban(reason=reason, delete_message_seconds=0)
     else:
-        await member.timeout_for(timedelta(seconds=timeout), reason=reason)
+        if permissions.mute_members:
+            await member.timeout_for(timedelta(seconds=timeout), reason=reason)
     return ACTION_NAMES.get(action, "Timeout")
 
 
 async def send_anti_raid_log(
-    c, guild, member: Member, action_name: str, reason: str, extra_fields=None
+    guild, member: Member, action_name: str, reason: str, extra_fields=None
 ):
     fields = [
         EmbedField(
@@ -493,10 +508,8 @@ async def send_anti_raid_log(
     if extra_fields:
         fields.extend(extra_fields)
 
-    await send_message_to_log_channel(
-        c,
+    await _send_anti_raid_embed(
         guild,
-        "anti_raid",
         Embed(
             title="Anti Raid",
             fields=fields,
@@ -504,11 +517,16 @@ async def send_anti_raid_log(
     )
 
 
+async def _send_anti_raid_embed(guild, embed: Embed):
+    with engine.begin() as c:
+        await send_message_to_log_channel(c, guild, "anti_raid", embed)
+
+
 async def send_anti_raid_dm(member: Member, message: str):
     try:
         await member.send(content=message)
-    except Exception:
-        pass
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
 
 
 def _format_template(template: str, member: Member, values: dict[str, str]) -> str:
@@ -540,12 +558,22 @@ async def _delete_messages(messages: list[Message]):
         try:
             for i in range(0, len(unique), 100):
                 await channel.delete_messages(unique[i : i + 100])
-        except Exception:
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
             for message in unique:
                 try:
                     await message.delete()
-                except Exception:
-                    pass
+                except Exception as e2:
+                    sentry_sdk.capture_exception(e2)
+
+
+async def _kick_member(member: Member, reason: str):
+    if not member.guild.me.guild_permissions.kick_members:
+        return
+    try:
+        await member.kick(reason=reason)
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
 
 
 async def verify_member(member: Member):
@@ -554,7 +582,7 @@ async def verify_member(member: Member):
         kick_minimum_age = int(setting_minimum_age.get(c, member.guild.id))
 
     if kick_no_avatar and member.avatar is None:
-        await member.kick(reason="Anti Raid: User has no avatar")
+        await _kick_member(member, "Anti Raid: User has no avatar")
         return
 
     if kick_minimum_age == 0:
@@ -564,8 +592,9 @@ async def verify_member(member: Member):
         datetime.datetime.now() - member.created_at.replace(tzinfo=None)
     ).days
     if account_age < kick_minimum_age:
-        await member.kick(
-            reason=f"Anti Raid: User is below minimum account age ({account_age} < {kick_minimum_age})"
+        await _kick_member(
+            member,
+            f"Anti Raid: User is below minimum account age ({account_age} < {kick_minimum_age})",
         )
 
 
@@ -626,18 +655,19 @@ async def handle_mrbeast_scam(message: Message):
     values = {"{count}": str(trigger_count), "{channels}": str(len(channels))}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
-    with engine.begin() as c:
-        await send_message_to_log_channel(
-            c,
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(
+        _send_anti_raid_embed(
             message.guild,
-            "anti_raid",
             Embed(
                 title="MrBeast Scam Detection",
                 description="Akabot detected a member posting the same media across multiple channels",
@@ -655,9 +685,11 @@ async def handle_mrbeast_scam(message: Message):
                 ],
             ),
         )
-
+    )
     if delete:
-        await _delete_messages(scam_messages)
+        coros.append(_delete_messages(scam_messages))
+
+    await _parallel_report(*coros)
 
     guild_posts.pop(member.id, None)
 
@@ -698,20 +730,21 @@ async def handle_flood(message: Message):
     values = {"{count}": str(len(member_msgs)), "{window}": str(window)}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await _delete_messages([m for _, m in member_msgs])
+        coros.append(_delete_messages([m for _, m in member_msgs]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
     guild_msgs.pop(member.id, None)
 
@@ -763,20 +796,21 @@ async def handle_duplicate(message: Message):
     values = {"{count}": str(same_count), "{window}": str(window)}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await _delete_messages([m for _, m in member_msgs])
+        coros.append(_delete_messages([m for _, m in member_msgs]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
     guild_msgs.pop(member.id, None)
 
@@ -815,20 +849,21 @@ async def handle_mass_mentions(message: Message):
     values = {"{count}": str(mention_count)}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await _delete_messages([message])
+        coros.append(_delete_messages([message]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
 
 async def handle_invite_spam(message: Message):
@@ -874,20 +909,21 @@ async def handle_invite_spam(message: Message):
     values = {"{count}": str(len(member_msgs)), "{window}": str(window)}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await _delete_messages([m for _, m in member_msgs])
+        coros.append(_delete_messages([m for _, m in member_msgs]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
     guild_msgs.pop(member.id, None)
 
@@ -933,20 +969,21 @@ async def handle_caps(message: Message):
     }
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await message.delete()
+        coros.append(_delete_messages([message]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
 
 async def handle_emoji_flood(message: Message):
@@ -994,20 +1031,21 @@ async def handle_emoji_flood(message: Message):
     values = {"{count}": str(len(member_msgs)), "{window}": str(window)}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await _delete_messages([m for _, m in member_msgs])
+        coros.append(_delete_messages([m for _, m in member_msgs]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
     guild_msgs.pop(member.id, None)
 
@@ -1051,20 +1089,21 @@ async def handle_sticker_flood(message: Message):
     values = {"{count}": str(len(member_msgs)), "{window}": str(window)}
     reason = _format_template(reason_template, member, values)
 
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     if dm:
-        await send_anti_raid_dm(
-            member, _format_template(dm_template, member, {**values, "{reason}": reason})
+        coros.append(
+            send_anti_raid_dm(
+                member, _format_template(dm_template, member, {**values, "{reason}": reason})
+            )
         )
-
-    action_name = await perform_action(member, action, reason, timeout)
-
+    coros.append(perform_action(member, action, reason, timeout))
+    coros.append(send_anti_raid_log(message.guild, member, action_name, reason))
     if delete:
-        await _delete_messages([m for _, m in member_msgs])
+        coros.append(_delete_messages([m for _, m in member_msgs]))
 
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c, message.guild, member, action_name, reason,
-        )
+    await _parallel_report(*coros)
 
     guild_msgs.pop(member.id, None)
 
@@ -1108,20 +1147,22 @@ async def handle_join_burst(member: Member):
     values = {"{count}": str(len(guild_joins)), "{window}": str(window)}
     reason = _format_template(reason_template, member, values)
 
-    action_name = "Log"
+    action_name = ACTION_NAMES.get(action, "Timeout")
+
+    coros = []
     for burst_member in burst_members:
         if dm:
-            await send_anti_raid_dm(
-                burst_member,
-                _format_template(
-                    dm_template, burst_member, {**values, "{reason}": reason}
-                ),
+            coros.append(
+                send_anti_raid_dm(
+                    burst_member,
+                    _format_template(
+                        dm_template, burst_member, {**values, "{reason}": reason}
+                    ),
+                )
             )
-        action_name = await perform_action(burst_member, action, reason, timeout)
-
-    with engine.begin() as c:
-        await send_anti_raid_log(
-            c,
+        coros.append(perform_action(burst_member, action, reason, timeout))
+    coros.append(
+        send_anti_raid_log(
             member.guild,
             member,
             action_name,
@@ -1135,3 +1176,6 @@ async def handle_join_burst(member: Member):
                 ),
             ],
         )
+    )
+
+    await _parallel_report(*coros)
