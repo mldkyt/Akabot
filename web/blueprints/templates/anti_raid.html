@@ -9,7 +9,18 @@
 </div>
 {% endfor %}
 
+<h2>Template placeholders</h2>
+<p>Reason and DM message fields support these placeholders:</p>
+<p><code>{guild}</code> - server name</p>
+<p><code>{username}</code> - user's username</p>
+<p><code>{display_name}</code> - user's display name</p>
+<p><code>{member}</code> - user's display name</p>
+<p><code>{reason}</code> - formatted reason message (DM messages only)</p>
+<p>Additional placeholders are listed under each detection type.</p>
+
 <form method="post" action="/settings/anti_raid">
+    <h2>Basic settings</h2>
+
     <input type="checkbox" name="kick_no_pfp" id="kick_no_pfp" {% if kick_no_pfp %}checked{% endif %}>
     <label for="kick_no_pfp">Kick users without avatar</label>
     <br/>
@@ -18,6 +29,7 @@
     <br/>
 
     <h2>MrBeast scam detection</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{channels}</code></p>
     <input type="checkbox" name="mrbeast_scam" id="mrbeast_scam" {% if mrbeast_scam %}checked{% endif %}>
     <label for="mrbeast_scam">Detect members posting the same media into 3 or more channels within 10 seconds</label>
     <br/>
@@ -26,7 +38,298 @@
         <option value="timeout" {% if mrbeast_action == "timeout" %}selected{% endif %}>Timeout</option>
         <option value="kick" {% if mrbeast_action == "kick" %}selected{% endif %}>Kick</option>
         <option value="ban" {% if mrbeast_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if mrbeast_action == "log" %}selected{% endif %}>Log</option>
     </select>
+    <br/>
+    <input type="checkbox" name="mrbeast_dm" id="mrbeast_dm" {% if mrbeast_dm %}checked{% endif %}>
+    <label for="mrbeast_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="mrbeast_delete" id="mrbeast_delete" {% if mrbeast_delete %}checked{% endif %}>
+    <label for="mrbeast_delete">Delete messages</label>
+    <br/>
+    <label for="mrbeast_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="mrbeast_timeout" id="mrbeast_timeout" value="{{mrbeast_timeout}}">
+    <br/>
+    <label for="mrbeast_dm_message">DM message</label>
+    <input type="text" name="mrbeast_dm_message" id="mrbeast_dm_message" value="{{mrbeast_dm_message}}">
+    <br/>
+    <label for="mrbeast_reason">Reason message</label>
+    <input type="text" name="mrbeast_reason" id="mrbeast_reason" value="{{mrbeast_reason}}">
+    <br/>
+
+    <h2>Message flood</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{window}</code></p>
+    <input type="checkbox" name="flood_enabled" id="flood_enabled" {% if flood_enabled %}checked{% endif %}>
+    <label for="flood_enabled">Detect members sending too many messages in a short time</label>
+    <br/>
+    <label for="flood_action">Action</label>
+    <select name="flood_action" id="flood_action">
+        <option value="timeout" {% if flood_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if flood_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if flood_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if flood_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="flood_dm" id="flood_dm" {% if flood_dm %}checked{% endif %}>
+    <label for="flood_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="flood_delete" id="flood_delete" {% if flood_delete %}checked{% endif %}>
+    <label for="flood_delete">Delete messages</label>
+    <br/>
+    <label for="flood_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="flood_timeout" id="flood_timeout" value="{{flood_timeout}}">
+    <br/>
+    <label for="flood_dm_message">DM message</label>
+    <input type="text" name="flood_dm_message" id="flood_dm_message" value="{{flood_dm_message}}">
+    <br/>
+    <label for="flood_reason">Reason message</label>
+    <input type="text" name="flood_reason" id="flood_reason" value="{{flood_reason}}">
+    <br/>
+    <label for="flood_count">Messages in window</label>
+    <input type="number" name="flood_count" id="flood_count" value="{{flood_count}}">
+    <br/>
+    <label for="flood_window">Window in seconds</label>
+    <input type="number" name="flood_window" id="flood_window" value="{{flood_window}}">
+    <br/>
+
+    {% if message_intent %}
+    <h2>Duplicate message spam</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{window}</code></p>
+    <input type="checkbox" name="duplicate_enabled" id="duplicate_enabled" {% if duplicate_enabled %}checked{% endif %}>
+    <label for="duplicate_enabled">Detect members sending the same message repeatedly</label>
+    <br/>
+    <label for="duplicate_action">Action</label>
+    <select name="duplicate_action" id="duplicate_action">
+        <option value="timeout" {% if duplicate_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if duplicate_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if duplicate_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if duplicate_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="duplicate_dm" id="duplicate_dm" {% if duplicate_dm %}checked{% endif %}>
+    <label for="duplicate_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="duplicate_delete" id="duplicate_delete" {% if duplicate_delete %}checked{% endif %}>
+    <label for="duplicate_delete">Delete messages</label>
+    <br/>
+    <label for="duplicate_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="duplicate_timeout" id="duplicate_timeout" value="{{duplicate_timeout}}">
+    <br/>
+    <label for="duplicate_dm_message">DM message</label>
+    <input type="text" name="duplicate_dm_message" id="duplicate_dm_message" value="{{duplicate_dm_message}}">
+    <br/>
+    <label for="duplicate_reason">Reason message</label>
+    <input type="text" name="duplicate_reason" id="duplicate_reason" value="{{duplicate_reason}}">
+    <br/>
+    <label for="duplicate_count">Duplicate messages in window</label>
+    <input type="number" name="duplicate_count" id="duplicate_count" value="{{duplicate_count}}">
+    <br/>
+    <label for="duplicate_window">Window in seconds</label>
+    <input type="number" name="duplicate_window" id="duplicate_window" value="{{duplicate_window}}">
+    <br/>
+
+    <h2>Mass mentions</h2>
+    <p>Placeholders: <code>{count}</code></p>
+    <input type="checkbox" name="mentions_enabled" id="mentions_enabled" {% if mentions_enabled %}checked{% endif %}>
+    <label for="mentions_enabled">Detect members mentioning too many users or roles in one message</label>
+    <br/>
+    <label for="mentions_action">Action</label>
+    <select name="mentions_action" id="mentions_action">
+        <option value="timeout" {% if mentions_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if mentions_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if mentions_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if mentions_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="mentions_dm" id="mentions_dm" {% if mentions_dm %}checked{% endif %}>
+    <label for="mentions_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="mentions_delete" id="mentions_delete" {% if mentions_delete %}checked{% endif %}>
+    <label for="mentions_delete">Delete messages</label>
+    <br/>
+    <label for="mentions_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="mentions_timeout" id="mentions_timeout" value="{{mentions_timeout}}">
+    <br/>
+    <label for="mentions_dm_message">DM message</label>
+    <input type="text" name="mentions_dm_message" id="mentions_dm_message" value="{{mentions_dm_message}}">
+    <br/>
+    <label for="mentions_reason">Reason message</label>
+    <input type="text" name="mentions_reason" id="mentions_reason" value="{{mentions_reason}}">
+    <br/>
+    <label for="mentions_count">Mentions in a single message</label>
+    <input type="number" name="mentions_count" id="mentions_count" value="{{mentions_count}}">
+    <br/>
+
+    <h2>Invite spam</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{window}</code></p>
+    <input type="checkbox" name="invite_enabled" id="invite_enabled" {% if invite_enabled %}checked{% endif %}>
+    <label for="invite_enabled">Detect members posting Discord invite links</label>
+    <br/>
+    <label for="invite_action">Action</label>
+    <select name="invite_action" id="invite_action">
+        <option value="timeout" {% if invite_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if invite_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if invite_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if invite_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="invite_dm" id="invite_dm" {% if invite_dm %}checked{% endif %}>
+    <label for="invite_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="invite_delete" id="invite_delete" {% if invite_delete %}checked{% endif %}>
+    <label for="invite_delete">Delete messages</label>
+    <br/>
+    <label for="invite_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="invite_timeout" id="invite_timeout" value="{{invite_timeout}}">
+    <br/>
+    <label for="invite_dm_message">DM message</label>
+    <input type="text" name="invite_dm_message" id="invite_dm_message" value="{{invite_dm_message}}">
+    <br/>
+    <label for="invite_reason">Reason message</label>
+    <input type="text" name="invite_reason" id="invite_reason" value="{{invite_reason}}">
+    <br/>
+    <label for="invite_count">Messages with links in window</label>
+    <input type="number" name="invite_count" id="invite_count" value="{{invite_count}}">
+    <br/>
+    <label for="invite_window">Window in seconds</label>
+    <input type="number" name="invite_window" id="invite_window" value="{{invite_window}}">
+    <br/>
+
+    <h2>Caps flood</h2>
+    <p>Placeholders: <code>{percentage}</code>, <code>{characters}</code></p>
+    <input type="checkbox" name="caps_enabled" id="caps_enabled" {% if caps_enabled %}checked{% endif %}>
+    <label for="caps_enabled">Detect messages that are mostly uppercase text</label>
+    <br/>
+    <label for="caps_action">Action</label>
+    <select name="caps_action" id="caps_action">
+        <option value="timeout" {% if caps_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if caps_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if caps_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if caps_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="caps_dm" id="caps_dm" {% if caps_dm %}checked{% endif %}>
+    <label for="caps_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="caps_delete" id="caps_delete" {% if caps_delete %}checked{% endif %}>
+    <label for="caps_delete">Delete messages</label>
+    <br/>
+    <label for="caps_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="caps_timeout" id="caps_timeout" value="{{caps_timeout}}">
+    <br/>
+    <label for="caps_dm_message">DM message</label>
+    <input type="text" name="caps_dm_message" id="caps_dm_message" value="{{caps_dm_message}}">
+    <br/>
+    <label for="caps_reason">Reason message</label>
+    <input type="text" name="caps_reason" id="caps_reason" value="{{caps_reason}}">
+    <br/>
+    <label for="caps_percentage">Uppercase percentage</label>
+    <input type="number" name="caps_percentage" id="caps_percentage" value="{{caps_percentage}}">
+    <br/>
+    <label for="caps_min_length">Minimum message length</label>
+    <input type="number" name="caps_min_length" id="caps_min_length" value="{{caps_min_length}}">
+    <br/>
+
+    <h2>Emoji flood</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{window}</code></p>
+    <input type="checkbox" name="emoji_enabled" id="emoji_enabled" {% if emoji_enabled %}checked{% endif %}>
+    <label for="emoji_enabled">Detect members spamming emojis</label>
+    <br/>
+    <label for="emoji_action">Action</label>
+    <select name="emoji_action" id="emoji_action">
+        <option value="timeout" {% if emoji_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if emoji_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if emoji_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if emoji_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="emoji_dm" id="emoji_dm" {% if emoji_dm %}checked{% endif %}>
+    <label for="emoji_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="emoji_delete" id="emoji_delete" {% if emoji_delete %}checked{% endif %}>
+    <label for="emoji_delete">Delete messages</label>
+    <br/>
+    <label for="emoji_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="emoji_timeout" id="emoji_timeout" value="{{emoji_timeout}}">
+    <br/>
+    <label for="emoji_dm_message">DM message</label>
+    <input type="text" name="emoji_dm_message" id="emoji_dm_message" value="{{emoji_dm_message}}">
+    <br/>
+    <label for="emoji_reason">Reason message</label>
+    <input type="text" name="emoji_reason" id="emoji_reason" value="{{emoji_reason}}">
+    <br/>
+    <label for="emoji_count">Emojis in window</label>
+    <input type="number" name="emoji_count" id="emoji_count" value="{{emoji_count}}">
+    <br/>
+    <label for="emoji_window">Window in seconds</label>
+    <input type="number" name="emoji_window" id="emoji_window" value="{{emoji_window}}">
+    <br/>
+    {% endif %}
+
+    <h2>Sticker flood</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{window}</code></p>
+    <input type="checkbox" name="sticker_enabled" id="sticker_enabled" {% if sticker_enabled %}checked{% endif %}>
+    <label for="sticker_enabled">Detect members sending too many stickers</label>
+    <br/>
+    <label for="sticker_action">Action</label>
+    <select name="sticker_action" id="sticker_action">
+        <option value="timeout" {% if sticker_action == "timeout" %}selected{% endif %}>Timeout</option>
+        <option value="kick" {% if sticker_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if sticker_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if sticker_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="sticker_dm" id="sticker_dm" {% if sticker_dm %}checked{% endif %}>
+    <label for="sticker_dm">DM the member</label>
+    <br/>
+    <input type="checkbox" name="sticker_delete" id="sticker_delete" {% if sticker_delete %}checked{% endif %}>
+    <label for="sticker_delete">Delete messages</label>
+    <br/>
+    <label for="sticker_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="sticker_timeout" id="sticker_timeout" value="{{sticker_timeout}}">
+    <br/>
+    <label for="sticker_dm_message">DM message</label>
+    <input type="text" name="sticker_dm_message" id="sticker_dm_message" value="{{sticker_dm_message}}">
+    <br/>
+    <label for="sticker_reason">Reason message</label>
+    <input type="text" name="sticker_reason" id="sticker_reason" value="{{sticker_reason}}">
+    <br/>
+    <label for="sticker_count">Stickers in window</label>
+    <input type="number" name="sticker_count" id="sticker_count" value="{{sticker_count}}">
+    <br/>
+    <label for="sticker_window">Window in seconds</label>
+    <input type="number" name="sticker_window" id="sticker_window" value="{{sticker_window}}">
+    <br/>
+
+    <h2>Join burst raid</h2>
+    <p>Placeholders: <code>{count}</code>, <code>{window}</code></p>
+    <input type="checkbox" name="joinburst_enabled" id="joinburst_enabled" {% if joinburst_enabled %}checked{% endif %}>
+    <label for="joinburst_enabled">Detect many members joining in a short time</label>
+    <br/>
+    <label for="joinburst_action">Action</label>
+    <select name="joinburst_action" id="joinburst_action">
+        <option value="kick" {% if joinburst_action == "kick" %}selected{% endif %}>Kick</option>
+        <option value="ban" {% if joinburst_action == "ban" %}selected{% endif %}>Ban</option>
+        <option value="log" {% if joinburst_action == "log" %}selected{% endif %}>Log</option>
+    </select>
+    <br/>
+    <input type="checkbox" name="joinburst_dm" id="joinburst_dm" {% if joinburst_dm %}checked{% endif %}>
+    <label for="joinburst_dm">DM the member</label>
+    <br/>
+    <label for="joinburst_timeout">Timeout duration (seconds)</label>
+    <input type="number" name="joinburst_timeout" id="joinburst_timeout" value="{{joinburst_timeout}}">
+    <br/>
+    <label for="joinburst_dm_message">DM message</label>
+    <input type="text" name="joinburst_dm_message" id="joinburst_dm_message" value="{{joinburst_dm_message}}">
+    <br/>
+    <label for="joinburst_reason">Reason message</label>
+    <input type="text" name="joinburst_reason" id="joinburst_reason" value="{{joinburst_reason}}">
+    <br/>
+    <label for="joinburst_count">Joins in window</label>
+    <input type="number" name="joinburst_count" id="joinburst_count" value="{{joinburst_count}}">
+    <br/>
+    <label for="joinburst_window">Window in seconds</label>
+    <input type="number" name="joinburst_window" id="joinburst_window" value="{{joinburst_window}}">
     <br/>
 
     <button type="submit">Save</button>

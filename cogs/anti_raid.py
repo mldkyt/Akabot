@@ -1,7 +1,18 @@
 import sentry_sdk
 from discord import Bot, Cog, Member, Message
 
-from utils.anti_raid import handle_mrbeast_scam, verify_member
+from utils.anti_raid import (
+    handle_caps,
+    handle_duplicate,
+    handle_emoji_flood,
+    handle_flood,
+    handle_invite_spam,
+    handle_join_burst,
+    handle_mass_mentions,
+    handle_mrbeast_scam,
+    handle_sticker_flood,
+    verify_member,
+)
 
 
 class AntiRaid(Cog):
@@ -11,7 +22,11 @@ class AntiRaid(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
-        await verify_member(member)
+        try:
+            await verify_member(member)
+            await handle_join_burst(member)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_message(self, message: Message):
@@ -20,10 +35,15 @@ class AntiRaid(Cog):
                 return
             if message.author.bot:
                 return
-            if not message.attachments:
-                return
 
             await handle_mrbeast_scam(message)
+            await handle_flood(message)
+            await handle_duplicate(message)
+            await handle_mass_mentions(message)
+            await handle_invite_spam(message)
+            await handle_caps(message)
+            await handle_emoji_flood(message)
+            await handle_sticker_flood(message)
         except Exception as e:
             sentry_sdk.capture_exception(e)
 
