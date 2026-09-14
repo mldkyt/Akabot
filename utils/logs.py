@@ -11,7 +11,6 @@ from discord import (
 from sqlalchemy import Connection, select
 
 from database import logging_channels
-from logger import akabot_logger
 from utils.server_settings import (
     ServerSetting,
     SettingType,

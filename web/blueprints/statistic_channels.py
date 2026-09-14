@@ -2,7 +2,7 @@ from flask import Blueprint, session, render_template, request, flash, redirect
 from sqlalchemy import select
 
 from database import engine, synced_channels
-from utils.premium import get_limit, get_premium_context
+from utils.premium import get_limit
 from utils.statistic_channels import setting_statistic_channels
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data

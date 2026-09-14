@@ -11,7 +11,7 @@ from utils.chat_summary import chat_summary
 from utils.counting import setting_counting_channels
 from utils.leveling import setting_leveling_rewards
 from utils.moderation_commands import moderator_roles
-from utils.premium import get_limit, generate_tokens, get_premium_context, is_owner, premium_enabled, redeem_token
+from utils.premium import get_limit, generate_tokens, get_premium_context, is_owner, redeem_token
 from utils.roles_on_join import setting_roles_on_join
 from utils.statistic_channels import setting_statistic_channels
 from utils.suggestions import suggestion_channels

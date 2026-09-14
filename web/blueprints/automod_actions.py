@@ -3,7 +3,7 @@ from sqlalchemy import select, Connection
 
 from database import engine, synced_automod_rules
 from utils.automod_actions import automod_actions, time_str_to_time
-from utils.premium import get_limit, get_premium_context
+from utils.premium import get_limit
 from web.webutils.discord_sync import validate_automod_rule_id
 from web.webutils.tokens import authorize, get_token_data
 

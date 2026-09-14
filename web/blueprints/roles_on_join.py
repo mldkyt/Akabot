@@ -3,7 +3,7 @@ from flask import Blueprint, session, render_template, redirect, request, flash
 from sqlalchemy import select
 
 from database import engine, synced_roles
-from utils.premium import get_limit, get_premium_context
+from utils.premium import get_limit
 from utils.roles_on_join import setting_roles_on_join
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import get_token_data, authorize
