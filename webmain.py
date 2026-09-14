@@ -22,6 +22,7 @@ from web.blueprints.meow_back import meow_back_bp
 from web.blueprints.message_counting import message_counting_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.periodic_messages import periodic_messages_bp
+from web.blueprints.premium import premium_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
 from web.blueprints.statistic_channels import statistic_channels_bp
 from web.blueprints.sticky_messages import sticky_messages_bp
@@ -31,6 +32,8 @@ from web.blueprints.temporary_vcs import temporary_vcs_bp
 from web.blueprints.verification import verification_bp
 from web.blueprints.voting import voting_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
+
+from utils.premium import premium_enabled
 
 load_dotenv()
 
@@ -47,6 +50,8 @@ if os.getenv("SENTRY_SDK"):
 app = Flask(__name__, static_folder="web/static", static_url_path="/static")
 
 app.secret_key = os.getenv("WEB_SECRET", "1234")
+
+app.context_processor(lambda: {"premium_enabled": premium_enabled()})
 
 # Settings
 app.register_blueprint(settings_index_bp)
@@ -74,6 +79,7 @@ app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)
 app.register_blueprint(message_counting_bp)
+app.register_blueprint(premium_bp)
 
 if os.getenv("TOPGG_WEBHOOK_SECRET") is not None:
     app.register_blueprint(voting_bp)
