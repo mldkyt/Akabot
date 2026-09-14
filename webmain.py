@@ -2,10 +2,14 @@ import os
 
 import sentry_sdk
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, request, session
 
+from database import engine
+from utils.premium import premium_enabled, usage_bar
 from web.blueprints.anti_raid import anti_raid_bp
 from web.blueprints.automod_actions import automod_actions_bp
+from web.blueprints.premium import get_usage, premium_bp
+from web.webutils.tokens import get_token_data
 from web.blueprints.chat_revive import chat_revive_bp
 from web.blueprints.chat_streaks import chat_streaks_bp
 from web.blueprints.chat_summary import chat_summary_bp
@@ -48,6 +52,74 @@ app = Flask(__name__, static_folder="web/static", static_url_path="/static")
 
 app.secret_key = os.getenv("WEB_SECRET", "1234")
 
+app.context_processor(lambda: {"premium_enabled": premium_enabled()})
+
+PAGE_USAGE = {
+    "/settings/counting": ("Counting channels", 1),
+    "/settings/leveling": ("Leveling rewards", 3),
+    "/settings/moderation": ("Moderator roles", 5),
+    "/settings/welcome_goodbye": None,
+    "/settings/logging": ("Logging channels", 1),
+    "/settings/automod_actions": ("Automod actions", 3),
+    "/settings/chat_summary": ("Chat summary channels", 1),
+    "/settings/roles_on_join": ("Roles on join", 3),
+    "/settings/chat_revive": ("Chat revive channels", 1),
+    "/settings/temporary_vcs": ("Temporary voice channels", 3),
+    "/settings/statistic_channels": ("Statistic channels", 2),
+    "/settings/verification": ("Verification setups", 1),
+    "/settings/anti_raid": ("Anti raid protections", 3),
+    "/settings/message_counting": ("Message counting rewards", 3),
+    "/settings/periodic_messages": ("Periodic messages", 2),
+    "/settings/sticky_messages": ("Sticky messages", 1),
+    "/settings/suggestions": ("Suggestion channels", 1),
+    "/settings/tags": ("Tags", 3),
+    "/settings/markov": ("Markov channels", 1),
+}
+
+
+@app.context_processor
+def inject_premium_usage():
+    if "token" not in session:
+        return {}
+
+    match = None
+    for path, config in PAGE_USAGE.items():
+        if request.path.startswith(path):
+            match = (path, config)
+            break
+
+    if match is None:
+        return {}
+
+    auth = get_token_data(session["token"])
+    if auth is None:
+        return {}
+
+    with engine.begin() as c:
+        if not premium_enabled():
+            return {"premium_usage": None}
+
+        items = {i["name"]: i for i in get_usage(c, auth["guild"])}
+
+        if match[1] is None:
+            usage = items["Welcome messages"]["usage"] + items["Goodbye messages"]["usage"]
+            return {
+                "premium_usage": usage_bar(
+                    c, auth["guild"], "Welcome & Goodbye messages", usage, 2
+                )
+            }
+
+        name, free_limit = match[1]
+        item = items.get(name)
+        if item is None:
+            return {}
+
+        return {
+            "premium_usage": usage_bar(
+                c, auth["guild"], name, item["usage"], free_limit
+            )
+        }
+
 # Settings
 app.register_blueprint(settings_index_bp)
 app.register_blueprint(automod_actions_bp)
@@ -74,6 +146,7 @@ app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)
 app.register_blueprint(message_counting_bp)
+app.register_blueprint(premium_bp)
 
 if os.getenv("TOPGG_WEBHOOK_SECRET") is not None:
     app.register_blueprint(voting_bp)

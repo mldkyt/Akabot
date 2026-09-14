@@ -19,6 +19,7 @@ from database import (
 )
 from logger import akabot_logger
 from utils.message_appends import apply_appends
+from utils.premium import premium_required
 
 
 class VCNotifications(Cog):
@@ -93,6 +94,13 @@ class VCNotifications(Cog):
     )
     async def sub_user(self, ctx: ApplicationContext, user: User):
         with engine.begin() as c:
+            if premium_required(c, ctx.guild.id):
+                await ctx.respond(
+                    "Subscribing to notifications from specific users is a Premium feature",
+                    ephemeral=True,
+                )
+                return
+
             if (
                 c.execute(
                     select(vc_notifications_user).where(
@@ -159,6 +167,13 @@ class VCNotifications(Cog):
     )
     async def sub_channel(self, ctx: ApplicationContext, channel: VoiceChannel):
         with engine.begin() as c:
+            if premium_required(c, ctx.guild.id):
+                await ctx.respond(
+                    "Subscribing to notifications from specific channels is a Premium feature",
+                    ephemeral=True,
+                )
+                return
+
             if (
                 c.execute(
                     select(vc_notifications_channel).where(

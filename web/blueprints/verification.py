@@ -1,9 +1,8 @@
-from idlelib.rpc import request_queue
-
 from flask import Blueprint, session, render_template, request, flash
 from sqlalchemy import select
 
 from database import engine, synced_roles, synced_channels
+from utils.premium import get_premium_context
 from utils.verification import setting_verification_role, setting_verification_mode, setting_introduction_channel, \
     setting_kick_unverified_users
 from web.webutils.discord_sync import validate_role_id, validate_text_channel_id
@@ -13,6 +12,8 @@ verification_bp = Blueprint("verification_settings", __name__, template_folder='
 
 def handle_save(auth):
     with engine.begin() as c:
+        free_tier = get_premium_context(c, auth["guild"])["premium_only"]
+
         if "verification_role" in request.form:
             if request.form["verification_role"] == "unset":
                 setting_verification_role.set(c, auth["guild"], "")
@@ -20,14 +21,21 @@ def handle_save(auth):
                 setting_verification_role.set(c, auth["guild"], request.form["verification_role"])
 
         if "verification_mode" in request.form and request.form["verification_mode"] in ["none", "math", "silly", "introduction"]:
-            setting_verification_mode.set(c, auth["guild"], request.form["verification_mode"])
+            if free_tier and request.form["verification_mode"] in ["silly", "introduction"] and \
+                    setting_verification_mode.get(c, auth["guild"]) != request.form["verification_mode"]:
+                flash("Silly and introduction verification modes are Premium features")
+            else:
+                setting_verification_mode.set(c, auth["guild"], request.form["verification_mode"])
 
         # Introduction channel
         if "introductionchannel" in request.form:
             if request.form["introductionchannel"] == "unset":
                 setting_introduction_channel.set(c, auth["guild"], "")
             elif validate_text_channel_id(request.form["introductionchannel"]):
-                setting_introduction_channel.set(c, auth["guild"], request.form["introductionchannel"])
+                if free_tier and setting_introduction_channel.get(c, auth["guild"]) != request.form["introductionchannel"]:
+                    flash("Introduction verification is a Premium feature")
+                else:
+                    setting_introduction_channel.set(c, auth["guild"], request.form["introductionchannel"])
             else:
                 flash("Admin bot channel property found but the value was invalid.")
 
@@ -70,7 +78,10 @@ def verification_index():
             .where((synced_channels.c.gid == str(auth["guild"])) & (synced_channels.c.ctype == "text"))
         )]
 
+        premium = get_premium_context(c, auth["guild"])
+
     return render_template("verification.html", verification_role=verification_role_id,
                            verification_mode=verification_mode, roles=roles, text_channels=text_channels,
-                           introduction_channel=introduction_channel_id, kick_unverified_users=kick_unverified_users)
+                           introduction_channel=introduction_channel_id, kick_unverified_users=kick_unverified_users,
+                           premium=premium)
 

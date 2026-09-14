@@ -13,6 +13,7 @@
         {% include 'sidebar.html' %}
     </aside>
     <main class="main">
+        {% if premium_usage %}{% include 'premium_usage.html' %}{% endif %}
         {% block main %}{% endblock %}
     </main>
 </div>

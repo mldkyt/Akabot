@@ -19,6 +19,7 @@
 
     <label for="level_up_message_text">Level up message text</label>
     <input type="text" name="level_up_message_text" id="level_up_message_text" value="{{level_up_message_text}}">
+    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <label for="xp_per_message">XP per message</label>
@@ -73,7 +74,7 @@
 <p>No rewards set up</p>
 {% endfor %}
 
-<h2>Multipliers</h2>
+<h2>Multipliers {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}</h2>
 
 <p>Here you can configure multipliers for date ranges.</p>
 

@@ -14,6 +14,7 @@ from database import (
     web_tokens,
 )
 from logger import akabot_logger
+from utils.automod_actions import setting_automod_sync_error
 
 
 async def sync_text_channels(c: Connection, guild: Guild):
@@ -165,7 +166,9 @@ async def sync_roles(c: Connection, guild: Guild):
 
 async def sync_automod_actions(c: Connection, guild: Guild):
     if not guild.me.guild_permissions.manage_guild:
-        return
+        raise ValueError(
+            f"Akabot is missing the Manage Server permission in {guild.name}"
+        )
 
     automod_rules = await guild.fetch_auto_moderation_rules()
     automod_rule_ids = [i.id for i in automod_rules]
@@ -220,7 +223,14 @@ async def sync_guild(guild: Guild):
             await sync_text_channels(c, guild)
             await sync_voice_channels(c, guild)
             await sync_roles(c, guild)
-            await sync_automod_actions(c, guild)
+            try:
+                await sync_automod_actions(c, guild)
+                setting_automod_sync_error.set(c, guild.id, "")
+            except Exception as e:
+                setting_automod_sync_error.set(c, guild.id, str(e))
+                akabot_logger.warning(
+                    f"Failed to sync automod actions for guild {guild.name}: {e}"
+                )
     except Exception as e:
         akabot_logger.exception(f"Failed to sync guild {guild}: {e}")
         sentry_sdk.capture_exception(e)

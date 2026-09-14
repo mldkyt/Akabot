@@ -4,6 +4,7 @@ from sqlalchemy import select
 from database import engine, synced_channels
 from utils.counting import setting_counting_channels, any_count_mode, any_count_mode_count_words, \
     any_count_mode_count_frequency, any_count_mode_minimum_frequency, same_member_counting_mode
+from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -14,6 +15,16 @@ def set_settings(auth):
         return
 
     with engine.begin() as c:
+        if get_premium_context(c, auth["guild"])["premium_only"]:
+            premium_only_requested = any(request.form.get(key) for key in
+                                         ("any_count", "count_words", "count_word_frequency", "same_member"))
+            if request.form.get("count_frequency_min", "").isnumeric():
+                premium_only_requested = True
+
+            if premium_only_requested:
+                flash("Any count mode, word counting and same member modes are Premium features")
+                return
+
         if request.form.get("any_count"):
             any_count_mode.set(c, auth["guild"], "true")
         else:
@@ -46,6 +57,11 @@ def add_channel(auth):
         with engine.begin() as c:
             if setting_counting_channels.is_in_list(c, auth["guild"], request.form["channel"]):
                 flash("This channel is already added")
+                return
+
+            limit = get_limit(c, auth["guild"], 1)
+            if limit is not None and len(setting_counting_channels.get(c, auth["guild"])) >= limit:
+                flash("Free plan is limited to 1 counting channel")
                 return
 
             setting_counting_channels.add_to_list(c, auth["guild"], request.form["channel"])
@@ -93,9 +109,12 @@ def counting_index():
         count_frequency_min = any_count_mode_minimum_frequency.get(c, auth["guild"])
         same_member = same_member_counting_mode.get(c, auth["guild"]) == "true"
 
+        premium = get_premium_context(c, auth["guild"])
+
     return render_template("counting.html", counting_channels=counting_channel_names,
                            text_channels=text_channels, same_member=same_member,
-                           any_count=any_count, count_words=count_words, count_word_frequency=count_word_frequency, count_frequency_min=count_frequency_min)
+                           any_count=any_count, count_words=count_words, count_word_frequency=count_word_frequency, count_frequency_min=count_frequency_min,
+                           premium=premium)
 
 @counting_bp.route("/settings/counting/delete/<index>")
 def counting_delete(index: str):

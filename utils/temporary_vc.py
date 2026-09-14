@@ -4,6 +4,7 @@ from discord import Member, VoiceState
 from sqlalchemy import insert, select
 
 from database import engine, temporary_vcs
+from utils.premium import get_limit
 from utils.server_settings import ServerSetting, SettingType
 
 setting_temporary_vcs = ServerSetting(
@@ -19,6 +20,16 @@ async def h_join_channel(member: Member, after: VoiceState):
         temporary_vcs_ids = setting_temporary_vcs.get(c, member.guild.id)
 
     if str(after.channel.id) not in temporary_vcs_ids:
+        return
+
+    with engine.begin() as c:
+        limit = get_limit(c, member.guild.id, 3)
+        existing_count = len(c.execute(
+            select(temporary_vcs.c.cid).where(temporary_vcs.c.gid == str(member.guild.id))
+        ).fetchall())
+
+    if limit is not None and existing_count >= limit:
+        await member.send("The free plan is limited to 3 simultaneous temporary voice channels, so one wasn't created.")
         return
 
     # Create a channel

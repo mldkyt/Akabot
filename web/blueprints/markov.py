@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, markov, synced_channels
+from utils.premium import get_limit, get_premium_context
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
@@ -32,6 +33,13 @@ def markov_index():
                 ).fetchone()
 
                 if not row:
+                    limit = get_limit(c, auth["guild"], 1)
+                    markov_count = len(c.execute(
+                        select(markov.c.channel_id).where(markov.c.guild_id == auth["guild"])
+                    ).fetchall())
+                    if limit is not None and markov_count >= limit:
+                        return quick_response("Free plan is limited to 1 markov channel", 400)
+
                     c.execute(
                         insert(markov).values(
                             channel_id=request.form["channel"],
@@ -87,8 +95,11 @@ def markov_index():
             ).fetchall()
         ]
 
+        premium = get_premium_context(c, auth["guild"])
+
     return render_template(
         "markov.html",
         text_channels=text_channels,
         enabled_channels=enabled_channels,
+        premium=premium,
     )

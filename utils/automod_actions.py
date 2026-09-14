@@ -40,6 +40,12 @@ async def fetch_actions(g: Guild):
 
 automod_actions = ServerSetting(name="Automod actions", setting_type=SettingType.LIST)
 
+setting_automod_sync_error = ServerSetting(
+    name="Automod actions sync error",
+    setting_type=SettingType.NORMAL,
+    default="",
+)
+
 
 async def handle_automod_action(
     c: Connection, payload: AutoModActionExecutionEvent, rule: str

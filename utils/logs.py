@@ -11,7 +11,6 @@ from discord import (
 from sqlalchemy import Connection, select
 
 from database import logging_channels
-from logger import akabot_logger
 from utils.server_settings import (
     ServerSetting,
     SettingType,
@@ -65,6 +64,17 @@ logging_settings: list[tuple[str, str]] = [
     ("automod_ban", "Automod Actions ban"),
     ("automod_mute", "Automod Actions mute"),
     ("anti_raid", "Anti Raid"),
+]
+
+basic_logging_settings: list[tuple[str, str]] = [
+    ("member_join", "member joins"),
+    ("member_leave", "member leaves"),
+    ("member_ban", "member bans"),
+    ("member_unban", "member unbans"),
+    ("channel_create", "channel creates"),
+    ("channel_delete", "channel deletes"),
+    ("role_create", "role creates"),
+    ("role_delete", "role deletes"),
 ]
 
 

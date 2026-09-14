@@ -24,6 +24,7 @@ from database import (
 )
 from logger import akabot_logger
 from utils.ads import get_ad
+from utils.premium import has_premium
 from utils.server_settings import (
     ServerSetting,
     SettingType,
@@ -321,13 +322,14 @@ async def summarize(c: Connection, g: Guild):
     now = datetime.datetime.now()
     yesterday = now - datetime.timedelta(days=1)
     chat_summaries = chat_summary.get(c, g.id)
-    extra = chat_summary_extra.get(c, g.id)
-    history_enabled = chat_summary_history.get(c, g.id) == "true"
+    premium = has_premium(c, g.id)
+    extra = chat_summary_extra.get(c, g.id) == "true" and premium
+    history_enabled = chat_summary_history.get(c, g.id) == "true" and premium
 
     for i in chat_summaries:
         channel = g.get_channel(int(i))
 
-        if extra == "true" and now.month == 1 and now.day == 1:
+        if extra and now.month == 1 and now.day == 1:
             total_messages = c.execute(
                 select(yearly_chat_summary_channels.c.messages).where(
                     (yearly_chat_summary_channels.c.gid == str(g.id))
@@ -355,7 +357,7 @@ async def summarize(c: Connection, g: Guild):
             rows = int(chat_summary_rows_extra.get(c, g.id))
             kind = "yearly"
             period = str(yesterday.year)
-        elif extra == "true" and now.day == 1:
+        elif extra and now.day == 1:
             total_messages = c.execute(
                 select(monthly_chat_summary_channels.c.messages).where(
                     (monthly_chat_summary_channels.c.gid == str(g.id))

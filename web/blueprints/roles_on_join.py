@@ -3,6 +3,7 @@ from flask import Blueprint, session, render_template, redirect, request, flash
 from sqlalchemy import select
 
 from database import engine, synced_roles
+from utils.premium import get_limit
 from utils.roles_on_join import setting_roles_on_join
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import get_token_data, authorize
@@ -14,6 +15,11 @@ def handle_add(auth):
         if "role" in request.form and validate_role_id(request.form["role"]):
             if setting_roles_on_join.is_in_list(c, auth["guild"], request.form["role"]):
                 flash("Already present")
+                return
+
+            limit = get_limit(c, auth["guild"], 3)
+            if limit is not None and len(setting_roles_on_join.get(c, auth["guild"])) >= limit:
+                flash("Free plan is limited to 3 roles on join")
                 return
 
             setting_roles_on_join.add_to_list(c, auth["guild"], request.form["role"])

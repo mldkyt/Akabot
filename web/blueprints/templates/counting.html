@@ -15,22 +15,27 @@
 <form action="/settings/counting" method="post">
     <input type="checkbox" name="any_count" id="any_count" {% if any_count %}checked{% endif %}>
     <label for="any_count">Any count mode</label>
+    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <input type="checkbox" name="count_words" id="count_words" {% if count_words %}checked{% endif %}>
     <label for="count_words">Count words</label>
+    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <input type="checkbox" name="count_word_frequency" id="count_word_frequency" {% if count_word_frequency %}checked{% endif %}>
     <label for="count_word_frequency">Count word frequency</label>
+    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <input type="checkbox" name="same_member" id="same_member" {% if same_member %}checked{% endif %}>
     <label for="same_member">Same member counting mode - one user can't count multiple times consecutively</label>
+    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <label for="count_frequency_min">Count frequency minimum words</label>
     <input type="number" id="count_frequency_min" name="count_frequency_min" value="{{count_frequency_min}}">
+    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
     
     <button type="submit">Save</button>

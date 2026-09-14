@@ -3,6 +3,7 @@ from sqlalchemy import select
 
 from database import engine, synced_roles
 from utils.moderation_commands import moderator_roles
+from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -13,6 +14,11 @@ def handle_add(auth):
         if "role" in request.form and validate_role_id(request.form["role"]):
             if moderator_roles.is_in_list(c, auth["guild"], request.form["role"]):
                 flash("Already present")
+                return
+
+            limit = get_limit(c, auth["guild"], 5)
+            if limit is not None and len(moderator_roles.get(c, auth["guild"])) >= limit:
+                flash("Free plan is limited to 5 moderator roles")
                 return
 
             moderator_roles.add_to_list(c, auth["guild"], request.form["role"])
@@ -60,7 +66,9 @@ def moderation_index():
             .where(synced_roles.c.gid == auth["guild"])
         ).fetchall()]
 
-    return render_template("moderation.html", roles=roles, moderator_roles=the_roles)
+        premium = get_premium_context(c, auth["guild"])
+
+    return render_template("moderation.html", roles=roles, moderator_roles=the_roles, premium=premium)
 
 @moderation_bp.route("/settings/moderation/delete/<index>")
 def moderation_delete(index: str):

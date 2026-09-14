@@ -6,6 +6,8 @@
 
 <h1>Suggestions</h1>
 
+{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 1 suggestion channel.</p>{% endif %}
+
 <h2>Main settings</h2>
 
 <form action="/settings/suggestions" method="post">

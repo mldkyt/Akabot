@@ -4,6 +4,8 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, periodic_messages, synced_channels
+from utils.premium import get_limit, get_premium_context
+from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 periodic_messages_bp = Blueprint(
@@ -49,6 +51,13 @@ def periodic_messages_index():
                         )
                     )
                 else:
+                    limit = get_limit(c, auth["guild"], 2)
+                    periodic_count = len(c.execute(
+                        select(periodic_messages.c.id).where(periodic_messages.c.guild_id == auth["guild"])
+                    ).fetchall())
+                    if limit is not None and periodic_count >= limit:
+                        return quick_response("Free plan is limited to 2 periodic messages", 400)
+
                     c.execute(
                         insert(periodic_messages).values(
                             channel_id=request.form["channel"],
@@ -104,8 +113,11 @@ def periodic_messages_index():
                 }
             )
 
+        premium = get_premium_context(c, auth["guild"])
+
     return render_template(
         "periodic_messages.html",
         text_channels=text_channels,
         periodic_messages=periodic_messages_data,
+        premium=premium,
     )

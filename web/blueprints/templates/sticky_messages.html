@@ -6,6 +6,8 @@
 
 <h1>Sticky messages</h1>
 
+{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 1 sticky message.</p>{% endif %}
+
 <form action="/settings/sticky_messages" method="post">
     <label for="channel">Channel</label>
     <select name="channel" id="channel">
