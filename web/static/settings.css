@@ -209,6 +209,11 @@ a:hover {
     margin: 0;
 }
 
+.premium-label {
+    color: var(--yellow);
+    font-weight: 600;
+}
+
 /* Data cards */
 .data-card {
     border: 1px solid var(--border);
