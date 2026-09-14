@@ -11,7 +11,7 @@ from utils.chat_summary import chat_summary
 from utils.counting import setting_counting_channels
 from utils.leveling import setting_leveling_rewards
 from utils.moderation_commands import moderator_roles
-from utils.premium import get_limit, generate_tokens, get_premium_context, is_owner, redeem_token
+from utils.premium import generate_tokens, get_premium_context, is_owner, redeem_token, usage_bar
 from utils.roles_on_join import setting_roles_on_join
 from utils.statistic_channels import setting_statistic_channels
 from utils.suggestions import suggestion_channels
@@ -186,22 +186,19 @@ def premium_index():
         until = None
         if premium_context["active"]:
             row = c.execute(
-                select(premium_guilds.c.premium_until).where(
+                select(premium_guilds.c.premium_until, premium_guilds.c.unlimited).where(
                     premium_guilds.c.gid == str(auth["guild"])
                 )
             ).fetchone()
             if row is not None:
-                until = row[0].strftime("%Y-%m-%d")
+                until = "unlimited" if row[1] else row[0].strftime("%Y-%m-%d")
 
         if premium_context["enabled"]:
             usage = []
             for item in get_usage(c, auth["guild"]):
-                limit = get_limit(c, auth["guild"], item["free_limit"])
-                if limit is None:
-                    text = f"{item['usage']}/unlimited"
-                else:
-                    text = f"{item['usage']}/{limit} ({round(item['usage'] / limit * 100)}%)"
-                usage.append({"name": item["name"], "text": text})
+                bar = usage_bar(c, auth["guild"], item["name"], item["usage"], item["free_limit"])
+                if bar is not None:
+                    usage.append(bar)
         else:
             usage = []
 
@@ -231,26 +228,30 @@ def premium_manage():
     with engine.begin() as c:
         if request.method == "POST":
             if "count" in request.form and request.form["count"].isnumeric():
-                duration_days = 365 if request.form.get("duration") == "yearly" else 30
+                duration = request.form.get("duration")
+                unlimited = duration == "unlimited"
+                duration_days = 365 if duration == "yearly" else (30 if duration == "monthly" else 0)
 
                 prefix = request.form.get("format", "").strip().upper()
                 if prefix == "":
                     prefix = "AKA"
 
-                codes = generate_tokens(int(request.form["count"]), duration_days, prefix)
+                codes = generate_tokens(int(request.form["count"]), duration_days, prefix, unlimited=unlimited)
                 flash(f"Generated {len(codes)} premium codes")
 
         tokens = [
             {
                 "code": i[0],
                 "duration_days": i[1],
-                "redeemed_gid": i[2],
-                "created_at": i[3].strftime("%Y-%m-%d") if i[3] is not None else "",
+                "unlimited": i[2],
+                "redeemed_gid": i[3],
+                "created_at": i[4].strftime("%Y-%m-%d") if i[4] is not None else "",
             }
             for i in c.execute(
                 select(
                     premium_tokens.c.code,
                     premium_tokens.c.duration_days,
+                    premium_tokens.c.unlimited,
                     premium_tokens.c.redeemed_gid,
                     premium_tokens.c.created_at,
                 ).order_by(premium_tokens.c.created_at.desc())

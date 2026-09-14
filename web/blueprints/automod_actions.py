@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, session, flash, redirect
 from sqlalchemy import select, Connection
 
 from database import engine, synced_automod_rules
-from utils.automod_actions import automod_actions, time_str_to_time
+from utils.automod_actions import automod_actions, setting_automod_sync_error, time_str_to_time
 from utils.premium import get_limit
 from web.webutils.discord_sync import validate_automod_rule_id
 from web.webutils.tokens import authorize, get_token_data
@@ -130,7 +130,15 @@ def automod_actions_index():
     automod_actions = parse_automod_actions(auth['guild'])
     automod_rules = get_automod_rules(auth['guild'])
 
-    return render_template("automod_actions.html", automod_actions=automod_actions, automod_rules=automod_rules)
+    with engine.begin() as c:
+        automod_sync_error = setting_automod_sync_error.get(c, auth["guild"]) or ""
+
+    return render_template(
+        "automod_actions.html",
+        automod_actions=automod_actions,
+        automod_rules=automod_rules,
+        automod_sync_error=automod_sync_error,
+    )
 
 
 @automod_actions_bp.route("/settings/automod_actions/delete/<index>")

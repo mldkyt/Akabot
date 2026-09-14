@@ -10,6 +10,12 @@
 </div>
 {% endfor %}
 
+{% if automod_sync_error %}
+<div class="flash flash--warning">
+    <p>Syncing automod actions failed: {{automod_sync_error}}</p>
+</div>
+{% endif %}
+
 <h2>New action</h2>
 
 <form action="/settings/automod_actions" method="post">

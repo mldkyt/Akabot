@@ -85,9 +85,11 @@ def sticky_messages_index():
                 }
             )
 
+        premium = get_premium_context(c, auth["guild"])
+
     return render_template(
         "sticky_messages.html",
         text_channels=text_channels,
         sticky_messages=sticky_messages_data,
-        premium=get_premium_context(c, auth["guild"]),
+        premium=premium,
     )
