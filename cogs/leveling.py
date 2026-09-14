@@ -3,6 +3,7 @@ import sentry_sdk
 from discord import ApplicationContext, Member, Message, Permissions, SlashCommandGroup
 
 from database import engine
+from logger import akabot_logger
 from utils.chat_streaks import handle_send_reply
 from utils.leveling import (
     add_xp,
@@ -79,6 +80,7 @@ class Leveling(discord.Cog):
                         if level_up_message is not None and reply_in_same_channel:
                             await level_up_message.delete(delay=5)
         except Exception as e:
+            akabot_logger.exception(f"Failed to process level up for message {message.id}: {e}")
             sentry_sdk.capture_exception(e)
 
     @discord.slash_command()
@@ -100,6 +102,7 @@ class Leveling(discord.Cog):
                     ephemeral=True,
                 )
         except Exception as e:
+            akabot_logger.exception(f"Failed to fetch level for user {ctx.user.id} in guild {ctx.guild.id}: {e}")
             sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 

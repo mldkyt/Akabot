@@ -21,6 +21,7 @@ from discord.ext.tasks import loop
 from discord.ui import View, button
 
 from database import engine
+from logger import akabot_logger
 from utils.chat_streaks import (
     count_message,
     get_all_streaks_for,
@@ -192,6 +193,7 @@ class ChatStreaks(Cog):
                                 delay=int(server_message_delay.get(c, msg.guild.id))
                             )
         except Exception as e:
+            akabot_logger.exception(f"Failed to process chat streak message {msg.id}: {e}")
             sentry_sdk.capture_exception(e)
 
     @chat_streaks.command()
@@ -217,6 +219,7 @@ class ChatStreaks(Cog):
                     ephemeral=True,
                 )
         except Exception as e:
+            akabot_logger.exception(f"Failed to fetch streak for user {ctx.user.id}: {e}")
             sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
@@ -249,6 +252,7 @@ class ChatStreaks(Cog):
                 paginator = Paginator(pages)
                 await paginator.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
+            akabot_logger.exception(f"Failed to fetch chat streak leaderboard for guild {ctx.guild.id}: {e}")
             sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
@@ -332,6 +336,9 @@ class ChatStreaks(Cog):
                     try:
                         member = await guild.fetch_member(int(uid))
                     except HTTPException:
+                        akabot_logger.warning(
+                            f"Failed to fetch member {uid} for streak reminder in guild {gid}"
+                        )
                         continue
 
                 dm_preference = user_setting_receive_notifications.get(c, member.id)
@@ -356,7 +363,9 @@ class ChatStreaks(Cog):
                         view=UnsubscribeDMNotificationsView(),
                     )
                 except Forbidden:
-                    pass
+                    akabot_logger.warning(
+                        f"Forbidden to send streak reminder DM to {member} in guild {guild.id}"
+                    )
 
     @loop(seconds=60)
     async def chat_streak_reminders(self):
@@ -368,6 +377,7 @@ class ChatStreaks(Cog):
 
             await self.run_chat_streak_reminders()
         except Exception as e:
+            akabot_logger.exception(f"Failed to run chat streak reminders: {e}")
             sentry_sdk.capture_exception(e)
 
 

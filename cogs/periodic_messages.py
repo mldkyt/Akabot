@@ -4,6 +4,7 @@ from discord import Bot, Cog, Message
 from sqlalchemy import select, update
 
 from database import engine, periodic_messages
+from logger import akabot_logger
 
 
 class PeriodicMessages(Cog):
@@ -70,7 +71,9 @@ class PeriodicMessages(Cog):
                         .values(next_send=next_send)
                     )
                 except Exception:
-                    pass  # Handle any exceptions (e.g., message not found)
+                    akabot_logger.exception(
+                        f"Failed to send periodic message {msg[0]} in channel {message.channel.id}"
+                    )
 
 
 def setup(bot: Bot):

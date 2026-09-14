@@ -3,6 +3,7 @@ from discord import Guild, Message
 from sqlalchemy import Connection, delete, insert, select, update
 
 from database import engine, message_counting, message_counting_members, message_counting_rewards
+from logger import akabot_logger
 from utils.server_settings import ServerSetting, SettingType
 
 setting_enable_leaderboard = ServerSetting(
@@ -173,7 +174,7 @@ async def reindex(guild: Guild):
                     inc(c, message)
                     final_count += 1
             except Exception as e:
-                print(e)
+                akabot_logger.exception(f"Failed to reindex text channel {text}: {e}")
                 sentry_sdk.capture_exception(e)
 
         for voice in guild.voice_channels:
@@ -185,7 +186,7 @@ async def reindex(guild: Guild):
                     inc(c, message)
                     final_count += 1
             except Exception as e:
-                print(e)
+                akabot_logger.exception(f"Failed to reindex voice channel {voice}: {e}")
                 sentry_sdk.capture_exception(e)
 
     return final_count

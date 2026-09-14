@@ -242,7 +242,9 @@ class VCNotifications(Cog):
                             )
                             sent_to.append(i[0])
                     except Forbidden:
-                        pass
+                        akabot_logger.warning(
+                            f"Forbidden to send VC notification DM to {dm_target} in guild {member.guild.id}"
+                        )
 
                 for i in c.execute(
                     select(vc_notifications_user.c.uid).where(
@@ -262,7 +264,9 @@ class VCNotifications(Cog):
                             )
                             sent_to.append(i[0])
                     except Forbidden:
-                        pass
+                        akabot_logger.warning(
+                            f"Forbidden to send VC notification DM to {dm_target} in guild {member.guild.id}"
+                        )
 
                 for i in c.execute(
                     select(vc_notifications_channel.c.uid).where(
@@ -282,7 +286,9 @@ class VCNotifications(Cog):
                             )
                             sent_to.append(i[0])
                     except Forbidden:
-                        pass
+                        akabot_logger.warning(
+                            f"Forbidden to send VC notification DM to {dm_target} in guild {member.guild.id}"
+                        )
 
 
 def setup(bot: Bot):

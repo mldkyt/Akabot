@@ -91,6 +91,9 @@ async def send_welcome_message(c: Connection, member: Member):
     try:
         chan = await member.guild.fetch_channel(int(chan))
     except HTTPException:
+        akabot_logger.warning(
+            f"Welcome channel not found for guild {member.guild.id}, unsetting it"
+        )
         await send_message_to_log_channel(
             c,
             member.guild,
@@ -171,6 +174,9 @@ async def send_goodbye_message(c: Connection, member: Member):
     try:
         chan = await member.guild.fetch_channel(int(chan))
     except HTTPException:
+        akabot_logger.warning(
+            f"Goodbye channel not found for guild {member.guild.id}, unsetting it"
+        )
         await send_message_to_log_channel(
             c,
             member.guild,
@@ -205,6 +211,9 @@ async def handle_first_grace_period():
                 try:
                     await send_welcome_message(c, v["member"])
                 except Exception as e:
+                    akabot_logger.exception(
+                        f"Failed to send welcome message during grace period for member {v['member']}: {e}"
+                    )
                     sentry_sdk.capture_exception(e)
 
     for i in discard_these:

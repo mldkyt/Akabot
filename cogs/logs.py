@@ -26,6 +26,7 @@ from discord import (
 from discord.abc import GuildChannel
 
 from database import engine
+from logger import akabot_logger
 from utils.logs import (
     format_overwrite,
     format_perm_name,
@@ -64,6 +65,7 @@ class Logging(Cog):
                         await handle_emoji(c, guild, b, a)
 
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -90,6 +92,7 @@ class Logging(Cog):
                         await handle_sticker(c, guild, b, a)
 
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -119,6 +122,7 @@ class Logging(Cog):
                     c, rule.guild, "automod_create", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -147,6 +151,7 @@ class Logging(Cog):
                     c, rule.guild, "automod_delete", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -175,6 +180,7 @@ class Logging(Cog):
                     c, rule.guild, "automod_update", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -209,6 +215,7 @@ class Logging(Cog):
                 )
                 await send_message_to_log_channel(c, guild, "member_ban", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -243,6 +250,7 @@ class Logging(Cog):
                 )
                 await send_message_to_log_channel(c, guild, "member_unban", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -404,6 +412,7 @@ class Logging(Cog):
                         c, after.guild, "channel_update", embed
                     )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -433,6 +442,7 @@ class Logging(Cog):
                     c, channel.guild, "channel_create", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -462,6 +472,7 @@ class Logging(Cog):
                     c, channel.guild, "channel_delete", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -625,6 +636,7 @@ class Logging(Cog):
 
                     await send_message_to_log_channel(c, after, "guild_update", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -652,6 +664,7 @@ class Logging(Cog):
 
                 await send_message_to_log_channel(c, role.guild, "role_create", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -685,6 +698,7 @@ class Logging(Cog):
 
                 await send_message_to_log_channel(c, role.guild, "role_delete", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -759,6 +773,7 @@ class Logging(Cog):
                         c, after.guild, "role_update", embed
                     )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -805,6 +820,7 @@ class Logging(Cog):
                     c, invite.guild, "invite_create", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -840,6 +856,7 @@ class Logging(Cog):
                     c, invite.guild, "invite_delete", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -853,6 +870,7 @@ class Logging(Cog):
                 )
                 await send_message_to_log_channel(c, member.guild, "member_join", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -868,6 +886,7 @@ class Logging(Cog):
                     c, member.guild, "member_leave", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -923,6 +942,7 @@ class Logging(Cog):
                         c, after.guild, "member_update", embed
                     )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1032,6 +1052,7 @@ class Logging(Cog):
                             c, member.guild, "voice_deafen", embed
                         )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1061,6 +1082,7 @@ class Logging(Cog):
                     c, reaction.message.guild, "reaction_add", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1090,6 +1112,7 @@ class Logging(Cog):
                     c, reaction.message.guild, "reaction_remove", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1113,6 +1136,7 @@ class Logging(Cog):
                     c, message.guild, "reaction_clear_all", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1138,6 +1162,7 @@ class Logging(Cog):
                     c, reaction.message.guild, "reaction_clear_emoji", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1183,6 +1208,7 @@ class Logging(Cog):
                 )
                 await send_message_to_log_channel(c, event.guild, "event_create", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1237,6 +1263,7 @@ class Logging(Cog):
                         c, after.guild, "event_update", embed
                     )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1280,6 +1307,7 @@ class Logging(Cog):
                 )
                 await send_message_to_log_channel(c, event.guild, "event_delete", embed)
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1312,6 +1340,7 @@ class Logging(Cog):
                     c, thread.guild, "thread_create", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1339,6 +1368,7 @@ class Logging(Cog):
                     c, thread.guild, "thread_delete", embed
                 )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -1386,6 +1416,7 @@ class Logging(Cog):
                         c, after.guild, "thread_update", embed
                     )
             except Exception as e:
+                akabot_logger.exception(f"Failed to handle log event: {e}")
                 sentry_sdk.capture_exception(e)
 
 

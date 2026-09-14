@@ -15,6 +15,7 @@ from discord.ui import BaseView
 from sqlalchemy import Connection, desc, insert, select, update
 
 from database import chat_streak_last_members, chat_streaks, engine
+from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import ServerSetting, SettingType
 from utils.user_settings import UserSetting
@@ -359,5 +360,6 @@ async def handle_send_reply(
 
         return await bot_channel.send(content, view=view), False
     except Exception as e:
+        akabot_logger.exception(f"Failed to send chat streak response for message {msg.id}: {e}")
         sentry_sdk.capture_exception(e)
         return None, False

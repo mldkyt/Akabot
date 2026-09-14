@@ -4,6 +4,7 @@ from discord import Message
 from sqlalchemy import select, update
 
 from database import engine, sticky_messages
+from logger import akabot_logger
 
 
 async def update_sticky_message(message: Message):
@@ -31,7 +32,9 @@ async def update_sticky_message(message: Message):
                 )
                 await existing_message.delete()
             except Exception:
-                pass
+                akabot_logger.exception(
+                    f"Failed to fetch/delete previous sticky message {existing_record[1]} in channel {message.channel.id}"
+                )
 
         new_message = await message.channel.send(existing_record[0])
         c.execute(

@@ -376,14 +376,14 @@ async def set_consent(user_1: Member | User, user_2: Member | User, consent_leve
                 await user_1.send(
                     f"You have asked {user_2.display_name} to consent and they consented level {consent_level}: {CONSENT_LEVELS[consent_level]}")
             except Exception:
-                pass
+                akabot_logger.exception(f"Failed to send consent DM to {user_1}")
 
         async def send_user_2():
             try:
                 await user_2.send(
                     f"You and {user_1.display_name} have consented with level {consent_level}: {CONSENT_LEVELS[consent_level]}")
             except Exception:
-                pass
+                akabot_logger.exception(f"Failed to send consent DM to {user_2}")
 
         await asyncio.gather(send_user_1(), send_user_2())
 

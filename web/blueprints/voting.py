@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.sql import insert, update
 
 from database import engine, vote_points
+from logger import akabot_logger
 from web.webutils.quick_response import quick_response
 
 voting_bp = Blueprint("voting", __name__, template_folder="templates")
@@ -20,6 +21,7 @@ def verify_webhook(raw_body: bytes, signature: str, secret: str) -> bool:
         timestamp = parts["t"]
         received_sig = parts["v1"]
     except (ValueError, KeyError):
+        akabot_logger.warning("Failed to parse top.gg webhook signature")
         return False
 
     payload = timestamp.encode() + b"." + raw_body

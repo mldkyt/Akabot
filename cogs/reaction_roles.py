@@ -136,6 +136,9 @@ class ReactionRoles(Cog):
                 "Reaction role has been created!", ephemeral=True
             )
         except Exception as e:
+            akabot_logger.exception(
+                f"Failed to create reaction role in guild {interaction.guild_id}: {e}"
+            )
             sentry_sdk.capture_exception(e)
             await interaction.response.send_message("An error occured", ephemeral=True)
 
@@ -175,6 +178,9 @@ class ReactionRoles(Cog):
             try:
                 message = await interaction.channel.fetch_message(int(message_id))
             except NotFound:
+                akabot_logger.warning(
+                    f"Reaction role message {message_id} not found in channel {interaction.channel_id}"
+                )
                 await interaction.response.send_message(
                     "Message not found", ephemeral=True
                 )
@@ -218,6 +224,9 @@ class ReactionRoles(Cog):
                 "Reaction role has been edited!", ephemeral=True
             )
         except Exception as e:
+            akabot_logger.exception(
+                f"Failed to edit reaction role message {message_id}: {e}"
+            )
             sentry_sdk.capture_exception(e)
             await interaction.response.send_message("An error occured", ephemeral=True)
 
@@ -336,6 +345,7 @@ class ReactionRoles(Cog):
                 await interaction.user.remove_roles(*roles, reason="Reaction role")
                 await interaction.user.add_roles(role, reason="Reaction role")
         except Exception as e:
+            akabot_logger.exception(f"Failed to handle reaction role interaction: {e}")
             sentry_sdk.capture_exception(e)
 
 

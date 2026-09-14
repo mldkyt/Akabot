@@ -21,11 +21,16 @@ async def apply_roles(member: Member):
                 role = await member.guild.fetch_role(int(role_id))
                 roles.append(role)
             except HTTPException:
-                pass
+                akabot_logger.warning(
+                    f"Failed to fetch role {role_id} on join for {member} in guild {member.guild.id}"
+                )
 
         try:
             await member.add_roles(*roles)
         except Forbidden:
-            pass
+            akabot_logger.warning(
+                f"Forbidden to add roles on join for {member} in guild {member.guild.id}"
+            )
         except Exception as e:
+            akabot_logger.exception(f"Failed to apply roles on join for {member}: {e}")
             sentry_sdk.capture_exception(e)

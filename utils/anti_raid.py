@@ -11,6 +11,7 @@ import sentry_sdk
 from discord import Embed, EmbedField, Member, Message
 
 from database import engine
+from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
 from utils.server_settings import ServerSetting, SettingType
 
@@ -472,6 +473,7 @@ async def _parallel_report(*coros):
     results = await asyncio.gather(*coros, return_exceptions=True)
     for result in results:
         if isinstance(result, Exception):
+            akabot_logger.exception(f"Anti raid parallel task failed: {result}")
             sentry_sdk.capture_exception(result)
 
 
@@ -526,6 +528,7 @@ async def send_anti_raid_dm(member: Member, message: str):
     try:
         await member.send(content=message)
     except Exception as e:
+        akabot_logger.exception(f"Failed to send anti raid DM to {member}: {e}")
         sentry_sdk.capture_exception(e)
 
 
@@ -559,11 +562,13 @@ async def _delete_messages(messages: list[Message]):
             for i in range(0, len(unique), 100):
                 await channel.delete_messages(unique[i : i + 100])
         except Exception as e:
+            akabot_logger.exception(f"Failed to bulk delete anti raid messages in {channel}: {e}")
             sentry_sdk.capture_exception(e)
             for message in unique:
                 try:
                     await message.delete()
                 except Exception as e2:
+                    akabot_logger.exception(f"Failed to delete anti raid message {message.id}: {e2}")
                     sentry_sdk.capture_exception(e2)
 
 
@@ -573,6 +578,7 @@ async def _kick_member(member: Member, reason: str):
     try:
         await member.kick(reason=reason)
     except Exception as e:
+        akabot_logger.exception(f"Failed to kick anti raid member {member}: {e}")
         sentry_sdk.capture_exception(e)
 
 

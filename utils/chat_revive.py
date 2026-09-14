@@ -85,7 +85,9 @@ async def notifications(bot: Bot):
                 else:
                     await channel.send(f"<@&{chat_revival_role}> Chat Revive!")
             except HTTPException:
-                pass
+                akabot_logger.warning(
+                    f"Failed to send chat revive message in channel {i[1]} of guild {i[0]}"
+                )
 
         c.execute(
             delete(chat_revive).where(

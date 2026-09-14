@@ -20,6 +20,7 @@ from sentry_sdk import capture_exception
 from sqlalchemy import delete, insert, select
 
 from database import engine, verification_introduction_messages
+from logger import akabot_logger
 from utils.bot_channel import setting_admin_bot_channel
 from utils.verification import (
     setting_introduction_channel,
@@ -240,7 +241,9 @@ class AdminIntroductionVerifyView(View):
             )
             await introduction_message.delete()
         except Exception:
-            pass
+            akabot_logger.exception(
+                f"Failed to delete verification introduction message {verification_message[0]}"
+            )
 
         member_id = verification_message[1]
         member = await interaction.guild.fetch_member(int(member_id))
@@ -250,7 +253,9 @@ class AdminIntroductionVerifyView(View):
                 f"An admin denied your introduction in {interaction.guild.name} and you were kicked, you can rejoin."
             )
         except Exception:
-            pass
+            akabot_logger.exception(
+                f"Failed to send denial DM to {member} in guild {interaction.guild.id}"
+            )
 
         await member.kick(reason="Verification failed")
 
@@ -371,11 +376,16 @@ class Verification(Cog):
                             f"You have been kicked from {guild.name} for not verifying in 24 hours, you can rejoin."
                         )
                     except Exception:
-                        pass
+                        akabot_logger.exception(
+                            f"Failed to send verification kick DM to {member} in guild {guild.id}"
+                        )
 
                     try:
                         await member.kick(reason="Verification failed")
                     except Exception as e:
+                        akabot_logger.exception(
+                            f"Failed to kick unverified member {member}: {e}"
+                        )
                         capture_exception(e)
 
 

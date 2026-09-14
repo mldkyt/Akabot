@@ -1,6 +1,7 @@
 import sentry_sdk
 from discord import AutoModActionExecutionEvent, AutoModRule, Bot, Cog
 
+from logger import akabot_logger
 from utils.automod_actions import fetch_actions, handle_automod_actions
 
 
@@ -28,6 +29,7 @@ class AutomodActions(Cog):
             await fetch_actions(payload.guild)
             await handle_automod_actions(self.bot, payload)
         except Exception as e:
+            akabot_logger.exception(f"Failed to handle automod action execution: {e}")
             sentry_sdk.capture_exception(e)
 
     @Cog.listener()

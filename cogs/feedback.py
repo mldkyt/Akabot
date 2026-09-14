@@ -11,6 +11,7 @@ from discord import (
 )
 from discord.ui import InputText, Modal
 
+from logger import akabot_logger
 from utils.message_appends import apply_appends
 
 
@@ -80,6 +81,7 @@ class BugReportModal(Modal):
         try:
             await self.submit_bug_report_on_forgejo(interaction)
         except Exception as e:
+            akabot_logger.exception(f"Failed to submit bug report from {interaction.user.id}: {e}")
             sentry_sdk.capture_exception(e)
             await interaction.response.send_message(
                 "oops an error occurred trying to report a bug lol", ephemeral=True
@@ -152,6 +154,7 @@ class FeatureModal(Modal):
         try:
             await self.submit_feature_on_forgejo(interaction)
         except Exception as e:
+            akabot_logger.exception(f"Failed to submit feature request from {interaction.user.id}: {e}")
             sentry_sdk.capture_exception(e)
             await interaction.response.send_message("", ephemeral=True)
 

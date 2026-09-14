@@ -17,6 +17,7 @@ from discord import (
 )
 
 from database import engine
+from logger import akabot_logger
 from utils.moderation_commands import (
     is_user_moderator,
     perform_basic_checks,
@@ -72,6 +73,9 @@ class ModerationCommands(Cog):
                         f"User {user.mention} was kicked for {reason}", ephemeral=True
                     )
             except Exception:
+                akabot_logger.exception(
+                    f"Failed to kick user {user} in guild {ctx.guild.id}"
+                )
                 await ctx.respond("Error kicking the user", ephemeral=True)
 
     @guild_only()
@@ -118,6 +122,9 @@ class ModerationCommands(Cog):
                         f"User {user.mention} was banned for {reason}", ephemeral=True
                     )
             except Exception:
+                akabot_logger.exception(
+                    f"Failed to ban user {user} in guild {ctx.guild.id}"
+                )
                 await ctx.respond("Error banning the user", ephemeral=True)
 
     @guild_only()
@@ -198,6 +205,9 @@ class ModerationCommands(Cog):
                         ephemeral=True,
                     )
             except Exception:
+                akabot_logger.exception(
+                    f"Failed to timeout/untimeout user {user} in guild {ctx.guild.id}"
+                )
                 await ctx.respond("Error muting the user", ephemeral=True)
 
     @guild_only()
@@ -255,6 +265,9 @@ class ModerationCommands(Cog):
                         ephemeral=True,
                     )
             except Exception:
+                akabot_logger.exception(
+                    f"Failed to timeout/untimeout user {user} in guild {ctx.guild.id}"
+                )
                 await ctx.respond("Error muting the user", ephemeral=True)
 
     purge_commands = SlashCommandGroup(name="purge", description="Purge commands")

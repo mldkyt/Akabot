@@ -5,6 +5,8 @@ from discord import Bot, Cog, SlashCommand
 from discord.ext.tasks import loop
 from sentry_sdk.api import capture_exception
 
+from logger import akabot_logger
+
 
 class TopGGIntegration(Cog):
     def __init__(self, bot: Bot) -> None:
@@ -37,6 +39,7 @@ class TopGGIntegration(Cog):
                 json=payload,
             ).raise_for_status()
         except Exception as e:
+            akabot_logger.exception(f"Failed to sync top.gg commands: {e}")
             capture_exception(e)
 
     @loop(hours=24)
@@ -50,6 +53,7 @@ class TopGGIntegration(Cog):
                 json={"server_count": len(self.bot.guilds)},
             ).raise_for_status()
         except Exception as e:
+            akabot_logger.exception(f"Failed to update top.gg metrics: {e}")
             capture_exception(e)
 
 

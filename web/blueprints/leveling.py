@@ -5,6 +5,7 @@ from flask import Blueprint, session, render_template, request, flash, redirect
 from sqlalchemy import select
 
 from database import engine, synced_roles
+from logger import akabot_logger
 from utils.leveling import setting_xp_per_message, setting_level_up_message, setting_level_up_message_text, \
     setting_xp_per_level, setting_leveling_rewards, setting_leveling_multipliers
 from web.webutils.discord_sync import validate_role_id
@@ -87,6 +88,9 @@ def handle_multipliers(auth, is_edit: bool = True):
     try:
         datetime(2024, int(start_month), int(start_day))
     except Exception:
+        akabot_logger.warning(
+            f"Failed to parse start date {start_month}-{start_day} for leveling multiplier"
+        )
         flash("Failed to parse start date")
         return
 
@@ -99,6 +103,9 @@ def handle_multipliers(auth, is_edit: bool = True):
     try:
         datetime(2024, int(end_month), int(end_day))
     except Exception:
+        akabot_logger.warning(
+            f"Failed to parse end date {end_month}-{end_day} for leveling multiplier"
+        )
         flash("Failed to parse end date")
         return
 

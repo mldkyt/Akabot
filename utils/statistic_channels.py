@@ -34,6 +34,9 @@ async def update(bot: Bot):
                 try:
                     await channel.edit(name=templ)
                 except Forbidden:
-                    pass
+                    akabot_logger.warning(
+                        f"Forbidden to update statistic channel {channel} in guild {guild.id}"
+                    )
                 except Exception as e:
+                    akabot_logger.exception(f"Failed to update statistic channel {channel}: {e}")
                     sentry_sdk.capture_exception(e)

@@ -13,6 +13,7 @@ from sqlalchemy import select
 
 from cogs.web import WEB_DOMAIN
 from database import engine, message_counting, message_counting_members
+from logger import akabot_logger
 from utils.message_counting import (
     dec,
     inc,
@@ -43,6 +44,7 @@ class MessageCounting(Cog):
 
                 await update_roles(c, msg)
         except Exception as e:
+            akabot_logger.exception(f"Failed to process message counting for message {msg.id}: {e}")
             sentry_sdk.capture_exception(e)
 
     @Cog.listener()
@@ -63,6 +65,7 @@ class MessageCounting(Cog):
 
                 await update_roles(c, msg)
         except Exception as e:
+            akabot_logger.exception(f"Failed to process message delete counting for message {msg.id}: {e}")
             sentry_sdk.capture_exception(e)
 
     message_counting_cmds = SlashCommandGroup(name="message_counting")

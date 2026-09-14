@@ -79,7 +79,9 @@ def get_multiplier(c: Connection, m: Member):
                 multiplier *= int(s[2])
         except Exception:
             # catch leap years, we validate against 2024 since it's a leap year
-            pass
+            akabot_logger.warning(
+                f"Failed to parse xp multiplier date {start_month}/{start_day} - {end_month}/{end_day} for member {m}"
+            )
 
     # Multipliers from message counting
     message_count = c.execute(

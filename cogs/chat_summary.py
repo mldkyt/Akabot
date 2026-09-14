@@ -12,6 +12,7 @@ from discord import (
 from discord.ext.tasks import loop
 
 from database import engine
+from logger import akabot_logger
 from utils.chat_summary import (
     SummaryHistoryView,
     chat_summary,
@@ -45,6 +46,7 @@ class ChatSummary(Cog):
 
                             await perform_backfill(i, channel)
             except Exception as e:
+                akabot_logger.exception(f"Failed to initialize chat summary backfill: {e}")
                 sentry_sdk.capture_exception(e)
 
             self.has_init = True
@@ -65,6 +67,7 @@ class ChatSummary(Cog):
                 # Count into chat summary
                 inc(c, msg)
         except Exception as e:
+            akabot_logger.exception(f"Failed to process chat summary message {msg.id}: {e}")
             sentry_sdk.capture_exception(e)
 
     @loop(minutes=1)
@@ -79,6 +82,7 @@ class ChatSummary(Cog):
                 with engine.begin() as c:
                     await summarize(c, i)
             except Exception as e:
+                akabot_logger.exception(f"Failed to summarize chat for guild {i.id}: {e}")
                 sentry_sdk.capture_exception(e)
 
     chat_summary_commands = SlashCommandGroup(name="chat_summary")

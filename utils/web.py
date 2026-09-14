@@ -13,6 +13,7 @@ from database import (
     synced_roles,
     web_tokens,
 )
+from logger import akabot_logger
 
 
 async def sync_text_channels(c: Connection, guild: Guild):
@@ -221,6 +222,7 @@ async def sync_guild(guild: Guild):
             await sync_roles(c, guild)
             await sync_automod_actions(c, guild)
     except Exception as e:
+        akabot_logger.exception(f"Failed to sync guild {guild}: {e}")
         sentry_sdk.capture_exception(e)
 
 

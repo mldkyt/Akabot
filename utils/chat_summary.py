@@ -22,6 +22,7 @@ from database import (
     yearly_chat_summary_channels,
     yearly_chat_summary_members,
 )
+from logger import akabot_logger
 from utils.ads import get_ad
 from utils.server_settings import (
     ServerSetting,
@@ -300,6 +301,9 @@ class SummaryHistoryView(View):
                     try:
                         member = interaction.guild.get_member(int(row[0]))
                     except Exception:
+                        akabot_logger.exception(
+                            f"Failed to resolve member {row[0]} for chat summary pagination"
+                        )
                         member = None
                 if member is not None:
                     page_text += f"{row[2]}. **{member.display_name}**: {row[1]} messages\n"
@@ -730,4 +734,5 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                             )
                         )
     except Exception as e:
+        akabot_logger.exception(f"Failed to summarize chat for guild {gid}: {e}")
         sentry_sdk.capture_exception(e)

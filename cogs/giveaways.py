@@ -5,6 +5,7 @@ from discord.ext.tasks import loop
 from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.giveaways import create_giveaway, get_ending_giveaways, roll_winners, mark_giveaway_ended, GiveawayEndedView, \
     GiveawayView, clear_expired_giveaways, get_giveaway_joins, get_giveaway_info_by_mid
+from logger import akabot_logger
 from utils.message_appends import apply_appends
 
 
@@ -68,6 +69,9 @@ class Giveaways(Cog):
         try:
             message = await channel.fetch_message(int(giveaway[3]))
         except NotFound:
+            akabot_logger.warning(
+                f"Giveaway message {giveaway[3]} not found in channel {giveaway[2]} of guild {giveaway[1]}"
+            )
             return
 
         winners = roll_winners(message)
@@ -98,6 +102,9 @@ class Giveaways(Cog):
             try:
                 message = await channel.fetch_message(int(i[3]))
             except NotFound:
+                akabot_logger.warning(
+                    f"Giveaway message {i[3]} not found in channel {i[2]} of guild {i[1]}"
+                )
                 continue
 
             winners = roll_winners(message)
