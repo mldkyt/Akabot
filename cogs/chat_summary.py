@@ -35,7 +35,7 @@ class ChatSummary(Cog):
             self.task_summary.start()
 
             try:
-                self.bot.add_cog(SummaryHistoryView())
+                self.bot.add_view(SummaryHistoryView())
 
                 with engine.begin() as c:
                     async for i in self.bot.fetch_guilds(limit=None):
