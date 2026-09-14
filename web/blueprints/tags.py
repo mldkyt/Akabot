@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, tags
+from utils.premium import get_limit, get_premium_context
+from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 tags_bp = Blueprint("tags_bp", __name__, template_folder="templates")
@@ -29,6 +31,13 @@ def template_index():
                         )
                     )
                 else:
+                    limit = get_limit(c, auth["guild"], 3)
+                    tag_count = len(c.execute(
+                        select(tags.c.id).where(tags.c.guild_id == auth["guild"])
+                    ).fetchall())
+                    if limit is not None and tag_count >= limit:
+                        return quick_response("Free plan is limited to 3 tags", 400)
+
                     c.execute(
                         insert(tags).values(
                             guild_id=auth["guild"],
@@ -51,4 +60,4 @@ def template_index():
             ).fetchall()
         ]
 
-    return render_template("tags.html", tags=tags_data)
+    return render_template("tags.html", tags=tags_data, premium=get_premium_context(c, auth["guild"]))

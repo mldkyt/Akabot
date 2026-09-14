@@ -1,8 +1,9 @@
-from flask import Blueprint, redirect, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import select
 
 from database import engine, synced_channels
 from utils.suggestions import suggestion_channels, suggestion_threads
+from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -57,6 +58,7 @@ def suggestions_index():
         text_channels=text_channels,
         suggestion_channels=res_suggestion_channels,
         suggestion_threads=suggestion_threads_val,
+        premium=get_premium_context(c, auth["guild"]),
     )
 
 
@@ -80,6 +82,12 @@ def suggestions_add_channel():
             if suggestion_channels.is_in_list(
                 c, auth["guild"], request.form["channel"]
             ):
+                return redirect("/settings/suggestions", 303)
+
+            limit = get_limit(c, auth["guild"], 1)
+            current_count = len(suggestion_channels.get(c, auth["guild"]))
+            if limit is not None and current_count >= limit:
+                flash("Free plan is limited to 1 suggestion channel")
                 return redirect("/settings/suggestions", 303)
 
             suggestion_channels.add_to_list(c, auth["guild"], request.form["channel"])
