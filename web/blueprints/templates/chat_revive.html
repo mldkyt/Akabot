@@ -40,6 +40,7 @@
     <br>
     <input type="number" name="minutes" id="minutes">
     <br>
+    {% if premium.enabled %}<small>The free plan cannot set this below 60 minutes.</small>{% endif %}
 
     <button type="submit">Create chat revive</button>
 </form>
@@ -59,6 +60,7 @@
         <label for="minutes">Minutes to revive after</label>
         <input type="number" name="minutes" id="minutes" value="{{chat_revive.minutes}}">
         <br>
+        {% if premium.enabled %}<small>The free plan cannot set this below 60 minutes.</small>{% endif %}
 
         <button type="submit">Edit chat revive</button>
     </form>

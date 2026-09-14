@@ -3,6 +3,7 @@ from sqlalchemy import select
 
 from database import engine, synced_channels, synced_roles
 from utils.chat_revive import setting_chat_revive_channels, setting_chat_revive_role
+from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id, validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -32,6 +33,17 @@ def handle_post(auth, is_edit: bool = False):
         return False
 
     with engine.begin() as c:
+        free_tier = get_premium_context(c, auth["guild"])["premium_only"]
+
+        if free_tier and int(request.form["minutes"]) < 60:
+            flash("Free plan cannot set the chat revive interval below 60 minutes")
+            return False
+
+        limit = get_limit(c, auth["guild"], 1)
+        if limit is not None and len(setting_chat_revive_channels.get(c, auth["guild"])) >= limit:
+            flash("Free plan is limited to 1 chat revive channel")
+            return False
+
         setting_chat_revive_channels.add_to_list(c, auth["guild"],
                                                  f"{request.form['channel']};{request.form['minutes']}")
 
@@ -89,8 +101,10 @@ def chat_revive_index():
             .where(synced_roles.c.gid == str(auth["guild"]))
         ).fetchall()]
 
+        premium = get_premium_context(c, auth["guild"])
+
     return render_template("chat_revive.html", chat_revive_role=chat_revive_role, roles=roles, channels=channels,
-                           chat_revives=chat_revives)
+                           chat_revives=chat_revives, premium=premium)
 
 
 @chat_revive_bp.route("/settings/chat_revive/delete/<index>")
