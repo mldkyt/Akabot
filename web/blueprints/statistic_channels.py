@@ -2,6 +2,7 @@ from flask import Blueprint, session, render_template, request, flash, redirect
 from sqlalchemy import select
 
 from database import engine, synced_channels
+from utils.premium import get_limit, get_premium_context
 from utils.statistic_channels import setting_statistic_channels
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
@@ -25,6 +26,11 @@ def handle_post(auth, is_edit: bool = False):
         statistic_channels_ids = [i.split(";")[0] for i in setting_statistic_channels.get(c, auth["guild"])]
         if request.form["channel"] in statistic_channels_ids:
             flash("This ID already has a template assigned, please edit instead!")
+            return
+
+        limit = get_limit(c, auth["guild"], 2)
+        if limit is not None and len(statistic_channels_ids) >= limit:
+            flash("Free plan is limited to 2 statistic channels")
             return
 
         setting_statistic_channels.add_to_list(c, auth["guild"], f"{request.form['channel']};{request.form['template']}")
