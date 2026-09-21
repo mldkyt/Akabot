@@ -29,6 +29,7 @@ from utils.server_settings import (
     ServerSetting,
     SettingType,
 )
+from utils.timezones import get_now
 
 chat_summary = ServerSetting(
     "Chat summary channels",
@@ -319,7 +320,7 @@ class SummaryHistoryView(View):
 
 
 async def summarize(c: Connection, g: Guild):
-    now = datetime.datetime.now()
+    now = get_now(g.id, c)
     yesterday = now - datetime.timedelta(days=1)
     chat_summaries = chat_summary.get(c, g.id)
     premium = has_premium(c, g.id)
@@ -506,7 +507,8 @@ async def summarize(c: Connection, g: Guild):
 
 async def perform_backfill(guild: Guild, channel: TextChannel):
     try:
-        today = datetime.datetime.now(datetime.UTC).date()
+        with engine.begin() as c:
+            today = get_now(guild.id, c).date()
         daily_data = {}
         monthly_data = {}
         yearly_data = {}

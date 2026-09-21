@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, periodic_messages, synced_channels
 from utils.premium import get_limit, get_premium_context
+from utils.timezones import get_now
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
@@ -37,13 +38,14 @@ def periodic_messages_index():
                 ).fetchone()
 
                 if existing:
+                    now = get_now(auth["guild"], c)
                     c.execute(
                         update(periodic_messages)
                         .values(
                             period=request.form["period"],
                             period_num=int(request.form["period_num"]),
                             content=request.form["content"],
-                            next_send=datetime.now()
+                            next_send=now
                             + timedelta(minutes=int(request.form["period_num"])),
                         )
                         .where(
@@ -58,6 +60,7 @@ def periodic_messages_index():
                     if limit is not None and periodic_count >= limit:
                         return quick_response("Free plan is limited to 2 periodic messages", 400)
 
+                    now = get_now(auth["guild"], c)
                     c.execute(
                         insert(periodic_messages).values(
                             channel_id=request.form["channel"],
@@ -65,7 +68,7 @@ def periodic_messages_index():
                             period=request.form["period"],
                             period_num=int(request.form["period_num"]),
                             content=request.form["content"],
-                            next_send=datetime.now()
+                            next_send=now
                             + timedelta(minutes=int(request.form["period_num"])),
                         )
                     )

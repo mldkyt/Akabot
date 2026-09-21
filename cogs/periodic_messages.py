@@ -5,6 +5,7 @@ from sqlalchemy import select, update
 
 from database import engine, periodic_messages
 from logger import akabot_logger
+from utils.timezones import get_now
 
 
 class PeriodicMessages(Cog):
@@ -16,7 +17,12 @@ class PeriodicMessages(Cog):
         if message.author.bot:
             return
 
+        if message.guild is None:
+            return
+
         with engine.begin() as c:
+            now = get_now(message.guild.id, c)
+
             # Find all expired messages in this channel
             expired_messages = c.execute(
                 select(
@@ -26,7 +32,7 @@ class PeriodicMessages(Cog):
                     periodic_messages.c.period_num,
                 ).where(
                     periodic_messages.c.channel_id == str(message.channel.id),
-                    periodic_messages.c.next_send <= datetime.datetime.now(),
+                    periodic_messages.c.next_send <= now,
                 )
             ).fetchall()
 
@@ -37,27 +43,27 @@ class PeriodicMessages(Cog):
 
                     # Calculate the next send time based on the period
                     if msg[2] == "daily":
-                        next_send = datetime.datetime.now() + datetime.timedelta(
+                        next_send = now + datetime.timedelta(
                             days=msg[3]
                         )
                     elif msg[2] == "hourly":
-                        next_send = datetime.datetime.now() + datetime.timedelta(
+                        next_send = now + datetime.timedelta(
                             hours=msg[3]
                         )
                     elif msg[2] == "weekly":
-                        next_send = datetime.datetime.now() + datetime.timedelta(
+                        next_send = now + datetime.timedelta(
                             weeks=msg[3]
                         )
                     elif msg[2] == "monthly":
-                        next_send = datetime.datetime.now() + datetime.timedelta(
+                        next_send = now + datetime.timedelta(
                             days=31 * msg[3]
                         )
                     elif msg[2] == "yearly":
-                        next_send = datetime.datetime.now() + datetime.timedelta(
+                        next_send = now + datetime.timedelta(
                             days=365 * msg[3]
                         )
                     else:
-                        next_send = datetime.datetime.now() + datetime.timedelta(
+                        next_send = now + datetime.timedelta(
                             minutes=msg[3]
                         )
 

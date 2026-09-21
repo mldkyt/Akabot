@@ -17,6 +17,7 @@ from utils.server_settings import (
     ServerSetting,
     SettingType,
 )
+from utils.timezones import get_now
 
 setting_xp_per_message = ServerSetting(
     name="Leveling XP per message",
@@ -62,7 +63,7 @@ def get_multiplier(c: Connection, m: Member):
 
     multiplier = 1
 
-    now = datetime.datetime.now()
+    now = get_now(m.guild.id, c)
 
     for i in multipliers:
         s: list[str] = i.split(";")
