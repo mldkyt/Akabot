@@ -2,6 +2,7 @@ import dateparser
 from discord import Cog, Bot, SlashCommandGroup, ApplicationContext, NotFound, default_permissions
 from discord.ext.tasks import loop
 from sqlalchemy import select
+from zoneinfo import ZoneInfo
 
 from database import engine, giveaways
 from utils.giveaways import create_giveaway, get_ending_giveaways, roll_winners, mark_giveaway_ended, GiveawayEndedView, \
@@ -9,6 +10,7 @@ from utils.giveaways import create_giveaway, get_ending_giveaways, roll_winners,
 from logger import akabot_logger
 from utils.message_appends import apply_appends
 from utils.premium import get_limit
+from utils.timezones import get_now, get_timezone
 
 
 class Giveaways(Cog):
@@ -26,10 +28,24 @@ class Giveaways(Cog):
     @default_permissions(manage_guild=True)
     async def create(self, ctx: ApplicationContext, item: str, winner_count: int, end: str):
         """Create a giveaway. The item WILL BE SHOWN in the message!"""
-        end_date = dateparser.parse(end)
+        tz_name = get_timezone(ctx.guild.id)
+        end_date = dateparser.parse(
+            end,
+            settings={
+                "TIMEZONE": tz_name,
+                # Relative dates ("tomorrow", "in 2 hours") must be relative to
+                # the guild's local wall clock, not the bot host's clock.
+                "RELATIVE_BASE": get_now(ctx.guild.id),
+            },
+        )
         if end_date is None:
             await ctx.respond("Invalid end date format", ephemeral=True)
             return
+
+        # Normalize to a naive datetime in the guild's timezone so it matches
+        # how all other timestamps are stored and compared.
+        if end_date.tzinfo is not None:
+            end_date = end_date.astimezone(ZoneInfo(tz_name)).replace(tzinfo=None)
 
         with engine.begin() as c:
             limit = get_limit(c, ctx.guild.id, 1)

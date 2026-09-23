@@ -10,6 +10,7 @@ from database import engine
 from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
 from utils.server_settings import ServerSetting, SettingType
+from utils.timezones import get_now
 
 # Welcome
 welcome_channel = ServerSetting(
@@ -64,7 +65,7 @@ def add_member_to_grace_period(c: Connection, member: Member):
 
     grace_period_first[uuid.uuid4()] = {
         "member": member,
-        "after": datetime.datetime.now() + datetime.timedelta(seconds=dur),
+        "after": get_now(member.guild.id, c) + datetime.timedelta(seconds=dur),
     }
 
 
@@ -121,7 +122,7 @@ async def send_welcome_message(c: Connection, member: Member):
         grace_period_second[uuid.uuid4()] = {
             "message": message,
             "member": member,
-            "after": datetime.datetime.now() + datetime.timedelta(minutes=dur),
+            "after": get_now(member.guild.id, c) + datetime.timedelta(minutes=dur),
         }
     elif msg_type == "text":
         message = await chan.send(
@@ -130,7 +131,7 @@ async def send_welcome_message(c: Connection, member: Member):
         grace_period_second[uuid.uuid4()] = {
             "message": message,
             "member": member,
-            "after": datetime.datetime.now() + datetime.timedelta(minutes=dur),
+            "after": get_now(member.guild.id, c) + datetime.timedelta(minutes=dur),
         }
     else:
         akabot_logger.warning(
@@ -205,9 +206,9 @@ async def handle_first_grace_period():
     global grace_period_first
 
     for k, v in grace_period_first.items():
-        if v["after"] < datetime.datetime.now():
-            discard_these.append(k)
-            with engine.begin() as c:
+        with engine.begin() as c:
+            if v["after"] < get_now(v["member"].guild.id, c):
+                discard_these.append(k)
                 try:
                     await send_welcome_message(c, v["member"])
                 except Exception as e:
@@ -224,9 +225,10 @@ def handle_second_grace_period():
     discard_these = []
     global grace_period_second
 
-    for k, v in grace_period_second.items():
-        if v["after"] < datetime.datetime.now():
-            discard_these.append(k)
+    with engine.begin() as c:
+        for k, v in grace_period_second.items():
+            if v["after"] < get_now(v["member"].guild.id, c):
+                discard_these.append(k)
 
     for i in discard_these:
         del grace_period_second[i]

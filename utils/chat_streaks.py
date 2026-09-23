@@ -1,7 +1,6 @@
-import datetime
-from datetime import date, timedelta
-
 import sentry_sdk
+from datetime import timedelta
+
 from discord import (
     Bot,
     DMChannel,
@@ -18,6 +17,7 @@ from database import chat_streak_last_members, chat_streaks, engine
 from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import ServerSetting, SettingType
+from utils.timezones import get_now
 from utils.user_settings import UserSetting
 
 server_response_setting = ServerSetting(
@@ -65,7 +65,7 @@ user_setting_receive_notifications = UserSetting(
 def update_for_user(c: Connection, u: Member):
     """Update chat streaks for a member"""
 
-    now = date.today()
+    now = get_now(u.guild.id, c).date()
     yesterday = now - timedelta(days=1)
 
     # Check if we have an existant chat streak
@@ -124,7 +124,7 @@ def update_for_user(c: Connection, u: Member):
 def get_streak(c: Connection, u: Member):
     """Get streak"""
 
-    now = date.today()
+    now = get_now(u.guild.id, c).date()
 
     a = c.execute(
         select(chat_streaks.c.start_date, chat_streaks.c.last_message_date).where(
@@ -146,7 +146,7 @@ def get_streak(c: Connection, u: Member):
 
 def get_message_count(c: Connection, u: Member):
     """Get the amount of counted messages sent today"""
-    now = date.today()
+    now = get_now(u.guild.id, c).date()
 
     a = c.execute(
         select(chat_streaks.c.message_count, chat_streaks.c.message_count_date).where(
@@ -162,7 +162,7 @@ def get_message_count(c: Connection, u: Member):
 
 def count_message(c: Connection, u: Member, cid: int, same_member_check: bool):
     """Count a message toward the daily minimum. Returns the updated count."""
-    today = date.today()
+    today = get_now(u.guild.id, c).date()
     gid = str(u.guild.id)
     uid = str(u.id)
     cid = str(cid)
@@ -261,7 +261,7 @@ def get_raw_streak(c: Connection, u: Member):
 
     start_date = a[0]
 
-    return (datetime.datetime.now(datetime.UTC).date() - start_date).days
+    return (get_now(u.guild.id, c).date() - start_date).days
 
 
 def get_leaderboard(c: Connection, u: Member):
@@ -277,7 +277,7 @@ def get_leaderboard(c: Connection, u: Member):
         .order_by(desc(chat_streaks.c.last_message_date - chat_streaks.c.start_date))
     ).fetchall()
 
-    return [i for i in a if (date.today() - i[2]).total_seconds() <= 86400]
+    return [i for i in a if (get_now(u.guild.id, c).date() - i[2]).total_seconds() <= 86400]
 
 
 def get_all_streaks_for(c: Connection, b: Bot, m: Member):
@@ -299,8 +299,8 @@ async def get_expiring_streaks(c: Connection):
         select(chat_streaks.c.gid, chat_streaks.c.uid, chat_streaks.c.last_message_date)
     ).fetchall()
 
-    today = datetime.datetime.now(datetime.UTC).date()
     for streak in streaks:
+        today = get_now(int(streak[0]), c).date()
         if (today - streak[2]).days == 1:
             yield (streak[0], streak[1])
 

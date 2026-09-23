@@ -48,6 +48,20 @@
     <input type="number" id="responsedelete" name="responsedelete" value="{{response_delete_delay}}">
     <br>
 
+    <!-- Timezone -->
+    <label for="timezone">Timezone</label>
+    <select id="timezone" name="timezone">
+        <option value="UTC" {% if timezone == "UTC" %}selected{% endif %}>UTC</option>
+        {% for region, tz_list in timezone_groups %}
+        <optgroup label="{{region}}">
+            {% for tz in tz_list %}
+            <option value="{{tz}}" {% if tz == timezone %}selected{% endif %}>{{tz}}</option>
+            {% endfor %}
+        </optgroup>
+        {% endfor %}
+    </select>
+    <br>
+
     <button type="submit">Save</button>
 </form>
 

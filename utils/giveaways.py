@@ -1,11 +1,13 @@
 import datetime
 import random
+from zoneinfo import ZoneInfo
 
 from discord import Message, Member, User, ButtonStyle, Button, Interaction
 from discord.ui import View, button
 from sqlalchemy import insert, select, delete, update, text
 
 from database import engine, giveaways, giveaway_joins
+from utils.timezones import get_now, get_timezone
 
 
 class GiveawayView(View):
@@ -66,16 +68,23 @@ def create_giveaway(initial_message: Message, winners: int, end_date: datetime.d
 
 
 def get_ending_giveaways() -> list[tuple[int, str, str, str]]:
-    now = datetime.datetime.now()
     with engine.begin() as c:
         res = c.execute(
-            text("SELECT giveaways.id, giveaways.gid, giveaways.cid, giveaways.mid "
-                 "FROM giveaways "
-                 "WHERE giveaways.end IS NOT NULL and :now > giveaways.end"),
-            {"now": now}
+            select(giveaways.c.id, giveaways.c.gid, giveaways.c.cid, giveaways.c.mid, giveaways.c.end)
+            .where(giveaways.c.end.is_not(None))
         ).fetchall()
 
-    return res
+    ending = []
+    for i in res:
+        end = i[4]
+        # On Postgres, DateTime(timezone=True) comes back timezone-aware;
+        # convert to the guild's naive local wall time before comparing.
+        if end.tzinfo is not None:
+            end = end.astimezone(ZoneInfo(get_timezone(int(i[1])))).replace(tzinfo=None)
+        if end < get_now(int(i[1])):
+            ending.append((i[0], i[1], i[2], i[3]))
+
+    return ending
 
 
 def mark_giveaway_ended(gid: int):
@@ -88,13 +97,18 @@ def mark_giveaway_ended(gid: int):
 
 
 def clear_expired_giveaways():
-    now = datetime.datetime.now()
     with engine.begin() as c:
         res = c.execute(
-            text("SELECT giveaways.id FROM giveaways WHERE :now > giveaways.expiry"),
-            {"now": now}
+            select(giveaways.c.id, giveaways.c.gid, giveaways.c.expiry)
         ).fetchall()
+
         for i in res:
+            expiry = i[2]
+            if expiry.tzinfo is not None:
+                expiry = expiry.astimezone(ZoneInfo(get_timezone(int(i[1]), c))).replace(tzinfo=None)
+            if expiry >= get_now(int(i[1]), c):
+                continue
+
             c.execute(
                 delete(giveaway_joins)
                 .where(giveaway_joins.c.gid == i[0])

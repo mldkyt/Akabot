@@ -4,9 +4,13 @@ from discord import Message
 from sqlalchemy import Connection, select, update
 
 from database import markov
+from utils.timezones import get_now
 
 
 def tick_markov(c: Connection, message: Message):
+    if message.guild is None:
+        return
+
     markov_data = c.execute(
         select(markov.c.mode, markov.c.period, markov.c.period_num)
         .where(markov.c.channel_id == message.channel.id)
@@ -24,6 +28,9 @@ def tick_markov(c: Connection, message: Message):
 
 
 def post_markov_run(c: Connection, message: Message):
+    if message.guild is None:
+        return False
+
     markov_data = c.execute(
         select(markov.c.mode, markov.c.period, markov.c.period_num)
         .where(markov.c.channel_id == message.channel.id)
@@ -34,20 +41,21 @@ def post_markov_run(c: Connection, message: Message):
 
     if markov_data[0] == "periodic":
         _, period, period_num = markov_data
+        now = get_now(message.guild.id, c)
         if period == "minutely":
-            next_send = datetime.datetime.now() + datetime.timedelta(
+            next_send = now + datetime.timedelta(
                 minutes=period_num
             )
         elif period == "hourly":
-            next_send = datetime.datetime.now() + datetime.timedelta(
+            next_send = now + datetime.timedelta(
                 hours=period_num
             )
         elif period == "daily":
-            next_send = datetime.datetime.now() + datetime.timedelta(
+            next_send = now + datetime.timedelta(
                 days=period_num
             )
         else:
-            next_send = datetime.datetime.now() + datetime.timedelta(days=1)
+            next_send = now + datetime.timedelta(days=1)
 
         c.execute(
             update(markov)
@@ -64,6 +72,9 @@ def post_markov_run(c: Connection, message: Message):
 
 
 def should_trigger_markov(c: Connection, message: Message) -> bool:
+    if message.guild is None:
+        return False
+
     markov_data = c.execute(
         select(markov.c.mode)
         .where(markov.c.channel_id == message.channel.id)
@@ -78,7 +89,7 @@ def should_trigger_markov(c: Connection, message: Message) -> bool:
             select(markov).where(
                 (markov.c.channel_id == str(message.channel.id))
                 & (
-                    (markov.c.next_send < datetime.datetime.now())
+                    (markov.c.next_send < get_now(message.guild.id, c))
                     | (markov.c.next_send is None)
                 )
             )

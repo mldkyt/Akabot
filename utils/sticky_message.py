@@ -5,10 +5,14 @@ from sqlalchemy import select, update
 
 from database import engine, sticky_messages
 from logger import akabot_logger
+from utils.timezones import get_now
 
 
 async def update_sticky_message(message: Message):
     if message.author.bot:
+        return
+
+    if message.guild is None:
         return
 
     with engine.begin() as c:
@@ -16,7 +20,7 @@ async def update_sticky_message(message: Message):
             select(sticky_messages.c.content, sticky_messages.c.last_msg_id).where(
                 (sticky_messages.c.channel_id == str(message.channel.id))
                 & (
-                    (sticky_messages.c.cooldown < datetime.datetime.now())
+                    (sticky_messages.c.cooldown < get_now(message.guild.id, c))
                     | (sticky_messages.c.cooldown == None)
                 )
             )
@@ -42,6 +46,6 @@ async def update_sticky_message(message: Message):
             .where(sticky_messages.c.channel_id == str(message.channel.id))
             .values(
                 last_msg_id=str(new_message.id),
-                cooldown=datetime.datetime.now() + datetime.timedelta(minutes=1),
+                cooldown=get_now(message.guild.id, c) + datetime.timedelta(minutes=1),
             )
         )
