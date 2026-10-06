@@ -19,7 +19,8 @@ class Giveaways(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        self.giveaways_handler.start()
+        if not self.giveaways_handler.is_running():
+            self.giveaways_handler.start()
         self.bot.add_view(GiveawayView())
 
     giveaway_grp = SlashCommandGroup(name="giveaways", description="Giveaway commands")

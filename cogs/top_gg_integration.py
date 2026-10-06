@@ -16,7 +16,8 @@ class TopGGIntegration(Cog):
     @Cog.listener()
     async def on_ready(self):
         if os.getenv("TOPGG_TOKEN") is not None:
-            self.topgg_update_metrics.start()
+            if not self.topgg_update_metrics.is_running():
+                self.topgg_update_metrics.start()
             await self.topgg_sync_commands()
 
     async def topgg_sync_commands(self):

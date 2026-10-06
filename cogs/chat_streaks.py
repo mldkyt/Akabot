@@ -106,7 +106,8 @@ class ChatStreaks(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        self.chat_streak_reminders.start()
+        if not self.chat_streak_reminders.is_running():
+            self.chat_streak_reminders.start()
 
         self.bot.add_view(UnsubscribeDMNotificationsView())
         self.bot.add_view(EnableDMNotificationsView())

@@ -11,7 +11,8 @@ class StatisticChannels(Cog):
 
     @Cog.listener()
     async def on_ready(self):
-        self.update_channels.start()
+        if not self.update_channels.is_running():
+            self.update_channels.start()
 
     @loop(minutes=5)
     async def update_channels(self):
