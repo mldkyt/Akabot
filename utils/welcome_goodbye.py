@@ -14,7 +14,7 @@ from utils.timezones import get_now
 
 # Welcome
 welcome_channel = ServerSetting(
-    name="Welcome channel", setting_type=SettingType.NORMAL, default="0"
+    name="Welcome channel", setting_type=SettingType.NORMAL, default=""
 )
 
 welcome_grace_period_first = ServerSetting(
@@ -41,7 +41,7 @@ welcome_message_type = ServerSetting(
 
 # Goodbye
 goodbye_channel = ServerSetting(
-    name="Goodbye channel", setting_type=SettingType.NORMAL, default="0"
+    name="Goodbye channel", setting_type=SettingType.NORMAL, default=""
 )
 
 goodbye_message_title = ServerSetting(
