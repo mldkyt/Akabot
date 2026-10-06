@@ -42,7 +42,7 @@ any_count_mode_count_words = ServerSetting(
 any_count_mode_minimum_frequency = ServerSetting(
     name="Counting any count mode: Minimum frequency",
     setting_type=SettingType.NORMAL,
-    default="false",
+    default="1",
 )
 
 
@@ -71,7 +71,10 @@ def attempt_to_parse_number(c: Connection, m: Message) -> list[int]:
                 words[i] = 0
             words[i] += 1
 
-        a = int(any_count_mode_minimum_frequency.get(c, m.guild.id))
+        try:
+            a = int(any_count_mode_minimum_frequency.get(c, m.guild.id))
+        except (TypeError, ValueError):
+            a = 1
         less_frequent_words = []
         for k in words.keys():
             if words[k] < a:
