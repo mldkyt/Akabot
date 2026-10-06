@@ -122,7 +122,7 @@ async def send_welcome_message(c: Connection, member: Member):
         grace_period_second[uuid.uuid4()] = {
             "message": message,
             "member": member,
-            "after": get_now(member.guild.id, c) + datetime.timedelta(minutes=dur),
+            "after": get_now(member.guild.id, c) + datetime.timedelta(seconds=dur),
         }
     elif msg_type == "text":
         message = await chan.send(
@@ -131,7 +131,7 @@ async def send_welcome_message(c: Connection, member: Member):
         grace_period_second[uuid.uuid4()] = {
             "message": message,
             "member": member,
-            "after": get_now(member.guild.id, c) + datetime.timedelta(minutes=dur),
+            "after": get_now(member.guild.id, c) + datetime.timedelta(seconds=dur),
         }
     else:
         akabot_logger.warning(
