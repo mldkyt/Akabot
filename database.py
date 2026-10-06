@@ -54,7 +54,7 @@ server_settings_list = Table(
     Column("uid", VARCHAR),
     Column("name", VARCHAR),
     Column("value", VARCHAR),
-    UniqueConstraint("name", "value"),
+    UniqueConstraint("uid", "name", "value"),
 )
 
 user_settings_list = Table(
@@ -64,7 +64,7 @@ user_settings_list = Table(
     Column("uid", VARCHAR),
     Column("name", VARCHAR),
     Column("value", VARCHAR),
-    UniqueConstraint("name", "value"),
+    UniqueConstraint("uid", "name", "value"),
 )
 
 leveling = Table(
