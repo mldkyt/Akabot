@@ -184,7 +184,7 @@ def leveling_index():
                 "index": reward_role_i,
                 "id": reward_role[0],
                 "level": reward_role[1],
-                "name": reward_role_name[0]
+                "name": reward_role_name[0] if reward_role_name else "Unknown role"
             })
 
         multiplier_ids = [i.split(";") for i in setting_leveling_multipliers.get(c, auth["guild"])] # start;end;multiplier
@@ -264,7 +264,8 @@ def remove_reward(index: str):
             return redirect("/settings/leveling", 303)
 
     return render_template("leveling_remove_reward.html",
-                           role_name=reward_role_name[0], index=index, level=reward_role_id[1])
+                           role_name=reward_role_name[0] if reward_role_name else "Unknown role",
+                           index=index, level=reward_role_id[1])
 
 @leveling_bp.route("/settings/leveling/edit/multiplier/<index>", methods=["POST"])
 def edit_multiplier(index: str):

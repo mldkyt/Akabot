@@ -80,7 +80,7 @@ def chat_revive_index():
 
             chat_revives.append({
                 "index": i,
-                "channel": f"#{channel[0]}",
+                "channel": f"#{channel[0]}" if channel else "Unknown Channel",
                 "channel_id": args[0],
                 "minutes": args[1]
             })
@@ -139,7 +139,7 @@ def chat_revive_delete(index: str):
 
     chat_revive_parsed = {
         "index": int(index),
-        "channel": channel_info[0],
+        "channel": channel_info[0] if channel_info else "Unknown Channel",
         "minutes": chat_revive[1]
     }
 
