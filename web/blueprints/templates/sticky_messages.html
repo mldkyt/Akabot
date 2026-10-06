@@ -29,7 +29,7 @@
 <form action="/settings/sticky_messages" method="post">
     <input type="hidden" name="channel" value="{{i.id}}" />
     <span>Message content:</span><br />
-    <textarea rows="10" cols="50">{{i.content}}</textarea>
+    <textarea rows="10" cols="50" name="content">{{i.content}}</textarea>
     <br />
     <button type="submit">Update message</button>
 </form>
