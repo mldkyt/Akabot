@@ -209,6 +209,7 @@ class DoubleOrNothing(View):
         super().__init__()
 
         self.amt = amt
+        self.cashed_out = False
 
     @button(label="Gamble!", style=ButtonStyle.primary)
     async def gamble(self, _: Button, ctx: Interaction):
@@ -222,7 +223,14 @@ class DoubleOrNothing(View):
 
     @button(label="Cash out", style=ButtonStyle.secondary)
     async def cash_out(self, _: Button, ctx: Interaction):
+        if self.cashed_out:
+            return
+
+        self.cashed_out = True
         self.disable_all_items()
+
+        # the stake is debited when the game starts, so cashing out credits the
+        # whole pot rather than the profit
         update_money(ctx.user.id, "bank", self.amt)
         await ctx.edit(content=f"Cashed out {self.amt} NekoCoins", view=None)
 
@@ -231,6 +239,8 @@ async def gamble(ctx: ApplicationContext, amount: int) -> tuple[bool, str | None
     wallet, bank = get_money(ctx.author.id)
     if amount > bank:
         return False, "Not enough money in the bank"
+
+    update_money(ctx.author.id, "bank", -amount)
 
     await ctx.respond(f"Gambling with {amount} NekoCoins right now", view=DoubleOrNothing(amount))
     return True, None
