@@ -91,7 +91,7 @@ async def send_message_to_log_channel(
     for channel in channel_data:
         channel = guild.get_channel(int(channel[0]))
         if not isinstance(channel, TextChannel):
-            return
+            continue
 
         if isinstance(message, str):
             await channel.send(embed=Embed(description=message, color=Color.red()))
