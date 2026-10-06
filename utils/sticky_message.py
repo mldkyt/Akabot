@@ -29,23 +29,31 @@ async def update_sticky_message(message: Message):
         if existing_record is None:
             return
 
-        if existing_record[1]:
-            try:
-                existing_message = await message.channel.fetch_message(
-                    existing_record[1]
-                )
-                await existing_message.delete()
-            except Exception:
-                akabot_logger.exception(
-                    f"Failed to fetch/delete previous sticky message {existing_record[1]} in channel {message.channel.id}"
-                )
-
-        new_message = await message.channel.send(existing_record[0])
+        # Reserve the cooldown window before any await. The block runs without
+        # yielding, so a burst of messages cannot pass this check again while
+        # the network calls below are in flight.
         c.execute(
             update(sticky_messages)
             .where(sticky_messages.c.channel_id == str(message.channel.id))
-            .values(
-                last_msg_id=str(new_message.id),
-                cooldown=get_now(message.guild.id, c) + datetime.timedelta(minutes=1),
+            .values(cooldown=get_now(message.guild.id, c) + datetime.timedelta(minutes=1))
+        )
+
+    if existing_record[1]:
+        try:
+            existing_message = await message.channel.fetch_message(
+                existing_record[1]
             )
+            await existing_message.delete()
+        except Exception:
+            akabot_logger.exception(
+                f"Failed to fetch/delete previous sticky message {existing_record[1]} in channel {message.channel.id}"
+            )
+
+    new_message = await message.channel.send(existing_record[0])
+
+    with engine.begin() as c:
+        c.execute(
+            update(sticky_messages)
+            .where(sticky_messages.c.channel_id == str(message.channel.id))
+            .values(last_msg_id=str(new_message.id))
         )
