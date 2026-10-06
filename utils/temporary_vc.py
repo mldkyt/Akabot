@@ -1,7 +1,7 @@
 from random import randint
 
 from discord import Member, VoiceState
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 
 from database import engine, temporary_vcs
 from utils.premium import get_limit
@@ -23,10 +23,34 @@ async def h_join_channel(member: Member, after: VoiceState):
         return
 
     with engine.begin() as c:
-        limit = get_limit(c, member.guild.id, 3)
-        existing_count = len(c.execute(
+        existing = c.execute(
             select(temporary_vcs.c.cid).where(temporary_vcs.c.gid == str(member.guild.id))
-        ).fetchall())
+        ).fetchall()
+
+        # Drop rows whose channel no longer exists (deleted by hand, by a
+        # moderator or by an earlier run), otherwise the free plan limit
+        # never recovers once it has been hit once.
+        stale = []
+        for row in existing:
+            try:
+                channel_id = int(row[0])
+            except (TypeError, ValueError):
+                stale.append(row[0])
+                continue
+
+            if member.guild.get_channel(channel_id) is None:
+                stale.append(row[0])
+
+        if stale:
+            c.execute(
+                delete(temporary_vcs).where(
+                    (temporary_vcs.c.gid == str(member.guild.id))
+                    & (temporary_vcs.c.cid.in_(stale))
+                )
+            )
+
+        limit = get_limit(c, member.guild.id, 3)
+        existing_count = len(existing) - len(stale)
 
     if limit is not None and existing_count >= limit:
         await member.send("The free plan is limited to 3 simultaneous temporary voice channels, so one wasn't created.")
@@ -59,6 +83,14 @@ async def h_leave_channel(member: Member, before: VoiceState):
 
     if len(before.channel.members) == 0:
         await before.channel.delete(reason="Temporary Voice Channels")
+
+        with engine.begin() as c:
+            c.execute(
+                delete(temporary_vcs).where(
+                    (temporary_vcs.c.gid == str(member.guild.id))
+                    & (temporary_vcs.c.cid == str(before.channel.id))
+                )
+            )
 
 
 async def handle_voice_update(member: Member, before: VoiceState, after: VoiceState):
