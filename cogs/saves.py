@@ -25,7 +25,9 @@ class Saves(Cog):
 
         with engine.begin() as c:
             saves_db = c.execute(
-                select(saves.c.link).where(saves.c.uid == str(ctx.user.id))
+                select(saves.c.link)
+                .where(saves.c.uid == str(ctx.user.id))
+                .order_by(saves.c.id)
             ).fetchall()
 
         if len(saves_db) == 0:
@@ -55,12 +57,16 @@ class Saves(Cog):
 
         with engine.begin() as c:
             all_saves = c.execute(
-                select(saves.c.id, saves.c.link).where(saves.c.uid == str(ctx.user.id))
+                select(saves.c.id, saves.c.link)
+                .where(saves.c.uid == str(ctx.user.id))
+                .order_by(saves.c.id)
             ).fetchall()
 
-            if len(all_saves) < num:
-                await ctx.respond("Not found")
+        if num < 1 or num > len(all_saves):
+            await ctx.respond("Not found", ephemeral=True)
+            return
 
+        with engine.begin() as c:
             c.execute(delete(saves).where(saves.c.id == all_saves[num - 1][0]))
 
         await ctx.respond(f"Deleted save {all_saves[num - 1][1]}", ephemeral=True)
