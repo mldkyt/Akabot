@@ -162,7 +162,7 @@ class ServerSetting:
 
     def clear_list(self, c: Connection, member: Member):
         c.execute(
-            delete(server_settings_list.c.value).where(
+            delete(server_settings_list).where(
                 (server_settings_list.c.uid == str(member.guild.id))
                 & (server_settings_list.c.name == self.name)
             )

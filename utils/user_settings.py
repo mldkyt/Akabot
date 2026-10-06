@@ -154,7 +154,7 @@ class UserSetting:
 
     def clear_list(self, c: Connection, member: int):
         c.execute(
-            delete(usl_table.c.value).where(
+            delete(usl_table).where(
                 (usl_table.c.uid == str(member)) & (usl_table.c.name == self.name)
             )
         )
