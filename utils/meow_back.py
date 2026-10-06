@@ -163,7 +163,7 @@ def meow_back_for_message(message: Message):
                 meow_back_settings.c.colon_3,
                 meow_back_settings.c.owo,
                 meow_back_settings.c.awawa,
-            ).where(meow_back_settings.c.cid == message.channel.id)
+            ).where(meow_back_settings.c.cid == str(message.channel.id))
         ).fetchone()
 
         if channel_settings:

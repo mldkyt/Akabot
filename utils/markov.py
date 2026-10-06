@@ -13,7 +13,7 @@ def tick_markov(c: Connection, message: Message):
 
     markov_data = c.execute(
         select(markov.c.mode, markov.c.period, markov.c.period_num)
-        .where(markov.c.channel_id == message.channel.id)
+        .where(markov.c.channel_id == str(message.channel.id))
     ).fetchone()
 
     if not markov_data:
@@ -33,7 +33,7 @@ def post_markov_run(c: Connection, message: Message):
 
     markov_data = c.execute(
         select(markov.c.mode, markov.c.period, markov.c.period_num)
-        .where(markov.c.channel_id == message.channel.id)
+        .where(markov.c.channel_id == str(message.channel.id))
     ).fetchone()
 
     if not markov_data:
@@ -77,7 +77,7 @@ def should_trigger_markov(c: Connection, message: Message) -> bool:
 
     markov_data = c.execute(
         select(markov.c.mode)
-        .where(markov.c.channel_id == message.channel.id)
+        .where(markov.c.channel_id == str(message.channel.id))
     ).fetchone()
 
     if not markov_data:

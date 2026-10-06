@@ -70,7 +70,7 @@ class VotingOptions(View):
             if c.execute(
                 select(suggestion_voting.c.vote).where(
                     (suggestion_voting.c.message_id == str(interaction.message.id))
-                    & (suggestion_voting.c.member_id == interaction.user.id)
+                    & (suggestion_voting.c.member_id == str(interaction.user.id))
                 )
             ).fetchone():
                 await interaction.respond("Already voted!", ephemeral=True)
@@ -79,7 +79,7 @@ class VotingOptions(View):
             c.execute(
                 insert(suggestion_voting).values(
                     message_id=str(interaction.message.id),
-                    member_id=interaction.user.id,
+                    member_id=str(interaction.user.id),
                     vote=1,
                 )
             )
@@ -114,7 +114,7 @@ class VotingOptions(View):
             if c.execute(
                 select(suggestion_voting.c.vote).where(
                     (suggestion_voting.c.message_id == str(interaction.message.id))
-                    & (suggestion_voting.c.member_id == interaction.user.id)
+                    & (suggestion_voting.c.member_id == str(interaction.user.id))
                 )
             ).fetchone():
                 await interaction.respond("Already voted!", ephemeral=True)
@@ -123,7 +123,7 @@ class VotingOptions(View):
             c.execute(
                 insert(suggestion_voting).values(
                     message_id=str(interaction.message.id),
-                    member_id=interaction.user.id,
+                    member_id=str(interaction.user.id),
                     vote=0,
                 )
             )
