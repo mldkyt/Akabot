@@ -22,6 +22,9 @@ def template_index():
         if request.method == "POST":
             if request.form.get("keyword") and request.form.get("content"):
                 if request.form.get("id"):
+                    if not request.form["id"].isnumeric():
+                        return quick_response("Invalid tag id", 400)
+
                     c.execute(
                         update(tags)
                         .where(
@@ -50,6 +53,9 @@ def template_index():
                     )
 
             if request.form.get("delete"):
+                if not request.form["delete"].isnumeric():
+                    return quick_response("Invalid tag id", 400)
+
                 c.execute(
                     delete(tags).where(
                         (tags.c.id == int(request.form["delete"]))

@@ -24,6 +24,9 @@ def markov_index():
                     and request.form.get("mode") and request.form["mode"] in ["periodic", "messages", "command"] \
                     and request.form.get("messages_num") and request.form["messages_num"].isnumeric():
 
+                if not request.form.get("num_periods", "").isnumeric():
+                    return quick_response("The period number must be a number", 400)
+
                 if int(request.form["messages_num"]) <= 1:
                     return quick_response("The minimum messages number must be at least 1", 400)
 

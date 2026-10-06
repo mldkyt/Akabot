@@ -29,8 +29,11 @@ def periodic_messages_index():
                 request.form.get("channel")
                 and request.form.get("period")
                 and request.form.get("period_num")
-                and request.form.get("content")
+                and                 request.form.get("content")
             ):
+                if not request.form["period_num"].isnumeric():
+                    return quick_response("The period number must be a number", 400)
+
                 existing = c.execute(
                     select(periodic_messages).where(
                         periodic_messages.c.channel_id == request.form["channel"]
