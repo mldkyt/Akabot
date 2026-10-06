@@ -51,26 +51,34 @@ def handle_settings(auth):
             else:
                 flash("XP per level must be between 10 and 10000")
 
-def handle_rewards(auth, is_edit: bool = False):
+def handle_rewards(auth, is_edit: bool = False, remove_value: str | None = None) -> bool:
     reward_role = request.form.get("reward_role")
     required_level = request.form.get("required_level")
 
     if not reward_role or not required_level:
-        return
+        return False
 
     if not validate_role_id(reward_role):
         flash("Role not found, try adding again if you just edited roles.")
-        return
+        return False
 
     if not required_level.isnumeric() or 1 > int(required_level) > 1000:
         flash("The level must be between 1 and 1000")
-        return
+        return False
 
     with engine.begin() as c:
-        if get_premium_context(c, auth["guild"])["premium_only"] and \
-                len(setting_leveling_rewards.get(c, auth["guild"])) >= 3:
+        rewards = setting_leveling_rewards.get(c, auth["guild"])
+
+        # An edit replaces an existing entry, so it must not count towards the
+        # free plan limit of the entry being replaced.
+        existing_count = len(rewards) - (1 if remove_value is not None else 0)
+
+        if get_premium_context(c, auth["guild"])["premium_only"] and existing_count >= 3:
             flash("Free plan is limited to 3 leveling rewards")
-            return
+            return False
+
+        if remove_value is not None:
+            setting_leveling_rewards.remove_from_list(c, auth["guild"], remove_value)
 
         setting_leveling_rewards.add_to_list(c, auth["guild"], f"{reward_role};{required_level}")
         if is_edit:
@@ -78,25 +86,27 @@ def handle_rewards(auth, is_edit: bool = False):
         else:
             flash("Added role reward successfully")
 
-def handle_multipliers(auth, is_edit: bool = True):
+    return True
+
+def handle_multipliers(auth, is_edit: bool = True, remove_value: str | None = None) -> bool:
     start = request.form.get("start")
     end = request.form.get("end")
     multiplier = request.form.get("multiplier")
 
     if not start or not end or not multiplier:
-        return
+        return False
 
     with engine.begin() as c:
         if get_premium_context(c, auth["guild"])["premium_only"]:
             flash("Leveling multipliers are a Premium feature")
-            return
+            return False
 
     if not multiplier.isnumeric():
-        return
+        return False
 
     if not re.match(r"^(\d)+-(\d)+$", start):
         flash("Invalid format for start date for multiplier")
-        return
+        return False
 
     start_month, start_day = start.split("-")
 
@@ -107,11 +117,11 @@ def handle_multipliers(auth, is_edit: bool = True):
             f"Failed to parse start date {start_month}-{start_day} for leveling multiplier"
         )
         flash("Failed to parse start date")
-        return
+        return False
 
     if not re.match(r"^(\d)+-(\d)+$", end):
         flash("Invalid format for end date for multiplier")
-        return
+        return False
 
     end_month, end_day = end.split("-")
 
@@ -122,18 +132,23 @@ def handle_multipliers(auth, is_edit: bool = True):
             f"Failed to parse end date {end_month}-{end_day} for leveling multiplier"
         )
         flash("Failed to parse end date")
-        return
+        return False
 
     if 1 > int(multiplier) > 1000:
         flash("Multiplier must be between 1 and 1000")
-        return
+        return False
 
     with engine.begin() as c:
+        if remove_value is not None:
+            setting_leveling_multipliers.remove_from_list(c, auth["guild"], remove_value)
+
         setting_leveling_multipliers.add_to_list(c, auth["guild"], f"{start_month:02}-{start_day:02};{end_month:02}-{end_day:02};{multiplier}")
         if is_edit:
             flash("Multiplier edited successfully")
         else:
             flash("Multiplier was created successfully")
+
+    return True
 
 
 @leveling_bp.route('/settings/leveling', methods=["GET", "POST"])
@@ -215,9 +230,9 @@ def edit_reward(index: str):
         if len(reward_role_ids) <= int(index):
             return redirect("/settings/leveling")
 
-        setting_leveling_rewards.remove_from_list(c, auth["guild"], ";".join(reward_role_ids[int(index)]))
+        remove_value = ";".join(reward_role_ids[int(index)])
 
-    handle_rewards(auth, is_edit=True)
+    handle_rewards(auth, is_edit=True, remove_value=remove_value)
     return redirect("/settings/leveling", 303)
 
 @leveling_bp.route("/settings/leveling/delete/reward/<index>")
@@ -251,7 +266,7 @@ def remove_reward(index: str):
     return render_template("leveling_remove_reward.html",
                            role_name=reward_role_name[0], index=index, level=reward_role_id[1])
 
-@leveling_bp.route("/settings/leveling/edit/multiplier/<index>", methods=["GET", "POST"])
+@leveling_bp.route("/settings/leveling/edit/multiplier/<index>", methods=["POST"])
 def edit_multiplier(index: str):
     if not index.isnumeric():
         return redirect("/settings/leveling", 302)
@@ -268,9 +283,9 @@ def edit_multiplier(index: str):
         if len(multiplier_ids) <= int(index):
             return redirect("/settings/leveling", 302)
 
-        setting_leveling_multipliers.remove_from_list(c, auth["guild"], ";".join(multiplier_ids[int(index)]))
+        remove_value = ";".join(multiplier_ids[int(index)])
 
-    handle_multipliers(auth, is_edit=True)
+    handle_multipliers(auth, is_edit=True, remove_value=remove_value)
     return redirect("/settings/leveling", 303)
 
 
