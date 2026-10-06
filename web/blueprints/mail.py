@@ -62,7 +62,7 @@ def admin_mail_add():
     if "author" not in request.form or "post" not in request.form:
         return redirect("/settings/mail", 303)
 
-    if 2 > len(request.form['author'].strip()) > 32 or 4 > len(request.form['post']) > 1000:
+    if not (2 <= len(request.form['author'].strip()) <= 32 and 4 <= len(request.form['post']) <= 1000):
         return redirect("/settings/mail", 303)
 
     add_mail(request.form['author'], request.form['post'])
@@ -88,7 +88,7 @@ def admin_mail_edit(id: str):
     if "author" not in request.form or "post" not in request.form:
         return redirect("/settings/mail", 303)
 
-    if 2 > len(request.form['author'].strip()) > 32 or 4 > len(request.form['post']) > 1000:
+    if not (2 <= len(request.form['author'].strip()) <= 32 and 4 <= len(request.form['post']) <= 1000):
         return redirect("/settings/mail")
 
     with engine.begin() as c:

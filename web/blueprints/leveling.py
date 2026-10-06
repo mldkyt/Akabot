@@ -62,7 +62,7 @@ def handle_rewards(auth, is_edit: bool = False, remove_value: str | None = None)
         flash("Role not found, try adding again if you just edited roles.")
         return False
 
-    if not required_level.isnumeric() or 1 > int(required_level) > 1000:
+    if not required_level.isnumeric() or not 1 <= int(required_level) <= 1000:
         flash("The level must be between 1 and 1000")
         return False
 
@@ -134,7 +134,7 @@ def handle_multipliers(auth, is_edit: bool = True, remove_value: str | None = No
         flash("Failed to parse end date")
         return False
 
-    if 1 > int(multiplier) > 1000:
+    if not 1 <= int(multiplier) <= 1000:
         flash("Multiplier must be between 1 and 1000")
         return False
 

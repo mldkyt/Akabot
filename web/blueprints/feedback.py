@@ -31,11 +31,11 @@ def handle_feedback_post(auth):
         "body" not in request.form:
         return None
 
-    if 4 > len(request.form["title"]) > 50:
+    if not 4 <= len(request.form["title"]) <= 50:
         flash("The title has an invalid length")
         return None
 
-    if 10 > len(request.form["body"]) > 1200:
+    if not 10 <= len(request.form["body"]) <= 1200:
         flash("The body has an invalid length")
         return None
 

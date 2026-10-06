@@ -15,7 +15,7 @@ def handle_post(auth, is_edit: bool = False):
     if not validate_voice_channel_id(request.form["channel"]):
         flash("Invalid voice channel selected")
         return
-    if 2 > len(request.form["template"]) > 50:
+    if not 2 <= len(request.form["template"]) <= 50:
         flash("Template too short or too long, keep it between 2 and 50 characters")
         return
     if ";" in request.form["template"]:
