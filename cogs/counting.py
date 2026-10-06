@@ -25,7 +25,7 @@ class Counting(Cog):
 
         with engine.begin() as c:
             if not setting_counting_channels.is_in_list(
-                c, message.author, str(message.channel.id)
+                c, message.guild.id, str(message.channel.id)
             ):
                 return
 
