@@ -100,8 +100,8 @@ def get_multiplier(c: Connection, m: Member):
             )
         ).fetchall()
 
-        for m in message_count_multipliers:
-            multiplier += m[0]
+        for reward in message_count_multipliers:
+            multiplier += reward[0]
 
     # Voting multiplier
     voting = c.execute(
