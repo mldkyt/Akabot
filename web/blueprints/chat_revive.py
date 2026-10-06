@@ -121,15 +121,15 @@ def chat_revive_delete(index: str):
 
     with engine.begin() as c:
         chat_revives = setting_chat_revive_channels.get(c, auth["guild"])
+        if len(chat_revives) <= int(index):
+            return redirect("/settings/chat_revive", 302)
+
         chat_revive = chat_revives[int(index)].split(";")
 
         channel_info = c.execute(
             select(synced_channels.c.cname)
             .where((synced_channels.c.cid == chat_revive[0]) & (synced_channels.c.gid == str(auth["guild"])))
         ).fetchone()
-
-    if len(chat_revives) <= int(index):
-        return redirect("/settings/chat_revive", 302)
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
