@@ -68,6 +68,9 @@ chat_summary_history = ServerSetting(
 
 
 def inc(c: Connection, m: Message):
+    # With unique mode on, consecutive messages from the same author count once.
+    unique = chat_summary_unique.get(c, m.guild.id) == "true"
+
     # Increment for channel
 
     a = c.execute(
@@ -78,6 +81,7 @@ def inc(c: Connection, m: Message):
             & (chat_summary_channels.c.cid == str(m.channel.id))
         )
     ).fetchone()
+    collapsed = unique and a is not None and a[1] == str(m.author.id)
     if a is None:
         c.execute(
             insert(chat_summary_channels).values(
@@ -87,20 +91,19 @@ def inc(c: Connection, m: Message):
                 last_member=str(m.author.id),
             )
         )
-    else:
-        if a[1] != str(m.author.id):
-            c.execute(
-                update(chat_summary_channels)
-                .values(messages=a[0] + 1, last_member=str(m.author.id))
-                .where(
-                    (chat_summary_channels.c.gid == str(m.guild.id))
-                    & (chat_summary_channels.c.cid == str(m.channel.id))
-                )
+    elif not collapsed:
+        c.execute(
+            update(chat_summary_channels)
+            .values(messages=a[0] + 1, last_member=str(m.author.id))
+            .where(
+                (chat_summary_channels.c.gid == str(m.guild.id))
+                & (chat_summary_channels.c.cid == str(m.channel.id))
             )
+        )
 
     # Increment for user
 
-    if a is None or a[1] != str(m.author.id):
+    if not collapsed:
         a = c.execute(
             select(chat_summary_members.c.messages).where(
                 (chat_summary_members.c.gid == str(m.guild.id))
@@ -144,6 +147,7 @@ def inc(c: Connection, m: Message):
             & (monthly_chat_summary_channels.c.cid == str(m.channel.id))
         )
     ).fetchone()
+    collapsed = unique and a is not None and a[1] == str(m.author.id)
     if a is None:
         c.execute(
             insert(monthly_chat_summary_channels).values(
@@ -153,20 +157,19 @@ def inc(c: Connection, m: Message):
                 last_member=str(m.author.id),
             )
         )
-    else:
-        if a[1] != str(m.author.id):
-            c.execute(
-                update(monthly_chat_summary_channels)
-                .values(messages=a[0] + 1, last_member=str(m.author.id))
-                .where(
-                    (monthly_chat_summary_channels.c.gid == str(m.guild.id))
-                    & (monthly_chat_summary_channels.c.cid == str(m.channel.id))
-                )
+    elif not collapsed:
+        c.execute(
+            update(monthly_chat_summary_channels)
+            .values(messages=a[0] + 1, last_member=str(m.author.id))
+            .where(
+                (monthly_chat_summary_channels.c.gid == str(m.guild.id))
+                & (monthly_chat_summary_channels.c.cid == str(m.channel.id))
             )
+        )
 
     # Increment for user
 
-    if a is None or a[1] != str(m.author.id):
+    if not collapsed:
         a = c.execute(
             select(monthly_chat_summary_members.c.messages).where(
                 (monthly_chat_summary_members.c.gid == str(m.guild.id))
@@ -207,6 +210,7 @@ def inc(c: Connection, m: Message):
             & (yearly_chat_summary_channels.c.cid == str(m.channel.id))
         )
     ).fetchone()
+    collapsed = unique and a is not None and a[1] == str(m.author.id)
     if a is None:
         c.execute(
             insert(yearly_chat_summary_channels).values(
@@ -216,20 +220,19 @@ def inc(c: Connection, m: Message):
                 last_member=str(m.author.id),
             )
         )
-    else:
-        if a[1] != str(m.author.id):
-            c.execute(
-                update(yearly_chat_summary_channels)
-                .values(messages=a[0] + 1, last_member=str(m.author.id))
-                .where(
-                    (yearly_chat_summary_channels.c.gid == str(m.guild.id))
-                    & (yearly_chat_summary_channels.c.cid == str(m.channel.id))
-                )
+    elif not collapsed:
+        c.execute(
+            update(yearly_chat_summary_channels)
+            .values(messages=a[0] + 1, last_member=str(m.author.id))
+            .where(
+                (yearly_chat_summary_channels.c.gid == str(m.guild.id))
+                & (yearly_chat_summary_channels.c.cid == str(m.channel.id))
             )
+        )
 
     # Increment for user
 
-    if a is None or a[1] != str(m.author.id):
+    if not collapsed:
         a = c.execute(
             select(yearly_chat_summary_members.c.messages).where(
                 (yearly_chat_summary_members.c.gid == str(m.guild.id))
@@ -509,6 +512,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
     try:
         with engine.begin() as c:
             today = get_now(guild.id, c).date()
+            unique = chat_summary_unique.get(c, guild.id) == "true"
         daily_data = {}
         monthly_data = {}
         yearly_data = {}
@@ -527,7 +531,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
 
             year_key = (gid, cid)
             year_data = yearly_data.setdefault(year_key, {"messages": 0, "last_member": None})
-            if year_data["last_member"] != uid:
+            if not unique or year_data["last_member"] != uid:
                 year_data["messages"] += 1
                 year_data["last_member"] = uid
                 year_user = yearly_data.setdefault((gid, cid, uid), {"messages": 0})
@@ -536,7 +540,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
             if msg_date.month == today.month:
                 month_key = (gid, cid)
                 month_data = monthly_data.setdefault(month_key, {"messages": 0, "last_member": None})
-                if month_data["last_member"] != uid:
+                if not unique or month_data["last_member"] != uid:
                     month_data["messages"] += 1
                     month_data["last_member"] = uid
                     month_user = monthly_data.setdefault((gid, cid, uid), {"messages": 0})
@@ -545,7 +549,7 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                 if msg_date.day == today.day:
                     day_key = (gid, cid)
                     day_data = daily_data.setdefault(day_key, {"messages": 0, "last_member": None})
-                    if day_data["last_member"] != uid:
+                    if not unique or day_data["last_member"] != uid:
                         day_data["messages"] += 1
                         day_data["last_member"] = uid
                         day_user = daily_data.setdefault((gid, cid, uid), {"messages": 0})
