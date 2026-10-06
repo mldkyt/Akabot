@@ -1,6 +1,6 @@
 import os
 
-import requests
+from aiohttp import ClientSession, ClientTimeout
 from discord import Bot, Cog
 from discord.ext.tasks import loop
 
@@ -22,7 +22,9 @@ class Heartbeat(Cog):
 
     @loop(seconds=int(HEARTBEAT_INTERVAL))
     async def heartbeat(self):
-        requests.post(HEARTBEAT_URL)
+        async with ClientSession(timeout=ClientTimeout(total=10)) as session:
+            async with session.post(HEARTBEAT_URL):
+                pass
 
 
 def setup(bot: Bot):
