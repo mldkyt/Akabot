@@ -242,7 +242,7 @@ async def apply_leveling_rewards(c: Connection, member: discord.Member):
         if i[0] is None:
             continue
 
-        if level > i[1] and i[0] not in member.roles:
+        if level >= i[1] and i[0] not in member.roles:
             if i[0] < member.guild.self_role:
                 to_add.append(i[0])
             else:
