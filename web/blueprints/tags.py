@@ -24,7 +24,10 @@ def template_index():
                 if request.form.get("id"):
                     c.execute(
                         update(tags)
-                        .where(tags.c.id == int(request.form["id"]))
+                        .where(
+                            (tags.c.id == int(request.form["id"]))
+                            & (tags.c.guild_id == auth["guild"])
+                        )
                         .values(
                             keyword=request.form["keyword"],
                             content=request.form["content"],
@@ -48,7 +51,10 @@ def template_index():
 
             if request.form.get("delete"):
                 c.execute(
-                    delete(tags).where((tags.c.id == int(request.form["delete"])))
+                    delete(tags).where(
+                        (tags.c.id == int(request.form["delete"]))
+                        & (tags.c.guild_id == auth["guild"])
+                    )
                 )
 
         tags_data = [

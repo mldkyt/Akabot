@@ -27,11 +27,17 @@ def sticky_messages_index():
                     )
                 ).fetchone()
 
+                if existing is not None and existing.guild_id != auth["guild"]:
+                    return quick_response("That channel belongs to another guild", 400)
+
                 if existing:
                     c.execute(
                         update(sticky_messages)
                         .values(content=request.form["content"])
-                        .where(sticky_messages.c.channel_id == request.form["channel"])
+                        .where(
+                            (sticky_messages.c.channel_id == request.form["channel"])
+                            & (sticky_messages.c.guild_id == auth["guild"])
+                        )
                     )
 
                 else:
@@ -52,7 +58,8 @@ def sticky_messages_index():
             elif request.form.get("delete"):
                 c.execute(
                     delete(sticky_messages).where(
-                        sticky_messages.c.channel_id == request.form["delete"]
+                        (sticky_messages.c.channel_id == request.form["delete"])
+                        & (sticky_messages.c.guild_id == auth["guild"])
                     )
                 )
 

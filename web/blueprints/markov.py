@@ -32,6 +32,9 @@ def markov_index():
                     select(markov).where(markov.c.channel_id == request.form["channel"])
                 ).fetchone()
 
+                if row is not None and row.guild_id != auth["guild"]:
+                    return quick_response("That channel belongs to another guild", 400)
+
                 if not row:
                     limit = get_limit(c, auth["guild"], 1)
                     markov_count = len(c.execute(
@@ -59,11 +62,17 @@ def markov_index():
                             mode=request.form["mode"],
                             messages_num=int(request.form["messages_num"]),
                         )
-                        .where(markov.c.channel_id == request.form["channel"])
+                        .where(
+                            (markov.c.channel_id == request.form["channel"])
+                            & (markov.c.guild_id == auth["guild"])
+                        )
                     )
             elif request.form.get("delete"):
                 c.execute(
-                    delete(markov).where(markov.c.channel_id == request.form["delete"])
+                    delete(markov).where(
+                        (markov.c.channel_id == request.form["delete"])
+                        & (markov.c.guild_id == auth["guild"])
+                    )
                 )
 
         text_channels = [

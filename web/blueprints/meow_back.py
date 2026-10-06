@@ -4,6 +4,7 @@ from sqlalchemy import delete, insert, select, update
 from database import engine, meow_back_settings, synced_channels
 from utils.meow_back import awawa, barking, colon_3, meowing, owo, wafing
 from web.webutils.discord_sync import validate_text_channel_id
+from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 meow_back_bp = Blueprint("meow_back", __name__)
@@ -143,15 +144,21 @@ def meow_back_channel():
         owo = 1 if request.form.get("owo") else 0
         awawa = 1 if request.form.get("awawa") else 0
 
-        if c.execute(
+        existing = c.execute(
             select(meow_back_settings).where(
                 meow_back_settings.c.cid == request.form["channel"]
             )
-        ).fetchone():
+        ).fetchone()
+
+        if existing is not None and existing.gid != auth["guild"]:
+            return quick_response("That channel belongs to another guild", 400)
+
+        if existing:
             if meow + waf + bark + colon_3 + owo + awawa == 0:
                 c.execute(
                     delete(meow_back_settings).where(
-                        meow_back_settings.c.cid == request.form["channel"]
+                        (meow_back_settings.c.cid == request.form["channel"])
+                        & (meow_back_settings.c.gid == auth["guild"])
                     )
                 )
             else:
@@ -165,7 +172,10 @@ def meow_back_channel():
                         owo=owo,
                         awawa=awawa,
                     )
-                    .where(meow_back_settings.c.cid == request.form["channel"])
+                    .where(
+                        (meow_back_settings.c.cid == request.form["channel"])
+                        & (meow_back_settings.c.gid == auth["guild"])
+                    )
                 )
         else:
             c.execute(

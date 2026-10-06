@@ -33,7 +33,8 @@ def handle_saving_settings(auth):
 
             c.execute(
                 delete(logging_channels).where(
-                    logging_channels.c.cid == request.form["channel_id"]
+                    (logging_channels.c.cid == request.form["channel_id"])
+                    & (logging_channels.c.gid == auth["guild"])
                 )
             )
 
@@ -52,7 +53,8 @@ def handle_saving_settings(auth):
         if "delete" in request.form:
             c.execute(
                 delete(logging_channels).where(
-                    logging_channels.c.cid == request.form["channel_id"]
+                    (logging_channels.c.cid == request.form["channel_id"])
+                    & (logging_channels.c.gid == auth["guild"])
                 )
             )
 

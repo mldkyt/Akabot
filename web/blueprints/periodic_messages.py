@@ -37,6 +37,9 @@ def periodic_messages_index():
                     )
                 ).fetchone()
 
+                if existing is not None and existing.guild_id != auth["guild"]:
+                    return quick_response("That channel belongs to another guild", 400)
+
                 if existing:
                     now = get_now(auth["guild"], c)
                     c.execute(
@@ -49,7 +52,8 @@ def periodic_messages_index():
                             + timedelta(minutes=int(request.form["period_num"])),
                         )
                         .where(
-                            periodic_messages.c.channel_id == request.form["channel"]
+                            (periodic_messages.c.channel_id == request.form["channel"])
+                            & (periodic_messages.c.guild_id == auth["guild"])
                         )
                     )
                 else:
@@ -76,7 +80,8 @@ def periodic_messages_index():
             elif request.form.get("delete"):
                 c.execute(
                     delete(periodic_messages).where(
-                        periodic_messages.c.channel_id == request.form["delete"]
+                        (periodic_messages.c.channel_id == request.form["delete"])
+                        & (periodic_messages.c.guild_id == auth["guild"])
                     )
                 )
 

@@ -41,7 +41,10 @@ def message_counting_index():
 
                 c.execute(
                     delete(message_counting_rewards)
-                    .where(message_counting_rewards.c.id == int(remove_id))
+                    .where(
+                        (message_counting_rewards.c.id == int(remove_id))
+                        & (message_counting_rewards.c.gid == auth["guild"])
+                    )
                 )
 
             # Role Reward
