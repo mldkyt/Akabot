@@ -135,10 +135,14 @@ async def update_roles(c: Connection, message: Message):
     rewards = c.execute(
         select(message_counting_rewards.c.rid)
         .where((message_counting_rewards.c.gid == str(message.guild.id)) &
-               (message_count[0] > message_counting_rewards.c.messages))
+               (message_counting_rewards.c.type == "role") &
+               (message_count[0] >= message_counting_rewards.c.messages))
     ).fetchall()
 
     for r in rewards:
+        if r[0] is None:
+            continue
+
         if message.guild.id not in fetched_roles:
             await message.guild.fetch_roles()
             fetched_roles.append(message.guild.id)
