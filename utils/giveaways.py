@@ -244,7 +244,7 @@ def reroll_winner(gid: int) -> str | None:
             .where((giveaway_joins.c.gid == res[0]) & (giveaway_joins.c.uid == winner[0]))
         )
 
-    return winner
+    return winner[0]
 
 
 def get_giveaway_joins(msg_id: str):
