@@ -9,6 +9,7 @@ from discord import (
     Cog,
     Embed,
     EmbedAuthor,
+    Guild,
     Interaction,
     Message,
     default_permissions,
@@ -371,33 +372,46 @@ class Verification(Cog):
 
     @loop(hours=1)
     async def kick_unverified_members(self):
+        # An exception escaping the loop body stops the task for every guild,
+        # so isolate each guild to keep the hourly job alive.
         for guild in self.bot.guilds:
-            with engine.begin() as c:
-                kick_unverified_users = (
-                    setting_kick_unverified_users.get(c, guild.id) == "true"
+            try:
+                await self.kick_unverified_in(guild)
+            except Exception:
+                akabot_logger.exception(
+                    f"Failed to kick unverified members in guild {guild.id}"
                 )
 
-            if not kick_unverified_users:
-                continue
+    async def kick_unverified_in(self, guild: Guild) -> None:
+        with engine.begin() as c:
+            kick_unverified_users = (
+                setting_kick_unverified_users.get(c, guild.id) == "true"
+            )
 
-            async for member in unverified_members(guild):
-                if guild.me.guild_permissions.kick_members:
-                    try:
-                        await member.send(
-                            f"You have been kicked from {guild.name} for not verifying in 24 hours, you can rejoin."
-                        )
-                    except Exception:
-                        akabot_logger.exception(
-                            f"Failed to send verification kick DM to {member} in guild {guild.id}"
-                        )
+        if not kick_unverified_users:
+            return
 
-                    try:
-                        await member.kick(reason="Verification failed")
-                    except Exception as e:
-                        akabot_logger.exception(
-                            f"Failed to kick unverified member {member}: {e}"
-                        )
-                        capture_exception(e)
+        me = guild.me
+        if me is None or not me.guild_permissions.kick_members:
+            return
+
+        async for member in unverified_members(guild):
+            try:
+                await member.send(
+                    f"You have been kicked from {guild.name} for not verifying in 24 hours, you can rejoin."
+                )
+            except Exception:
+                akabot_logger.exception(
+                    f"Failed to send verification kick DM to {member} in guild {guild.id}"
+                )
+
+            try:
+                await member.kick(reason="Verification failed")
+            except Exception as e:
+                akabot_logger.exception(
+                    f"Failed to kick unverified member {member}: {e}"
+                )
+                capture_exception(e)
 
 
 def setup(bot: Bot):

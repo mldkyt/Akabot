@@ -33,6 +33,11 @@ async def unverified_members(guild: Guild):
     with engine.begin() as c:
         verified_role_id = setting_verification_role.get(c, guild.id)
 
+    if not verified_role_id or not str(verified_role_id).isnumeric():
+        # No verification role configured, so nobody can be known to be
+        # verified. Yield nothing rather than kicking the whole guild.
+        return
+
     member_role = await guild.fetch_role(int(verified_role_id))
     async for member in guild.fetch_members(limit=None):
         if member.bot:
