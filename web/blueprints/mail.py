@@ -103,6 +103,17 @@ def admin_mail_edit(id: str):
 
 @mail_bp.route('/settings/mail/delete/<id>')
 def delete_mail(id: str):
+    authorization = authorize("/settings/mail")
+    if authorization is not None:
+        return authorization
+
+    auth = get_token_data(session["token"])
+    assert auth is not None
+
+    is_admin = auth["user"] == os.getenv("BOT_OWNER_ID", "-1")
+    if not is_admin:
+        return quick_response("Forbidden", 403)
+
     if not id.isnumeric():
         return quick_response("The ID has to be a number", 400)
 
