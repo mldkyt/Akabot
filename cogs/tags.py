@@ -17,7 +17,7 @@ class Tags(Cog):
         with engine.begin() as c:
             tags_db = c.execute(
                 select(tags.c.keyword, tags.c.content).where(
-                    tags.c.guild_id == message.guild.id
+                    tags.c.guild_id == str(message.guild.id)
                 )
             ).fetchall()
 
