@@ -6,6 +6,7 @@ from sqlalchemy import select, update
 
 from database import chat_streaks, engine, vote_points
 from utils.chat_streaks import user_setting_receive_notifications
+from utils.timezones import get_now
 
 
 def get_voting_points(user_id: str) -> int:
@@ -73,7 +74,11 @@ class ChatStreakExpireView(View):
             )
             return
 
+        if interaction.guild is None:
+            return
+
         with engine.begin() as c:
+            now = get_now(interaction.guild.id, c)
             c.execute(
                 update(chat_streaks)
                 .where(
@@ -81,11 +86,8 @@ class ChatStreakExpireView(View):
                     & (chat_streaks.c.uid == str(interaction.user.id))
                 )
                 .values(
-                    last_message_date=datetime.datetime.now(datetime.UTC).date(),
-                    start_date=(
-                        datetime.datetime.now(datetime.UTC)
-                        - datetime.timedelta(days=self.days)
-                    ).date(),
+                    last_message_date=now.date(),
+                    start_date=(now - datetime.timedelta(days=self.days)).date(),
                 )
             )
 

@@ -16,6 +16,7 @@ dependencies = [
     "mdparser-html==2.0.2",
     "markovify>=0.9.4",
     "sentry-sdk>=2.66.1",
+    "tzdata>=2026.4",
 ]
 
 [tool.basedpyright]

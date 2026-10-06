@@ -1,6 +1,3 @@
-import datetime
-from datetime import date
-
 import sentry_sdk
 from discord import (
     ApplicationContext,
@@ -43,6 +40,7 @@ from utils.chat_streaks import (
 )
 from utils.message_appends import apply_appends
 from utils.premium import premium_required
+from utils.timezones import get_now
 from utils.voting import ChatStreakExpireView, get_voting_points
 
 
@@ -276,7 +274,7 @@ class ChatStreaks(Cog):
 
                 guild_link = get_guild_link(guild)
 
-                days_from_now = date.today() - my_chat_streaks_fetched[i][2]
+                days_from_now = get_now(guild.id, c).date() - my_chat_streaks_fetched[i][2]
 
                 if days_from_now.days == 0:
                     indicator = "🔥"
@@ -332,6 +330,10 @@ class ChatStreaks(Cog):
     async def run_chat_streak_reminders(self):
         with engine.begin() as c:
             async for gid, uid in get_expiring_streaks(c):
+                now = get_now(int(gid), c)
+                if now.hour != 12 or now.minute != 0:
+                    continue
+
                 guild = self.bot.get_guild(int(gid))
                 if guild is None:
                     continue
@@ -375,11 +377,6 @@ class ChatStreaks(Cog):
     @loop(seconds=60)
     async def chat_streak_reminders(self):
         try:
-            now = datetime.datetime.now(datetime.UTC)
-
-            if now.hour != 12 or now.minute != 0:
-                return
-
             await self.run_chat_streak_reminders()
         except Exception as e:
             akabot_logger.exception(f"Failed to run chat streak reminders: {e}")

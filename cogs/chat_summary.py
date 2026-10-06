@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import sentry_sdk
 from discord import (
     ApplicationContext,
@@ -20,6 +18,7 @@ from utils.chat_summary import (
     perform_backfill,
     summarize,
 )
+from utils.timezones import get_now
 
 
 class ChatSummary(Cog):
@@ -72,14 +71,14 @@ class ChatSummary(Cog):
 
     @loop(minutes=1)
     async def task_summary(self):
-        now = datetime.now()
-
-        if now.hour != 0 or now.minute != 0:
-            return
-
         for i in self.bot.guilds:
             try:
                 with engine.begin() as c:
+                    now = get_now(i.id, c)
+
+                    if now.hour != 0 or now.minute != 0:
+                        continue
+
                     await summarize(c, i)
             except Exception as e:
                 akabot_logger.exception(f"Failed to summarize chat for guild {i.id}: {e}")
