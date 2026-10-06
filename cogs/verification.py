@@ -315,7 +315,18 @@ class Verification(Cog):
                 return
 
             admin_bot_channel_id = setting_admin_bot_channel.get(c, msg.guild.id)
-            admin_bot_channel = msg.guild.get_channel(int(admin_bot_channel_id))
+            admin_bot_channel = (
+                msg.guild.get_channel(int(admin_bot_channel_id))
+                if admin_bot_channel_id != ""
+                else None
+            )
+
+            if admin_bot_channel is None:
+                akabot_logger.warning(
+                    f"No valid admin bot channel set for guild {msg.guild.id}, "
+                    f"skipping verification for introduction message {msg.id}"
+                )
+                return
 
             admin_channel_message = await admin_bot_channel.send(
                 embed=Embed(
