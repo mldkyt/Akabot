@@ -1,7 +1,24 @@
+import datetime
+
 from flask import make_response, redirect, request, session
 from sqlalchemy import select
 
 from database import engine, web_tokens
+
+
+def _is_expired(expires: datetime.datetime | None) -> bool:
+    if expires is None:
+        return True
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    if expires.tzinfo is None:
+        # SQLite drops the offset when storing DateTime(timezone=True), so the
+        # value read back is the naive UTC wall clock. PostgreSQL returns an
+        # aware datetime and is compared as is.
+        expires = expires.replace(tzinfo=datetime.timezone.utc)
+
+    return expires <= now
 
 
 def authorize(route: str):
@@ -43,10 +60,14 @@ def get_token_data(token: str) -> dict | None:
                 web_tokens.c.uid,
                 web_tokens.c.uname,
                 web_tokens.c.uavatar,
+                web_tokens.c.expires,
             ).where(web_tokens.c.token == token)
         ).fetchone()
 
     if data is None:
+        return None
+
+    if _is_expired(data[5]):
         return None
 
     return {
