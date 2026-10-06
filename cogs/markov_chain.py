@@ -52,7 +52,7 @@ class MarkovChain(Cog):
         with engine.begin() as c:
             markov_data = c.execute(
                 select(markov.c.mode)
-                .where(markov.c.channel_id == ctx.author.id)
+                .where(markov.c.channel_id == str(ctx.channel.id))
             ).fetchone()
 
             if markov_data is None:
