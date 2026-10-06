@@ -207,7 +207,7 @@ def roll_winners(message: Message) -> list[str]:
             .where(giveaway_joins.c.gid == res[0])
         ).fetchall()
 
-        winners = random.choices(winners_db, k=min(len(winners_db), res[1]))
+        winners = random.sample(winners_db, k=min(len(winners_db), res[1]))
 
         for i in winners:
             c.execute(
