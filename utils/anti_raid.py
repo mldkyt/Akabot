@@ -1185,3 +1185,5 @@ async def handle_join_burst(member: Member):
     )
 
     await _parallel_report(*coros)
+
+    join_burst_joins.pop(member.guild.id, None)
