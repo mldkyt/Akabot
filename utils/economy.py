@@ -173,9 +173,23 @@ class PayConfirm(View):
         super().__init__()
         self.target = target
         self.amount = amount
+        self.paid = False
 
     @button(label="Confirm", style=ButtonStyle.primary)
     async def confirm(self, _: Button, ctx: Interaction):
+        if self.paid:
+            return
+
+        self.paid = True
+
+        # re-check the balance, the confirmation view can sit around for a while
+        _, bank = get_money(ctx.user.id)
+        if self.amount > bank:
+            self.disable_all_items()
+            await ctx.edit(view=self)
+            await ctx.respond("You no longer have enough money in your bank to send", ephemeral=True)
+            return
+
         update_money(ctx.user.id, "bank", -self.amount)
         update_money(self.target.id, "bank", self.amount)
 
@@ -185,6 +199,7 @@ class PayConfirm(View):
 
     @button(label="Cancel", style=ButtonStyle.secondary)
     async def cancel(self, _: Button, ctx: Interaction):
+        self.paid = True
         self.disable_all_items()
         await ctx.edit(view=self)
         await ctx.respond("Canceled", ephemeral=True)
@@ -194,7 +209,7 @@ async def pay(ctx: ApplicationContext, target: User, amount: int) -> tuple[bool,
     if target == ctx.author:
         return False, "Cannot pay yourself"
 
-    source_wallet, source_bank = get_money(target.id)
+    source_wallet, source_bank = get_money(ctx.author.id)
 
     if amount > source_bank:
         return False, "Not enough money in your bank to send"
