@@ -26,7 +26,7 @@ async def update_chat_revive(message: Message):
         setting = [
             i
             for i in setting_chat_revive_channels.get(c, message.guild.id)
-            if i.startswith(str(message.channel.id))
+            if i.split(";", 1)[0] == str(message.channel.id)
         ]
         if len(setting) == 0:
             return

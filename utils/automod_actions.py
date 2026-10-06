@@ -161,7 +161,7 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
         actions = automod_actions.get(c, payload.guild.id)
 
     for i in actions:
-        if i.startswith(str(payload.rule_id)):
+        if i.split(";", 1)[0] == str(payload.rule_id):
             try:
                 with (
                     engine.begin() as c2
