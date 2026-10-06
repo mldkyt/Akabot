@@ -55,7 +55,7 @@ def handle_create_automod_action(is_edit: bool = False) -> bool:
     auth = get_token_data(session["token"])
     assert auth is not None
 
-    if "type" not in request.form and "rule" not in request.form:
+    if "type" not in request.form or "rule" not in request.form:
         flash("Missing form parameters")
         return False
 
