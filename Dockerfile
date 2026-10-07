@@ -2,12 +2,13 @@ FROM python:3.12-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache gcc postgresql17 postgresql17-dev bash git
+RUN --mount=type=cache,target=/var/cache/apk apk add --no-cache gcc postgresql17 postgresql17-dev bash git
 
 COPY pyproject.toml .
+COPY uv.lock .
 
-RUN pip3 install --upgrade uv
-RUN uv sync
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install --upgrade uv
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
 
 COPY .git/ .git/.
 COPY docker/ docker/.
