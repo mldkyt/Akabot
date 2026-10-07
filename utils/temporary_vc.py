@@ -12,6 +12,11 @@ setting_temporary_vcs = ServerSetting(
     setting_type=SettingType.LIST,
 )
 
+# Guilds with a channel creation still in flight. Joined with the stored row
+# count before any await, so concurrent joins cannot all pass the limit check
+# before any of them has been stored.
+_in_flight: dict[str, int] = {}
+
 
 async def h_join_channel(member: Member, after: VoiceState):
     # Handle joining creator channel
@@ -52,19 +57,31 @@ async def h_join_channel(member: Member, after: VoiceState):
         limit = get_limit(c, member.guild.id, 3)
         existing_count = len(existing) - len(stale)
 
-    if limit is not None and existing_count >= limit:
+    gid = str(member.guild.id)
+    in_flight = _in_flight.get(gid, 0)
+
+    if limit is not None and existing_count + in_flight >= limit:
         await member.send("The free plan is limited to 3 simultaneous temporary voice channels, so one wasn't created.")
         return
 
-    # Create a channel
-    vc = await member.guild.create_voice_channel(name=f"VC {randint(100, 999)}", category=after.channel.category,
-                                                 bitrate=after.channel.bitrate, reason="Temporary Voice Channels")
+    _in_flight[gid] = in_flight + 1
 
-    with engine.begin() as c:
-        c.execute(
-            insert(temporary_vcs)
-            .values(gid=str(member.guild.id), cid=str(vc.id))
-        )
+    try:
+        # Create a channel
+        vc = await member.guild.create_voice_channel(name=f"VC {randint(100, 999)}", category=after.channel.category,
+                                                     bitrate=after.channel.bitrate, reason="Temporary Voice Channels")
+
+        with engine.begin() as c:
+            c.execute(
+                insert(temporary_vcs)
+                .values(gid=gid, cid=str(vc.id))
+            )
+    finally:
+        remaining = _in_flight[gid] - 1
+        if remaining:
+            _in_flight[gid] = remaining
+        else:
+            _in_flight.pop(gid, None)
 
     await member.move_to(vc)
 
