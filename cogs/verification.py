@@ -18,7 +18,7 @@ from discord import (
 from discord.ext.tasks import loop
 from discord.ui import InputText, Modal, View, button
 from sentry_sdk import capture_exception
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 
 from database import engine, verification_introduction_messages
 from logger import akabot_logger
@@ -307,28 +307,44 @@ class Verification(Cog):
                 )
             ).fetchone()
 
-            if existing_message is not None:
-                await msg.delete(reason="Member is already getting verified")
-                tmp = await msg.channel.send(
-                    f"{msg.author.mention}, you are already in the process of verification."
+            if existing_message is None:
+                admin_bot_channel_id = setting_admin_bot_channel.get(c, msg.guild.id)
+                admin_bot_channel = (
+                    msg.guild.get_channel(int(admin_bot_channel_id))
+                    if admin_bot_channel_id != ""
+                    else None
                 )
-                await tmp.delete(delay=5)
-                return
 
-            admin_bot_channel_id = setting_admin_bot_channel.get(c, msg.guild.id)
-            admin_bot_channel = (
-                msg.guild.get_channel(int(admin_bot_channel_id))
-                if admin_bot_channel_id != ""
-                else None
+                if admin_bot_channel is None:
+                    akabot_logger.warning(
+                        f"No valid admin bot channel set for guild {msg.guild.id}, "
+                        f"skipping verification for introduction message {msg.id}"
+                    )
+                    return
+
+                # Reserve the slot before any await. This block runs without
+                # yielding, so a burst of introduction messages from the same
+                # member cannot each reach the admin prompt below.
+                c.execute(
+                    insert(verification_introduction_messages).values(
+                        author_id=str(msg.author.id),
+                        guild_id=str(msg.guild.id),
+                        admin_message_id="",
+                        introduction_message_id=str(msg.id),
+                    )
+                )
+            else:
+                admin_bot_channel = None
+
+        if existing_message is not None:
+            await msg.delete(reason="Member is already getting verified")
+            tmp = await msg.channel.send(
+                f"{msg.author.mention}, you are already in the process of verification."
             )
+            await tmp.delete(delay=5)
+            return
 
-            if admin_bot_channel is None:
-                akabot_logger.warning(
-                    f"No valid admin bot channel set for guild {msg.guild.id}, "
-                    f"skipping verification for introduction message {msg.id}"
-                )
-                return
-
+        try:
             admin_channel_message = await admin_bot_channel.send(
                 embed=Embed(
                     title="Member Verification",
@@ -340,14 +356,31 @@ class Verification(Cog):
                 ),
                 view=AdminIntroductionVerifyView(),
             )
-
-            c.execute(
-                insert(verification_introduction_messages).values(
-                    author_id=str(msg.author.id),
-                    guild_id=str(msg.guild.id),
-                    admin_message_id=str(admin_channel_message.id),
-                    introduction_message_id=str(msg.id),
+        except Exception:
+            # Drop the reservation so the member can try again.
+            with engine.begin() as c:
+                c.execute(
+                    delete(verification_introduction_messages).where(
+                        verification_introduction_messages.c.introduction_message_id
+                        == str(msg.id)
+                    )
                 )
+            raise
+
+        with engine.begin() as c:
+            c.execute(
+                update(verification_introduction_messages)
+                .where(
+                    (
+                        verification_introduction_messages.c.introduction_message_id
+                        == str(msg.id)
+                    )
+                    & (
+                        verification_introduction_messages.c.guild_id
+                        == str(msg.guild.id)
+                    )
+                )
+                .values(admin_message_id=str(admin_channel_message.id))
             )
 
     @slash_command()
