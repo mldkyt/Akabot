@@ -1,8 +1,8 @@
 from flask import Blueprint, flash, redirect, render_template, request, session
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_channels
-from utils.suggestions import suggestion_channels, suggestion_threads
+from database import engine, suggestion_channels, synced_channels
+from utils.suggestions import suggestion_threads
 from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
@@ -37,17 +37,22 @@ def suggestions_index():
             ).fetchall()
         ]
 
-        for suggestion_channel in suggestion_channels.get(c, auth["guild"]):
+        suggestion_channel_rows = c.execute(
+            select(suggestion_channels.c.cid)
+            .where(suggestion_channels.c.gid == auth["guild"])
+            .order_by(suggestion_channels.c.id)
+        ).fetchall()
+        for suggestion_channel in suggestion_channel_rows:
             channel_name = c.execute(
                 select(synced_channels.c.cname).where(
-                    synced_channels.c.cid == suggestion_channel
+                    synced_channels.c.cid == suggestion_channel[0]
                 )
             ).fetchone()
 
             res_suggestion_channels.append(
                 {
                     "name": channel_name[0] if channel_name is not None else "unknown",
-                    "id": suggestion_channel,
+                    "id": suggestion_channel[0],
                 }
             )
 
@@ -81,18 +86,32 @@ def suggestions_add_channel():
             if not validate_text_channel_id(request.form["channel"]):
                 return redirect("/settings/suggestions", 303)
 
-            if suggestion_channels.is_in_list(
-                c, auth["guild"], request.form["channel"]
-            ):
+            existing = c.execute(
+                select(suggestion_channels.c.cid).where(
+                    (suggestion_channels.c.gid == auth["guild"])
+                    & (suggestion_channels.c.cid == request.form["channel"])
+                )
+            ).fetchone()
+            if existing is not None:
                 return redirect("/settings/suggestions", 303)
 
             limit = get_limit(c, auth["guild"], 1)
-            current_count = len(suggestion_channels.get(c, auth["guild"]))
+            current_count = len(
+                c.execute(
+                    select(suggestion_channels.c.cid).where(
+                        suggestion_channels.c.gid == auth["guild"]
+                    )
+                ).fetchall()
+            )
             if limit is not None and current_count >= limit:
                 flash("Free plan is limited to 1 suggestion channel")
                 return redirect("/settings/suggestions", 303)
 
-            suggestion_channels.add_to_list(c, auth["guild"], request.form["channel"])
+            c.execute(
+                insert(suggestion_channels).values(
+                    gid=auth["guild"], cid=request.form["channel"]
+                )
+            )
 
     return redirect("/settings/suggestions", 303)
 
@@ -114,8 +133,11 @@ def suggestions_delete_channel():
             if not validate_text_channel_id(request.form["channel"]):
                 return redirect("/settings/suggestions", 303)
 
-            suggestion_channels.remove_from_list(
-                c, auth["guild"], request.form["channel"]
+            c.execute(
+                delete(suggestion_channels).where(
+                    (suggestion_channels.c.gid == auth["guild"])
+                    & (suggestion_channels.c.cid == request.form["channel"])
+                )
             )
 
     return redirect("/settings/suggestions", 303)

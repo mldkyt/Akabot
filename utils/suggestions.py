@@ -2,12 +2,8 @@ from discord import ButtonStyle, Color, Embed, EmbedFooter, Interaction, Message
 from discord.ui import Button, View, button
 from sqlalchemy import insert, select
 
-from database import engine, suggestion_voting, suggestions
+from database import engine, suggestion_channels, suggestion_voting, suggestions
 from utils.server_settings import ServerSetting, SettingType
-
-suggestion_channels = ServerSetting(
-    name="Suggestion channels", setting_type=SettingType.LIST
-)
 
 suggestion_threads = ServerSetting(
     name="Suggestion threads", setting_type=SettingType.NORMAL
@@ -184,7 +180,13 @@ class VotingOptions(View):
 async def handle_suggestion_message(msg: Message):
     # Check if channel is suggestion channel
     with engine.begin() as c:
-        if str(msg.channel.id) not in suggestion_channels.get(c, msg.guild.id):
+        configured = c.execute(
+            select(suggestion_channels.c.cid).where(
+                (suggestion_channels.c.gid == str(msg.guild.id))
+                & (suggestion_channels.c.cid == str(msg.channel.id))
+            )
+        ).fetchone()
+        if configured is None:
             return
 
         await msg.delete()

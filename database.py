@@ -125,6 +125,15 @@ statistic_channels = Table(
     UniqueConstraint("gid", "cid"),
 )
 
+suggestion_channels = Table(
+    "suggestion_channels",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    UniqueConstraint("gid", "cid"),
+)
+
 # Chat Summary
 
 chat_summary_channels = Table(
