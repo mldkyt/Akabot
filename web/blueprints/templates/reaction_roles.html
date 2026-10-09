@@ -39,6 +39,8 @@
         data-emoji="{% if emoji.animated %}<a:{{emoji.name}}:{{emoji.id}}>{% else %}<:{{emoji.name}}:{{emoji.id}}>{% endif %}">
         <img src="https://cdn.discordapp.com/emojis/{{emoji.id}}.png" alt="{{emoji.name}}">{{emoji.name}}
     </button>
+    {% else %}
+    <span>No custom emojis added on this server</span>
     {% endfor %}
 </div>
 {% endmacro %}
