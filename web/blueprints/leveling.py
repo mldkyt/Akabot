@@ -2,12 +2,12 @@ import re
 from datetime import datetime
 
 from flask import Blueprint, session, render_template, request, flash, redirect
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_roles
+from database import engine, leveling_multipliers, leveling_rewards, synced_roles
 from logger import akabot_logger
 from utils.leveling import setting_xp_per_message, setting_level_up_message, setting_level_up_message_text, \
-    setting_xp_per_level, setting_leveling_rewards, setting_leveling_multipliers
+    setting_xp_per_level
 from utils.premium import get_premium_context
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
@@ -51,7 +51,7 @@ def handle_settings(auth):
             else:
                 flash("XP per level must be between 10 and 10000")
 
-def handle_rewards(auth, is_edit: bool = False, remove_value: str | None = None) -> bool:
+def handle_rewards(auth, is_edit: bool = False, remove_id: int | None = None) -> bool:
     reward_role = request.form.get("reward_role")
     required_level = request.form.get("required_level")
 
@@ -67,20 +67,33 @@ def handle_rewards(auth, is_edit: bool = False, remove_value: str | None = None)
         return False
 
     with engine.begin() as c:
-        rewards = setting_leveling_rewards.get(c, auth["guild"])
+        rewards = c.execute(
+            select(leveling_rewards.c.id).where(
+                leveling_rewards.c.gid == auth["guild"]
+            )
+        ).fetchall()
 
         # An edit replaces an existing entry, so it must not count towards the
         # free plan limit of the entry being replaced.
-        existing_count = len(rewards) - (1 if remove_value is not None else 0)
+        existing_count = len(rewards) - (1 if remove_id is not None else 0)
 
         if get_premium_context(c, auth["guild"])["premium_only"] and existing_count >= 3:
             flash("Free plan is limited to 3 leveling rewards")
             return False
 
-        if remove_value is not None:
-            setting_leveling_rewards.remove_from_list(c, auth["guild"], remove_value)
+        if remove_id is not None:
+            c.execute(
+                delete(leveling_rewards).where(
+                    (leveling_rewards.c.gid == auth["guild"])
+                    & (leveling_rewards.c.id == remove_id)
+                )
+            )
 
-        setting_leveling_rewards.add_to_list(c, auth["guild"], f"{reward_role};{required_level}")
+        c.execute(
+            insert(leveling_rewards).values(
+                gid=auth["guild"], rid=reward_role, level=int(required_level)
+            )
+        )
         if is_edit:
             flash("Edited role reward successfully")
         else:
@@ -88,7 +101,7 @@ def handle_rewards(auth, is_edit: bool = False, remove_value: str | None = None)
 
     return True
 
-def handle_multipliers(auth, is_edit: bool = True, remove_value: str | None = None) -> bool:
+def handle_multipliers(auth, is_edit: bool = True, remove_id: int | None = None) -> bool:
     start = request.form.get("start")
     end = request.form.get("end")
     multiplier = request.form.get("multiplier")
@@ -139,10 +152,24 @@ def handle_multipliers(auth, is_edit: bool = True, remove_value: str | None = No
         return False
 
     with engine.begin() as c:
-        if remove_value is not None:
-            setting_leveling_multipliers.remove_from_list(c, auth["guild"], remove_value)
+        if remove_id is not None:
+            c.execute(
+                delete(leveling_multipliers).where(
+                    (leveling_multipliers.c.gid == auth["guild"])
+                    & (leveling_multipliers.c.id == remove_id)
+                )
+            )
 
-        setting_leveling_multipliers.add_to_list(c, auth["guild"], f"{start_month:02}-{start_day:02};{end_month:02}-{end_day:02};{multiplier}")
+        c.execute(
+            insert(leveling_multipliers).values(
+                gid=auth["guild"],
+                start_month=int(start_month),
+                start_day=int(start_day),
+                end_month=int(end_month),
+                end_day=int(end_day),
+                multiplier=int(multiplier),
+            )
+        )
         if is_edit:
             flash("Multiplier edited successfully")
         else:
@@ -171,31 +198,45 @@ def leveling_index():
         level_up_message_text = setting_level_up_message_text.get(c, auth["guild"])
         xp_per_level = setting_xp_per_level.get(c, auth["guild"])
 
-        reward_role_ids = [i.split(";") for i in setting_leveling_rewards.get(c, auth["guild"])] # id;level
+        reward_rows = c.execute(
+            select(leveling_rewards.c.id, leveling_rewards.c.rid, leveling_rewards.c.level)
+            .where(leveling_rewards.c.gid == auth["guild"])
+            .order_by(leveling_rewards.c.id)
+        ).fetchall()
         reward_roles = []
-        for reward_role_i in range(len(reward_role_ids)):
-            reward_role = reward_role_ids[reward_role_i]
+        for reward_role_i in range(len(reward_rows)):
+            reward_role = reward_rows[reward_role_i]
             reward_role_name = c.execute(
                 select(synced_roles.c.rname)
-                .where((synced_roles.c.gid == auth["guild"]) & (synced_roles.c.rid == reward_role[0]))
+                .where((synced_roles.c.gid == auth["guild"]) & (synced_roles.c.rid == reward_role[1]))
             ).fetchone()
 
             reward_roles.append({
                 "index": reward_role_i,
-                "id": reward_role[0],
-                "level": reward_role[1],
+                "id": reward_role[1],
+                "level": reward_role[2],
                 "name": reward_role_name[0] if reward_role_name else "Unknown role"
             })
 
-        multiplier_ids = [i.split(";") for i in setting_leveling_multipliers.get(c, auth["guild"])] # start;end;multiplier
+        multiplier_rows = c.execute(
+            select(
+                leveling_multipliers.c.start_month,
+                leveling_multipliers.c.start_day,
+                leveling_multipliers.c.end_month,
+                leveling_multipliers.c.end_day,
+                leveling_multipliers.c.multiplier,
+            )
+            .where(leveling_multipliers.c.gid == auth["guild"])
+            .order_by(leveling_multipliers.c.id)
+        ).fetchall()
         multipliers = []
-        for multiplier_i in range(len(multiplier_ids)):
-            multiplier = multiplier_ids[multiplier_i]
+        for multiplier_i in range(len(multiplier_rows)):
+            multiplier = multiplier_rows[multiplier_i]
             multipliers.append({
                 "index": multiplier_i,
-                "start": multiplier[0],
-                "end": multiplier[1],
-                "multiplier": multiplier[2]
+                "start": f"{multiplier[0]:02}-{multiplier[1]:02}",
+                "end": f"{multiplier[2]:02}-{multiplier[3]:02}",
+                "multiplier": str(multiplier[4])
             })
 
         roles = [{
@@ -226,13 +267,17 @@ def edit_reward(index: str):
     assert auth is not None
 
     with engine.begin() as c:
-        reward_role_ids = [i.split(";") for i in setting_leveling_rewards.get(c, auth["guild"])] # id;level
-        if len(reward_role_ids) <= int(index):
+        reward_rows = c.execute(
+            select(leveling_rewards.c.id)
+            .where(leveling_rewards.c.gid == auth["guild"])
+            .order_by(leveling_rewards.c.id)
+        ).fetchall()
+        if len(reward_rows) <= int(index):
             return redirect("/settings/leveling")
 
-        remove_value = ";".join(reward_role_ids[int(index)])
+        remove_id = reward_rows[int(index)][0]
 
-    handle_rewards(auth, is_edit=True, remove_value=remove_value)
+    handle_rewards(auth, is_edit=True, remove_id=remove_id)
     return redirect("/settings/leveling", 303)
 
 @leveling_bp.route("/settings/leveling/delete/reward/<index>")
@@ -248,24 +293,33 @@ def remove_reward(index: str):
     assert auth is not None
 
     with engine.begin() as c:
-        reward_role_ids = [i.split(";") for i in setting_leveling_rewards.get(c, auth["guild"])] # id;level
-        if len(reward_role_ids) <= int(index):
+        reward_rows = c.execute(
+            select(leveling_rewards.c.id, leveling_rewards.c.rid, leveling_rewards.c.level)
+            .where(leveling_rewards.c.gid == auth["guild"])
+            .order_by(leveling_rewards.c.id)
+        ).fetchall()
+        if len(reward_rows) <= int(index):
             return redirect("/settings/leveling")
 
-        reward_role_id = reward_role_ids[int(index)]
+        reward_role_id = reward_rows[int(index)]
         reward_role_name = c.execute(
             select(synced_roles.c.rname)
-            .where((synced_roles.c.gid == auth["guild"]) & (synced_roles.c.rid == reward_role_id[0]))
+            .where((synced_roles.c.gid == auth["guild"]) & (synced_roles.c.rid == reward_role_id[1]))
         ).fetchone()
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            setting_leveling_rewards.remove_from_list(c, auth["guild"], ";".join(reward_role_ids[int(index)]))
+            c.execute(
+                delete(leveling_rewards).where(
+                    (leveling_rewards.c.gid == auth["guild"])
+                    & (leveling_rewards.c.id == reward_role_id[0])
+                )
+            )
             return redirect("/settings/leveling", 303)
 
     return render_template("leveling_remove_reward.html",
                            role_name=reward_role_name[0] if reward_role_name else "Unknown role",
-                           index=index, level=reward_role_id[1])
+                           index=index, level=reward_role_id[2])
 
 @leveling_bp.route("/settings/leveling/edit/multiplier/<index>", methods=["POST"])
 def edit_multiplier(index: str):
@@ -280,13 +334,17 @@ def edit_multiplier(index: str):
     assert auth is not None
 
     with engine.begin() as c:
-        multiplier_ids = [i.split(";") for i in setting_leveling_multipliers.get(c, auth["guild"])] # start;end;multiplier
-        if len(multiplier_ids) <= int(index):
+        multiplier_rows = c.execute(
+            select(leveling_multipliers.c.id)
+            .where(leveling_multipliers.c.gid == auth["guild"])
+            .order_by(leveling_multipliers.c.id)
+        ).fetchall()
+        if len(multiplier_rows) <= int(index):
             return redirect("/settings/leveling", 302)
 
-        remove_value = ";".join(multiplier_ids[int(index)])
+        remove_id = multiplier_rows[int(index)][0]
 
-    handle_multipliers(auth, is_edit=True, remove_value=remove_value)
+    handle_multipliers(auth, is_edit=True, remove_id=remove_id)
     return redirect("/settings/leveling", 303)
 
 
@@ -303,17 +361,35 @@ def delete_multiplier(index: str):
     assert auth is not None
 
     with engine.begin() as c:
-        multiplier_ids = [i.split(";") for i in setting_leveling_multipliers.get(c, auth["guild"])] # start;end;multiplier
-        if len(multiplier_ids) <= int(index):
+        multiplier_rows = c.execute(
+            select(
+                leveling_multipliers.c.id,
+                leveling_multipliers.c.start_month,
+                leveling_multipliers.c.start_day,
+                leveling_multipliers.c.end_month,
+                leveling_multipliers.c.end_day,
+                leveling_multipliers.c.multiplier,
+            )
+            .where(leveling_multipliers.c.gid == auth["guild"])
+            .order_by(leveling_multipliers.c.id)
+        ).fetchall()
+        if len(multiplier_rows) <= int(index):
             return redirect("/settings/leveling", 302)
 
-        multiplier = multiplier_ids[int(index)]
+        multiplier = multiplier_rows[int(index)]
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            setting_leveling_multipliers.remove_from_list(c, auth["guild"], ";".join(multiplier_ids[int(index)]))
+            c.execute(
+                delete(leveling_multipliers).where(
+                    (leveling_multipliers.c.gid == auth["guild"])
+                    & (leveling_multipliers.c.id == multiplier[0])
+                )
+            )
 
         return redirect("/settings/leveling", 303)
 
     return render_template("leveling_delete_multiplier.html",
-                           start_date=multiplier[0], end_date=multiplier[1], multiplier=multiplier[2])
+                           start_date=f"{multiplier[1]:02}-{multiplier[2]:02}",
+                           end_date=f"{multiplier[3]:02}-{multiplier[4]:02}",
+                           multiplier=multiplier[5])

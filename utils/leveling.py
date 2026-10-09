@@ -7,6 +7,8 @@ from sqlalchemy import Connection, insert, select, update
 
 from database import (
     leveling,
+    leveling_multipliers,
+    leveling_rewards,
     message_counting_members,
     message_counting_rewards,
     vote_points,
@@ -15,7 +17,6 @@ from logger import akabot_logger
 from utils.premium import has_premium
 from utils.server_settings import (
     ServerSetting,
-    SettingType,
 )
 from utils.timezones import get_now
 
@@ -35,14 +36,6 @@ setting_xp_per_level = ServerSetting(
     name="Leveling XP per level",
     default="500",
 )
-setting_leveling_rewards = ServerSetting(
-    name="Leveling rewards",
-    setting_type=SettingType.LIST,
-)
-setting_leveling_multipliers = ServerSetting(
-    name="Leveling Multipliers",
-    setting_type=SettingType.LIST,
-)
 
 
 def get_xp(c: Connection, uid: int, gid: int) -> int:
@@ -59,26 +52,32 @@ def get_xp(c: Connection, uid: int, gid: int) -> int:
 
 
 def get_multiplier(c: Connection, m: Member):
-    multipliers = setting_leveling_multipliers.get(c, m.guild.id)
+    multipliers = c.execute(
+        select(
+            leveling_multipliers.c.start_month,
+            leveling_multipliers.c.start_day,
+            leveling_multipliers.c.end_month,
+            leveling_multipliers.c.end_day,
+            leveling_multipliers.c.multiplier,
+        ).where(leveling_multipliers.c.gid == str(m.guild.id))
+    ).fetchall()
 
     multiplier = 1
 
     now = get_now(m.guild.id, c)
 
     for i in multipliers:
-        s: list[str] = i.split(";")
-        (start_month, start_day) = s[0].split("-")
-        (end_month, end_day) = s[1].split("-")
+        (start_month, start_day, end_month, end_day, value) = i
 
         try:
-            start_dt = datetime.datetime(now.year, int(start_month), int(start_day))
-            end_dt = datetime.datetime(now.year, int(end_month), int(end_day))
+            start_dt = datetime.datetime(now.year, start_month, start_day)
+            end_dt = datetime.datetime(now.year, end_month, end_day)
 
             if start_dt > end_dt:
-                end_dt = datetime.datetime(now.year + 1, int(end_month), int(end_day))
+                end_dt = datetime.datetime(now.year + 1, end_month, end_day)
 
             if start_dt <= now <= end_dt:
-                multiplier *= int(s[2])
+                multiplier *= value
         except Exception:
             # catch leap years, we validate against 2024 since it's a leap year
             akabot_logger.warning(
@@ -227,12 +226,15 @@ async def apply_leveling_rewards(c: Connection, member: discord.Member):
     xp = get_xp(c, member.id, member.guild.id)
     level = calculate_level(c, member, xp)
 
-    rewards = [i.split(";") for i in setting_leveling_rewards.get(c, member.guild.id)]
-    rewards = [[int(i[0]), int(i[1])] for i in rewards]
+    rewards = c.execute(
+        select(leveling_rewards.c.rid, leveling_rewards.c.level).where(
+            leveling_rewards.c.gid == str(member.guild.id)
+        )
+    ).fetchall()
     rewards = [
-        (member.guild.get_role(i[0]), i[1])
+        (member.guild.get_role(int(i[0])), i[1])
         for i in rewards
-        if member.guild.get_role(i[0]) is not None
+        if member.guild.get_role(int(i[0])) is not None
     ]
 
     to_add = []

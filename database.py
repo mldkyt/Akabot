@@ -75,6 +75,28 @@ leveling = Table(
     Column("xp", Integer),
 )
 
+leveling_rewards = Table(
+    "leveling_rewards",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("rid", VARCHAR, nullable=False),
+    Column("level", Integer, nullable=False),
+    UniqueConstraint("gid", "rid"),
+)
+
+leveling_multipliers = Table(
+    "leveling_multipliers",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("start_month", Integer, nullable=False),
+    Column("start_day", Integer, nullable=False),
+    Column("end_month", Integer, nullable=False),
+    Column("end_day", Integer, nullable=False),
+    Column("multiplier", Integer, nullable=False),
+)
+
 # Chat Summary
 
 chat_summary_channels = Table(
