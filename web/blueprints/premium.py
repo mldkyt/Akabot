@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, request, session, flash, redirect
 from sqlalchemy import select
 
-from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels, chat_summary_channels, counting_channels, leveling_rewards, moderator_roles, roles_on_join, statistic_channels, suggestion_channels
+from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels, chat_summary_channels, counting_channels, leveling_rewards, moderator_roles, roles_on_join, statistic_channels, suggestion_channels, automod_actions
 from utils.anti_raid import setting_flood_enabled, setting_duplicate_enabled, setting_mentions_enabled, \
     setting_invite_enabled, setting_caps_enabled, setting_emoji_enabled, setting_sticker_enabled, \
     setting_joinburst_enabled, setting_mrbeast_scam
-from utils.automod_actions import automod_actions
 from utils.premium import generate_tokens, get_premium_context, is_owner, redeem_token, usage_bar
 from utils.verification import setting_verification_role
 from utils.welcome_goodbye import welcome_channel, goodbye_channel
@@ -58,7 +57,9 @@ def get_usage(c, guild_id):
     })
     usage.append({
         "name": "Automod actions",
-        "usage": len(automod_actions.get(c, guild_id)),
+        "usage": len(c.execute(
+            select(automod_actions.c.id).where(automod_actions.c.gid == str(guild_id))
+        ).fetchall()),
         "free_limit": 3,
     })
     usage.append({

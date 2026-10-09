@@ -1,8 +1,8 @@
 from flask import Blueprint, request, render_template, session, flash, redirect
-from sqlalchemy import select, Connection
+from sqlalchemy import Connection, delete, insert, select
 
-from database import engine, synced_automod_rules
-from utils.automod_actions import automod_actions, setting_automod_sync_error, time_str_to_time
+from database import automod_actions, engine, synced_automod_rules
+from utils.automod_actions import setting_automod_sync_error, time_str_to_time
 from utils.premium import get_limit
 from web.webutils.discord_sync import validate_automod_rule_id
 from web.webutils.tokens import authorize, get_token_data
@@ -10,29 +10,31 @@ from web.webutils.tokens import authorize, get_token_data
 automod_actions_bp = Blueprint("automod_actions", __name__, template_folder='templates')
 
 
-def parse_automod_action(c: Connection, index: int, args: tuple) -> dict:
+def parse_automod_action(c: Connection, index: int, row: tuple) -> dict:
     output = {
         "id": index,
-        "rule": args[0],
-        "action": args[1]
+        "rule": row[1],
+        "action": row[2]
     }
 
     extra = c.execute(
         select(synced_automod_rules.c.aname)
-        .where(synced_automod_rules.c.aid == args[0])
+        .where(synced_automod_rules.c.aid == row[1])
     ).fetchone()
     if extra is not None:
         output["name"] = extra[0]
 
-    if len(args) == 4:
-        if args[1] == "mute":
-            output["time"] = args[2]
-            output["reason"] = args[3]
-    elif len(args) == 3:
-        if args[1] in ["kick", "ban"]:
-            output["reason"] = args[2]
-        if args[1] in ["dm"]:
-            output["message"] = args[2]
+    if row[2] == "mute":
+        if row[3] is not None:
+            output["time"] = row[3]
+        if row[4] is not None:
+            output["reason"] = row[4]
+    elif row[2] in ["kick", "ban"]:
+        if row[4] is not None:
+            output["reason"] = row[4]
+    elif row[2] in ["dm"]:
+        if row[4] is not None:
+            output["message"] = row[4]
 
     return output
 
@@ -40,11 +42,19 @@ def parse_automod_action(c: Connection, index: int, args: tuple) -> dict:
 def parse_automod_actions(guild_id: int) -> list[dict]:
     automod_action_list = []
     with engine.begin() as c:
-        automod_actions_rules = automod_actions.get(c, guild_id)
-        for index in range(len(automod_actions_rules)):
-            automod_action = automod_actions_rules[index]
-            args = automod_action.split(";")
-            output = parse_automod_action(c, index, args)
+        rows = c.execute(
+            select(
+                automod_actions.c.id,
+                automod_actions.c.rule_id,
+                automod_actions.c.action,
+                automod_actions.c.duration,
+                automod_actions.c.content,
+            )
+            .where(automod_actions.c.gid == str(guild_id))
+            .order_by(automod_actions.c.id)
+        ).fetchall()
+        for index in range(len(rows)):
+            output = parse_automod_action(c, index, rows[index])
 
             automod_action_list.append(output)
 
@@ -80,22 +90,34 @@ def handle_create_automod_action(is_edit: bool = False) -> bool:
     if "reason" in request.form and len(request.form["reason"].strip()) > 4:
         reason = request.form["reason"]
 
-    setting_str = ""
-    if request.form["type"] in ["kick", "ban"]:
-        setting_str = f"{request.form['rule']};{request.form['type']}" + ((";" + reason) if reason is not None else "")
+    duration = None
+    content = None
+    if request.form["type"] == "mute":
+        duration = request.form["time"]
+        content = reason
+    elif request.form["type"] in ["kick", "ban"]:
+        content = reason
     elif request.form["type"] == "dm":
-        setting_str = f"{request.form['rule']};{request.form['type']};{request.form['message']}"
-    elif request.form["type"] == "mute":
-        setting_str = f"{request.form['rule']};{request.form['type']};{request.form['time']}" + (
-            (";" + reason) if reason is not None else "")
+        content = request.form["message"]
 
     with engine.begin() as c:
         limit = get_limit(c, int(auth["guild"]), 3)
-        if limit is not None and len(automod_actions.get(c, int(auth["guild"]))) >= limit:
+        current = c.execute(
+            select(automod_actions.c.id).where(automod_actions.c.gid == str(auth["guild"]))
+        ).fetchall()
+        if limit is not None and len(current) >= limit:
             flash("Free plan is limited to 3 automod actions")
             return False
 
-        automod_actions.add_to_list(c, int(auth["guild"]), setting_str)
+        c.execute(
+            insert(automod_actions).values(
+                gid=str(auth["guild"]),
+                rule_id=request.form["rule"],
+                action=request.form["type"],
+                duration=duration,
+                content=content,
+            )
+        )
 
     if is_edit:
         flash("Edited successfully")
@@ -154,16 +176,32 @@ def automod_actions_delete(index: str):
     assert auth is not None
 
     with engine.begin() as c:
-        the_list = automod_actions.get(c, auth["guild"])
-        if len(the_list) <= int(index):
+        rows = c.execute(
+            select(
+                automod_actions.c.id,
+                automod_actions.c.rule_id,
+                automod_actions.c.action,
+                automod_actions.c.duration,
+                automod_actions.c.content,
+            )
+            .where(automod_actions.c.gid == auth["guild"])
+            .order_by(automod_actions.c.id)
+        ).fetchall()
+        if len(rows) <= int(index):
             flash("Can't delete item outside of range")
             return redirect("/settings/automod_actions", 302)
 
-        parsed = parse_automod_action(c, int(index), the_list[int(index)].split(";"))
+        parsed = parse_automod_action(c, int(index), rows[int(index)])
+        delete_id = rows[int(index)][0]
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            automod_actions.remove_from_list(c, auth["guild"], the_list[int(index)])
+            c.execute(
+                delete(automod_actions).where(
+                    (automod_actions.c.gid == auth["guild"])
+                    & (automod_actions.c.id == delete_id)
+                )
+            )
             return redirect("/settings/automod_actions", 302)
 
     return render_template("automod_actions_delete.html", action=parsed)
@@ -182,13 +220,21 @@ def automod_actions_edit(index: str):
     assert auth is not None
 
     with engine.begin() as c:
-        the_list = automod_actions.get(c, auth["guild"])
-        if len(the_list) <= int(index):
+        rows = c.execute(
+            select(automod_actions.c.id)
+            .where(automod_actions.c.gid == auth["guild"])
+            .order_by(automod_actions.c.id)
+        ).fetchall()
+        if len(rows) <= int(index):
             flash("Can't edit item outside of range")
             return redirect("/settings/automod_actions", 302)
 
-        the_list = automod_actions.get(c, auth["guild"])
-        automod_actions.remove_from_list(c, auth["guild"], the_list[int(index)])
+        c.execute(
+            delete(automod_actions).where(
+                (automod_actions.c.gid == auth["guild"])
+                & (automod_actions.c.id == rows[int(index)][0])
+            )
+        )
 
     handle_create_automod_action(is_edit=True)
     return redirect("/settings/automod_actions", 302)

@@ -10,9 +10,9 @@ from discord import (
     Guild,
     Message,
 )
-from sqlalchemy import Connection
+from sqlalchemy import Connection, select
 
-from database import engine
+from database import automod_actions, engine
 from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
 from utils.server_settings import ServerSetting, SettingType
@@ -37,8 +37,6 @@ async def fetch_actions(g: Guild):
     cached_automod_actions[g.id] = await g.fetch_auto_moderation_rules()
 
 
-automod_actions = ServerSetting(name="Automod actions", setting_type=SettingType.LIST)
-
 setting_automod_sync_error = ServerSetting(
     name="Automod actions sync error",
     setting_type=SettingType.NORMAL,
@@ -47,14 +45,14 @@ setting_automod_sync_error = ServerSetting(
 
 
 async def handle_automod_action(
-    c: Connection, payload: AutoModActionExecutionEvent, rule: str
+    c: Connection,
+    payload: AutoModActionExecutionEvent,
+    action: str,
+    duration: str | None,
+    content: str | None,
 ):
-    args = rule.split(";")
-
-    if args[1] == "kick":
-        reason = "AutoMod action"
-        if len(args) > 3:
-            reason = ";".join(args[2:])
+    if action == "kick":
+        reason = content or "AutoMod action"
 
         await payload.member.kick(reason=reason)
         await send_message_to_log_channel(
@@ -73,10 +71,8 @@ async def handle_automod_action(
                 ],
             ),
         )
-    elif args[1] == "ban":
-        reason = "AutoMod action"
-        if len(args) > 3:
-            reason = ";".join(args[2:])
+    elif action == "ban":
+        reason = content or "AutoMod action"
 
         await payload.member.ban(reason=reason, delete_message_seconds=604800)
         await send_message_to_log_channel(
@@ -95,12 +91,10 @@ async def handle_automod_action(
                 ],
             ),
         )
-    elif args[1] == "mute":
-        time = time_str_to_time(args[2])
+    elif action == "mute":
+        time = time_str_to_time(duration)
 
-        reason = "Automod action"
-        if len(args) > 4:
-            reason = ";".join(args[3:])
+        reason = content or "Automod action"
 
         await payload.member.timeout_for(timedelta(seconds=time), reason=reason)
         await send_message_to_log_channel(
@@ -116,18 +110,18 @@ async def handle_automod_action(
                         value=f"{payload.member.display_name} ({payload.member.name}; {payload.member.id})",
                     ),
                     EmbedField(name="Reason", value=reason),
-                    EmbedField(name="Duration of timeout", value=args[2]),
+                    EmbedField(name="Duration of timeout", value=duration),
                 ],
             ),
         )
-    elif args[1] == "dm":
-        message = ";".join(args[2:])
+    elif action == "dm":
+        message = content or ""
 
         if payload.member.can_send(Message):
             await payload.member.send(content=message)
     else:
         akabot_logger.warning(
-            f"Tried to perform action for {payload.rule_id}, but {args[1]} is an invalid action!"
+            f"Tried to perform action for {payload.rule_id}, but {action} is an invalid action!"
         )
 
 
@@ -157,14 +151,26 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
     payload.member = member
 
     with engine.begin() as c:
-        actions = automod_actions.get(c, payload.guild.id)
+        actions = c.execute(
+            select(
+                automod_actions.c.action,
+                automod_actions.c.duration,
+                automod_actions.c.content,
+            )
+            .where(
+                (automod_actions.c.gid == str(payload.guild.id))
+                & (automod_actions.c.rule_id == str(payload.rule_id))
+            )
+            .order_by(automod_actions.c.id)
+        ).fetchall()
 
     for i in actions:
-        if i.split(";", 1)[0] == str(payload.rule_id):
-            try:
-                with (
-                    engine.begin() as c2
-                ):  # separate connection for running this call with as an exception will not allow writing
-                    await handle_automod_action(c2, payload, i)
-            except Exception as e:
-                akabot_logger.exception(f"Failed to execute automod action for rule {i}: {e}")
+        try:
+            with (
+                engine.begin() as c2
+            ):  # separate connection for running this call with as an exception will not allow writing
+                await handle_automod_action(c2, payload, i[0], i[1], i[2])
+        except Exception as e:
+            akabot_logger.exception(
+                f"Failed to execute automod action for rule {payload.rule_id}: {e}"
+            )

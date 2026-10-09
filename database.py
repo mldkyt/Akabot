@@ -425,6 +425,17 @@ synced_automod_rules = Table(
     Column("aname", VARCHAR, nullable=False),
 )
 
+automod_actions = Table(
+    "automod_actions",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("rule_id", VARCHAR, nullable=False),
+    Column("action", VARCHAR, nullable=False),
+    Column("duration", VARCHAR),
+    Column("content", VARCHAR),
+)
+
 web_feedback_bans = Table(
     "web_feedback_bans", md_obj, Column("uid", VARCHAR, primary_key=True)
 )
