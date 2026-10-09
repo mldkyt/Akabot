@@ -1,6 +1,6 @@
-import sentry_sdk
 from datetime import timedelta
 
+import sentry_sdk
 from discord import (
     Bot,
     DMChannel,
@@ -277,7 +277,9 @@ def get_leaderboard(c: Connection, u: Member):
         .order_by(desc(chat_streaks.c.last_message_date - chat_streaks.c.start_date))
     ).fetchall()
 
-    return [i for i in a if (get_now(u.guild.id, c).date() - i[2]).total_seconds() <= 86400]
+    return [
+        i for i in a if (get_now(u.guild.id, c).date() - i[2]).total_seconds() <= 86400
+    ]
 
 
 def get_all_streaks_for(c: Connection, b: Bot, m: Member):
@@ -357,9 +359,13 @@ async def handle_send_reply(
 
         if setting_response != "bot_noping":
             content = f"{msg.author.mention} {content}"
+        else:
+            content = f"{msg.author.name}, {content}"
 
         return await bot_channel.send(content, view=view), False
     except Exception as e:
-        akabot_logger.exception(f"Failed to send chat streak response for message {msg.id}: {e}")
+        akabot_logger.exception(
+            f"Failed to send chat streak response for message {msg.id}: {e}"
+        )
         sentry_sdk.capture_exception(e)
         return None, False
