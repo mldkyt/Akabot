@@ -1,5 +1,4 @@
 import discord
-import sentry_sdk
 from discord import ApplicationContext, Member, Message, Permissions, SlashCommandGroup
 
 from database import engine
@@ -81,7 +80,6 @@ class Leveling(discord.Cog):
                             await level_up_message.delete(delay=5)
         except Exception as e:
             akabot_logger.exception(f"Failed to process level up for message {message.id}: {e}")
-            sentry_sdk.capture_exception(e)
 
     @discord.slash_command()
     async def level(self, ctx: ApplicationContext):
@@ -103,7 +101,6 @@ class Leveling(discord.Cog):
                 )
         except Exception as e:
             akabot_logger.exception(f"Failed to fetch level for user {ctx.user.id} in guild {ctx.guild.id}: {e}")
-            sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     admin_commands = SlashCommandGroup(

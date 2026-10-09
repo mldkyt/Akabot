@@ -1,6 +1,5 @@
 import datetime
 
-import sentry_sdk
 from discord import (
     ButtonStyle,
     Guild,
@@ -743,4 +742,3 @@ async def perform_backfill(guild: Guild, channel: TextChannel):
                         )
     except Exception as e:
         akabot_logger.exception(f"Failed to summarize chat for guild {gid}: {e}")
-        sentry_sdk.capture_exception(e)

@@ -1,7 +1,6 @@
 import datetime
 import uuid
 
-import sentry_sdk
 from discord import Color, Embed, EmbedFooter, HTTPException, Member
 from sqlalchemy import Connection
 from sqlalchemy.util.langhelpers import MemoizedSlots
@@ -215,7 +214,6 @@ async def handle_first_grace_period():
                     akabot_logger.exception(
                         f"Failed to send welcome message during grace period for member {v['member']}: {e}"
                     )
-                    sentry_sdk.capture_exception(e)
 
     for i in discard_these:
         del grace_period_first[i]

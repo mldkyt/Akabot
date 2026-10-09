@@ -2,7 +2,6 @@ import datetime
 import random
 import string
 
-import sentry_sdk
 from discord import Guild, Member
 from sqlalchemy import Connection, delete, insert, select, update
 
@@ -276,12 +275,11 @@ async def sync_guild(guild: Guild):
                 setting_automod_sync_error.set(c, guild.id, "")
             except Exception as e:
                 setting_automod_sync_error.set(c, guild.id, str(e))
-                akabot_logger.warning(
+                akabot_logger.exception(
                     f"Failed to sync automod actions for guild {guild.name}: {e}"
                 )
     except Exception as e:
         akabot_logger.exception(f"Failed to sync guild {guild}: {e}")
-        sentry_sdk.capture_exception(e)
 
 
 def generate_token(guild: Guild, member: Member) -> str:

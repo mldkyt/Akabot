@@ -1,6 +1,5 @@
 from os import getenv
 
-import sentry_sdk
 from aiohttp import ClientSession
 from discord import (
     ApplicationContext,
@@ -82,7 +81,6 @@ class BugReportModal(Modal):
             await self.submit_bug_report_on_forgejo(interaction)
         except Exception as e:
             akabot_logger.exception(f"Failed to submit bug report from {interaction.user.id}: {e}")
-            sentry_sdk.capture_exception(e)
             await interaction.response.send_message(
                 "oops an error occurred trying to report a bug lol", ephemeral=True
             )
@@ -155,7 +153,6 @@ class FeatureModal(Modal):
             await self.submit_feature_on_forgejo(interaction)
         except Exception as e:
             akabot_logger.exception(f"Failed to submit feature request from {interaction.user.id}: {e}")
-            sentry_sdk.capture_exception(e)
             await interaction.response.send_message("", ephemeral=True)
 
 

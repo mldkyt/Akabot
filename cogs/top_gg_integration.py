@@ -3,7 +3,6 @@ import os
 from aiohttp import ClientSession, ClientTimeout
 from discord import Bot, Cog, SlashCommand
 from discord.ext.tasks import loop
-from sentry_sdk.api import capture_exception
 
 from logger import akabot_logger
 
@@ -43,7 +42,6 @@ class TopGGIntegration(Cog):
                     resp.raise_for_status()
         except Exception as e:
             akabot_logger.exception(f"Failed to sync top.gg commands: {e}")
-            capture_exception(e)
 
     @loop(hours=24)
     async def topgg_update_metrics(self):
@@ -59,7 +57,6 @@ class TopGGIntegration(Cog):
                     resp.raise_for_status()
         except Exception as e:
             akabot_logger.exception(f"Failed to update top.gg metrics: {e}")
-            capture_exception(e)
 
 
 def setup(bot: Bot):

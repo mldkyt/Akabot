@@ -17,7 +17,6 @@ from discord import (
 )
 from discord.ext.tasks import loop
 from discord.ui import InputText, Modal, View, button
-from sentry_sdk import capture_exception
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, verification_introduction_messages
@@ -444,7 +443,6 @@ class Verification(Cog):
                 akabot_logger.exception(
                     f"Failed to kick unverified member {member}: {e}"
                 )
-                capture_exception(e)
 
 
 def setup(bot: Bot):

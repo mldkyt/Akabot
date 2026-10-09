@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
@@ -46,7 +45,6 @@ class ChatSummary(Cog):
                             await perform_backfill(i, channel)
             except Exception as e:
                 akabot_logger.exception(f"Failed to initialize chat summary backfill: {e}")
-                sentry_sdk.capture_exception(e)
 
             self.has_init = True
 
@@ -67,7 +65,6 @@ class ChatSummary(Cog):
                 inc(c, msg)
         except Exception as e:
             akabot_logger.exception(f"Failed to process chat summary message {msg.id}: {e}")
-            sentry_sdk.capture_exception(e)
 
     @loop(minutes=1)
     async def task_summary(self):
@@ -82,7 +79,6 @@ class ChatSummary(Cog):
                     await summarize(c, i)
             except Exception as e:
                 akabot_logger.exception(f"Failed to summarize chat for guild {i.id}: {e}")
-                sentry_sdk.capture_exception(e)
 
     chat_summary_commands = SlashCommandGroup(name="chat_summary")
 

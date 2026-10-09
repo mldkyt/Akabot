@@ -1,7 +1,6 @@
 import re
 from datetime import timedelta
 
-import sentry_sdk
 from discord import (
     AutoModActionExecutionEvent,
     AutoModRule,
@@ -169,4 +168,3 @@ async def handle_automod_actions(bot: Bot, payload: AutoModActionExecutionEvent)
                     await handle_automod_action(c2, payload, i)
             except Exception as e:
                 akabot_logger.exception(f"Failed to execute automod action for rule {i}: {e}")
-                sentry_sdk.capture_exception(e)

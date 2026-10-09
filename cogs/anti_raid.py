@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import Bot, Cog, Member, Message
 
 from logger import akabot_logger
@@ -28,7 +27,6 @@ class AntiRaid(Cog):
             await handle_join_burst(member)
         except Exception as e:
             akabot_logger.exception(f"Failed to handle member join anti raid for {member}: {e}")
-            sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_message(self, message: Message):
@@ -48,7 +46,6 @@ class AntiRaid(Cog):
             await handle_sticker_flood(message)
         except Exception as e:
             akabot_logger.exception(f"Failed to handle anti raid message {message.id}: {e}")
-            sentry_sdk.capture_exception(e)
 
 
 def setup(bot: Bot):

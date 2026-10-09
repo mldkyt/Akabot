@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-import sentry_sdk
 from discord import (
     Bot,
     DMChannel,
@@ -367,5 +366,4 @@ async def handle_send_reply(
         akabot_logger.exception(
             f"Failed to send chat streak response for message {msg.id}: {e}"
         )
-        sentry_sdk.capture_exception(e)
         return None, False

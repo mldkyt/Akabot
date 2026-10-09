@@ -1,9 +1,11 @@
+import logging
 import os
 
 import discord
 import sentry_sdk
 from discord.ext import commands as commands_ext
 from dotenv import load_dotenv
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from logger import akabot_logger
 
@@ -15,6 +17,9 @@ load_dotenv()
 if os.getenv("SENTRY_SDK"):
     sentry_sdk.init(
         dsn=os.getenv("SENTRY_SDK"),
+        integrations=[
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
+        ],
         traces_sample_rate=1,
         auto_session_tracking=False,
         send_default_pii=True,
@@ -94,7 +99,7 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error):
         # respond
         await ctx.respond("An error occured", ephemeral=True)
     except Exception:
-        akabot_logger.error("Failed to respond to message")
+        akabot_logger.exception("Failed to respond to message")
 
     sentry_sdk.capture_exception(error)
     raise error

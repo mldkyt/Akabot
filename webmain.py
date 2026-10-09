@@ -1,8 +1,12 @@
+import logging
 import os
 
 import sentry_sdk
 from dotenv import load_dotenv
 from flask import Flask, request, session
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from werkzeug.exceptions import HTTPException
 
 from database import engine
 from utils.premium import premium_enabled, usage_bar
@@ -41,7 +45,11 @@ load_dotenv()
 
 if os.getenv("SENTRY_SDK"):
     sentry_sdk.init(
-        os.getenv("SENTRY_SDK"),
+        dsn=os.getenv("SENTRY_SDK"),
+        integrations=[
+            FlaskIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
+        ],
         send_default_pii=True,
         max_request_body_size="always",
         traces_sample_rate=0,
@@ -52,6 +60,15 @@ if os.getenv("SENTRY_SDK"):
 app = Flask(__name__, static_folder="web/static", static_url_path="/static")
 
 app.secret_key = os.getenv("WEB_SECRET", "1234")
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_exception(error):
+    if isinstance(error, HTTPException):
+        return error
+
+    app.logger.exception("Unhandled exception")
+    return "Internal Server Error", 500
 
 app.context_processor(lambda: {"premium_enabled": premium_enabled()})
 

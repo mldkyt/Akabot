@@ -1,7 +1,6 @@
 import asyncio
 import json
 
-import sentry_sdk
 from discord import Bot, Cog
 from discord.ext.tasks import loop
 
@@ -69,7 +68,6 @@ class Tasks(Cog):
                 await handler(self.bot, json.loads(data))
             except Exception as e:
                 akabot_logger.exception(f"Task {task_id} ({task_type}) failed: {e}")
-                sentry_sdk.capture_exception(e)
                 with engine.begin() as c:
                     retry_or_fail(c, task_id, attempts, str(e))
             else:

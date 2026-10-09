@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import Forbidden, HTTPException, Member
 
 from database import engine
@@ -33,4 +32,3 @@ async def apply_roles(member: Member):
             )
         except Exception as e:
             akabot_logger.exception(f"Failed to apply roles on join for {member}: {e}")
-            sentry_sdk.capture_exception(e)

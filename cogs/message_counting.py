@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
@@ -45,7 +44,6 @@ class MessageCounting(Cog):
                 await update_roles(c, msg)
         except Exception as e:
             akabot_logger.exception(f"Failed to process message counting for message {msg.id}: {e}")
-            sentry_sdk.capture_exception(e)
 
     @Cog.listener()
     async def on_message_delete(self, msg: Message):
@@ -66,7 +64,6 @@ class MessageCounting(Cog):
                 await update_roles(c, msg)
         except Exception as e:
             akabot_logger.exception(f"Failed to process message delete counting for message {msg.id}: {e}")
-            sentry_sdk.capture_exception(e)
 
     message_counting_cmds = SlashCommandGroup(name="message_counting")
 

@@ -1,6 +1,5 @@
 import re
 
-import sentry_sdk
 from discord import (
     Bot,
     ButtonStyle,
@@ -202,7 +201,7 @@ def update_bot_permission_if_possible(guild) -> None:
         with engine.begin() as c:
             update_bot_permission(c, guild)
     except Exception as e:
-        akabot_logger.warning(f"Failed to sync reaction roles permission: {e}")
+        akabot_logger.exception(f"Failed to sync reaction roles permission: {e}")
 
 
 def delete_by_messages(message_ids: list[str]) -> None:
@@ -286,7 +285,6 @@ async def handle_interaction(bot: Bot, interaction: Interaction) -> None:
         await handle_legacy_interaction(interaction)
     except Exception as e:
         akabot_logger.exception(f"Failed to handle reaction role interaction: {e}")
-        sentry_sdk.capture_exception(e)
 
 
 async def handle_db_interaction(interaction: Interaction, option_id: int) -> None:

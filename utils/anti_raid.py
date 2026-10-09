@@ -529,7 +529,6 @@ async def send_anti_raid_dm(member: Member, message: str):
         await member.send(content=message)
     except Exception as e:
         akabot_logger.exception(f"Failed to send anti raid DM to {member}: {e}")
-        sentry_sdk.capture_exception(e)
 
 
 def _format_template(template: str, member: Member, values: dict[str, str]) -> str:
@@ -563,13 +562,11 @@ async def _delete_messages(messages: list[Message]):
                 await channel.delete_messages(unique[i : i + 100])
         except Exception as e:
             akabot_logger.exception(f"Failed to bulk delete anti raid messages in {channel}: {e}")
-            sentry_sdk.capture_exception(e)
             for message in unique:
                 try:
                     await message.delete()
                 except Exception as e2:
                     akabot_logger.exception(f"Failed to delete anti raid message {message.id}: {e2}")
-                    sentry_sdk.capture_exception(e2)
 
 
 async def _kick_member(member: Member, reason: str):
@@ -579,7 +576,6 @@ async def _kick_member(member: Member, reason: str):
         await member.kick(reason=reason)
     except Exception as e:
         akabot_logger.exception(f"Failed to kick anti raid member {member}: {e}")
-        sentry_sdk.capture_exception(e)
 
 
 async def verify_member(member: Member):

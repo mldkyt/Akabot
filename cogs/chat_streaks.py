@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import (
     ApplicationContext,
     Bot,
@@ -194,7 +193,6 @@ class ChatStreaks(Cog):
                             )
         except Exception as e:
             akabot_logger.exception(f"Failed to process chat streak message {msg.id}: {e}")
-            sentry_sdk.capture_exception(e)
 
     @chat_streaks.command()
     async def streak(self, ctx: ApplicationContext):
@@ -220,7 +218,6 @@ class ChatStreaks(Cog):
                 )
         except Exception as e:
             akabot_logger.exception(f"Failed to fetch streak for user {ctx.user.id}: {e}")
-            sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
@@ -257,7 +254,6 @@ class ChatStreaks(Cog):
                 await paginator.respond(ctx.interaction, ephemeral=True)
         except Exception as e:
             akabot_logger.exception(f"Failed to fetch chat streak leaderboard for guild {ctx.guild.id}: {e}")
-            sentry_sdk.capture_exception(e)
             await ctx.respond("Error", ephemeral=True)
 
     @chat_streaks.command()
@@ -381,7 +377,6 @@ class ChatStreaks(Cog):
             await self.run_chat_streak_reminders()
         except Exception as e:
             akabot_logger.exception(f"Failed to run chat streak reminders: {e}")
-            sentry_sdk.capture_exception(e)
 
 
 def setup(bot: Bot):

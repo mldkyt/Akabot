@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import Guild, Message
 from sqlalchemy import Connection, delete, insert, select, update
 
@@ -179,7 +178,6 @@ async def reindex(guild: Guild):
                     final_count += 1
             except Exception as e:
                 akabot_logger.exception(f"Failed to reindex text channel {text}: {e}")
-                sentry_sdk.capture_exception(e)
 
         for voice in guild.voice_channels:
             try:
@@ -191,7 +189,6 @@ async def reindex(guild: Guild):
                     final_count += 1
             except Exception as e:
                 akabot_logger.exception(f"Failed to reindex voice channel {voice}: {e}")
-                sentry_sdk.capture_exception(e)
 
     return final_count
 

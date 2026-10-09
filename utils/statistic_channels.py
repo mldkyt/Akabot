@@ -1,4 +1,3 @@
-import sentry_sdk
 from discord import Bot, Forbidden
 
 from database import engine
@@ -39,4 +38,3 @@ async def update(bot: Bot):
                     )
                 except Exception as e:
                     akabot_logger.exception(f"Failed to update statistic channel {channel}: {e}")
-                    sentry_sdk.capture_exception(e)
