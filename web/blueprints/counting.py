@@ -1,8 +1,8 @@
 from flask import Blueprint, session, render_template, request, flash, redirect
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_channels
-from utils.counting import setting_counting_channels, any_count_mode, any_count_mode_count_words, \
+from database import counting_channels, engine, synced_channels
+from utils.counting import any_count_mode, any_count_mode_count_words, \
     any_count_mode_count_frequency, any_count_mode_minimum_frequency, same_member_counting_mode
 from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
@@ -55,16 +55,34 @@ def set_settings(auth):
 def add_channel(auth):
     if "channel" in request.form and validate_text_channel_id(request.form["channel"]):
         with engine.begin() as c:
-            if setting_counting_channels.is_in_list(c, auth["guild"], request.form["channel"]):
+            existing = c.execute(
+                select(counting_channels.c.cid).where(
+                    (counting_channels.c.gid == str(auth["guild"]))
+                    & (counting_channels.c.cid == request.form["channel"])
+                )
+            ).fetchone()
+            if existing is not None:
                 flash("This channel is already added")
                 return
 
             limit = get_limit(c, auth["guild"], 1)
-            if limit is not None and len(setting_counting_channels.get(c, auth["guild"])) >= limit:
+            current = c.execute(
+                select(counting_channels.c.cid).where(
+                    counting_channels.c.gid == str(auth["guild"])
+                )
+            ).fetchall()
+            if limit is not None and len(current) >= limit:
                 flash("Free plan is limited to 1 counting channel")
                 return
 
-            setting_counting_channels.add_to_list(c, auth["guild"], request.form["channel"])
+            c.execute(
+                insert(counting_channels).values(
+                    gid=str(auth["guild"]),
+                    cid=request.form["channel"],
+                    current_count=0,
+                    last_counter="0",
+                )
+            )
             flash("Added channel successfully")
 
 @counting_bp.route("/settings/counting", methods=["GET", "POST"])
@@ -81,7 +99,14 @@ def counting_index():
         add_channel(auth)
 
     with engine.begin() as c:
-        counting_channel_ids = setting_counting_channels.get(c, auth["guild"])
+        counting_channel_ids = [
+            i[0]
+            for i in c.execute(
+                select(counting_channels.c.cid)
+                .where(counting_channels.c.gid == auth["guild"])
+                .order_by(counting_channels.c.cid)
+            ).fetchall()
+        ]
         counting_channel_names = []
         for index in range(len(counting_channel_ids)):
             result = c.execute(
@@ -129,7 +154,14 @@ def counting_delete(index: str):
         return redirect("/settings/counting", 302)
 
     with engine.begin() as c:
-        chs = setting_counting_channels.get(c, auth["guild"])
+        chs = [
+            i[0]
+            for i in c.execute(
+                select(counting_channels.c.cid)
+                .where(counting_channels.c.gid == auth["guild"])
+                .order_by(counting_channels.c.cid)
+            ).fetchall()
+        ]
         if len(chs) <= int(index):
             return redirect("/settings/counting", 302)
 
@@ -140,7 +172,12 @@ def counting_delete(index: str):
         ).fetchone()
 
         if "confirm" in request.args and request.args["confirm"] == "yes":
-            setting_counting_channels.remove_from_list(c, auth["guild"], chs)
+            c.execute(
+                delete(counting_channels).where(
+                    (counting_channels.c.gid == auth["guild"])
+                    & (counting_channels.c.cid == chs)
+                )
+            )
             return redirect("/settings/counting", 302)
 
     return render_template("counting_delete.html", channel=("#" + chs_parsed[0]) if chs_parsed is not None else chs)

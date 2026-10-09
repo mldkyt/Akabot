@@ -2,17 +2,12 @@ import asyncio
 import re
 
 from discord import Message
-from sqlalchemy import Connection, delete, insert, select, update
+from sqlalchemy import Connection, select, update
 
 from database import counting_channels
 from utils.server_settings import (
     ServerSetting,
     SettingType,
-)
-
-setting_counting_channels = ServerSetting(
-    name="Counting channels",
-    setting_type=SettingType.LIST,
 )
 
 same_member_counting_mode = ServerSetting(
@@ -101,47 +96,55 @@ async def handle_counting_channel(c: Connection, msg: Message):
         )
     ).fetchone()
 
+    # A row exists only for configured counting channels; a zeroed counter means
+    # the count has not started yet. Configuration is the row itself.
+    if a is None:
+        return
+
     numbers = attempt_to_parse_number(c, msg)
 
-    if a is None:
+    if a[0] == 0:
         if 1 in numbers:
-            c.execute(
-                insert(counting_channels).values(
-                    gid=str(msg.guild.id),
-                    cid=str(msg.channel.id),
-                    current_count=2,
-                    last_counter=str(msg.author.id),
-                )
-            )
-            await msg.add_reaction("✅")
-        else:
-            await msg.add_reaction("❌")
-    else:
-        same_member = True
-        if same_member_counting_mode.get(c, msg.guild.id) == "true":
-            same_member = a[1] != str(msg.author.id)
-
-        if a[0] in numbers and same_member:
             c.execute(
                 update(counting_channels)
                 .where(
                     (counting_channels.c.gid == str(msg.guild.id))
                     & (counting_channels.c.cid == str(msg.channel.id))
                 )
-                .values(current_count=a[0] + 1, last_counter=str(msg.author.id))
+                .values(current_count=2, last_counter=str(msg.author.id))
             )
             await msg.add_reaction("✅")
         else:
-            await asyncio.gather(
-                msg.channel.send(
-                    f"Awww, {msg.author.mention} ruined the count at {a[0]}!"
-                ),
-                msg.add_reaction("❌"),
-            )
+            await msg.add_reaction("❌")
+        return
 
-            c.execute(
-                delete(counting_channels).where(
-                    (counting_channels.c.gid == str(msg.guild.id))
-                    & (counting_channels.c.cid == str(msg.channel.id))
-                )
+    same_member = True
+    if same_member_counting_mode.get(c, msg.guild.id) == "true":
+        same_member = a[1] != str(msg.author.id)
+
+    if a[0] in numbers and same_member:
+        c.execute(
+            update(counting_channels)
+            .where(
+                (counting_channels.c.gid == str(msg.guild.id))
+                & (counting_channels.c.cid == str(msg.channel.id))
             )
+            .values(current_count=a[0] + 1, last_counter=str(msg.author.id))
+        )
+        await msg.add_reaction("✅")
+    else:
+        await asyncio.gather(
+            msg.channel.send(
+                f"Awww, {msg.author.mention} ruined the count at {a[0]}!"
+            ),
+            msg.add_reaction("❌"),
+        )
+
+        c.execute(
+            update(counting_channels)
+            .where(
+                (counting_channels.c.gid == str(msg.guild.id))
+                & (counting_channels.c.cid == str(msg.channel.id))
+            )
+            .values(current_count=0, last_counter="0")
+        )

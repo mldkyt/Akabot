@@ -1,11 +1,11 @@
 import os
 
 from discord import Bot, Cog, Message
+from sqlalchemy import select
 
-from database import engine
+from database import counting_channels, engine
 from utils.counting import (
     handle_counting_channel,
-    setting_counting_channels,
 )
 
 MESSAGE_INTENT = os.getenv("MESSAGE_INTENT", "0") == "1"
@@ -24,9 +24,13 @@ class Counting(Cog):
             return
 
         with engine.begin() as c:
-            if not setting_counting_channels.is_in_list(
-                c, message.guild.id, str(message.channel.id)
-            ):
+            configured = c.execute(
+                select(counting_channels.c.current_count).where(
+                    (counting_channels.c.gid == str(message.guild.id))
+                    & (counting_channels.c.cid == str(message.channel.id))
+                )
+            ).fetchone()
+            if configured is None:
                 return
 
             await handle_counting_channel(c, message)
