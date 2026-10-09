@@ -1,9 +1,8 @@
 from flask import Blueprint, session, render_template, request, flash, redirect
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_channels
+from database import engine, statistic_channels, synced_channels
 from utils.premium import get_limit
-from utils.statistic_channels import setting_statistic_channels
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -23,17 +22,31 @@ def handle_post(auth, is_edit: bool = False):
         return
 
     with engine.begin() as c:
-        statistic_channels_ids = [i.split(";")[0] for i in setting_statistic_channels.get(c, auth["guild"])]
-        if request.form["channel"] in statistic_channels_ids:
+        existing = c.execute(
+            select(statistic_channels.c.cid).where(
+                (statistic_channels.c.gid == auth["guild"])
+                & (statistic_channels.c.cid == request.form["channel"])
+            )
+        ).fetchone()
+        if existing is not None:
             flash("This ID already has a template assigned, please edit instead!")
             return
 
+        current = c.execute(
+            select(statistic_channels.c.cid).where(statistic_channels.c.gid == auth["guild"])
+        ).fetchall()
         limit = get_limit(c, auth["guild"], 2)
-        if limit is not None and len(statistic_channels_ids) >= limit:
+        if limit is not None and len(current) >= limit:
             flash("Free plan is limited to 2 statistic channels")
             return
 
-        setting_statistic_channels.add_to_list(c, auth["guild"], f"{request.form['channel']};{request.form['template']}")
+        c.execute(
+            insert(statistic_channels).values(
+                gid=auth["guild"],
+                cid=request.form["channel"],
+                template=request.form["template"],
+            )
+        )
 
 @statistic_channels_bp.route("/settings/statistic_channels", methods=["GET", "POST"])
 def statistic_channels_index():
@@ -48,10 +61,14 @@ def statistic_channels_index():
         handle_post(auth)
 
     with engine.begin() as c:
-        statistic_channels_1 = setting_statistic_channels.get(c, auth["guild"])
-        statistic_channels = []
-        for i in range(len(statistic_channels_1)):
-            args = statistic_channels_1[i].split(";")
+        statistic_channels_rows = c.execute(
+            select(statistic_channels.c.cid, statistic_channels.c.template)
+            .where(statistic_channels.c.gid == auth["guild"])
+            .order_by(statistic_channels.c.id)
+        ).fetchall()
+        statistic_channels_list = []
+        for i in range(len(statistic_channels_rows)):
+            args = statistic_channels_rows[i]
             channel_name = c.execute(
                 select(synced_channels.c.cname)
                 .where((synced_channels.c.cid == args[0]) & (synced_channels.c.gid == auth["guild"]))
@@ -60,7 +77,7 @@ def statistic_channels_index():
             if channel_name is None:
                 continue
 
-            statistic_channels.append({
+            statistic_channels_list.append({
                 "index": i,
                 "id": args[0],
                 "name": channel_name[0],
@@ -75,7 +92,7 @@ def statistic_channels_index():
             .where((synced_channels.c.gid == auth["guild"]) & (synced_channels.c.ctype == "voice"))
         ).fetchall()]
 
-    return render_template("statistic_channels.html", statistic_channels=statistic_channels, channels=channels)
+    return render_template("statistic_channels.html", statistic_channels=statistic_channels_list, channels=channels)
 
 @statistic_channels_bp.route("/settings/statistic_channels/edit/<index>", methods=["POST"])
 def statistic_channels_edit(index: str):
@@ -90,13 +107,23 @@ def statistic_channels_edit(index: str):
         return redirect("/settings/statistic_channels", 303)
 
     with engine.begin() as c:
-        statistic_channels_1 = setting_statistic_channels.get(c, auth["guild"])
-        if len(statistic_channels_1) <= int(index):
+        rows = c.execute(
+            select(statistic_channels.c.cid)
+            .where(statistic_channels.c.gid == auth["guild"])
+            .order_by(statistic_channels.c.id)
+        ).fetchall()
+        if len(rows) <= int(index):
             return redirect("/settings/statistic_channels", 303)
 
-        setting_statistic_channels.remove_from_list(c, auth["guild"], statistic_channels_1[int(index)])
-        handle_post(auth, is_edit=True)
-        return redirect("/settings/statistic_channels", 303)
+        c.execute(
+            delete(statistic_channels).where(
+                (statistic_channels.c.gid == auth["guild"])
+                & (statistic_channels.c.cid == rows[int(index)][0])
+            )
+        )
+
+    handle_post(auth, is_edit=True)
+    return redirect("/settings/statistic_channels", 303)
 
 
 
@@ -113,22 +140,31 @@ def statistic_channels_delete(index: str):
         return redirect("/settings/statistic_channels", 302)
 
     with engine.begin() as c:
-        statistic_channels_ids = setting_statistic_channels.get(c, auth["guild"])
-        if len(statistic_channels_ids) <= int(index):
+        rows = c.execute(
+            select(statistic_channels.c.cid)
+            .where(statistic_channels.c.gid == auth["guild"])
+            .order_by(statistic_channels.c.id)
+        ).fetchall()
+        if len(rows) <= int(index):
             return redirect("/settings/statistic_channels", 302)
 
-        statistic_channel_id = statistic_channels_ids[int(index)]
+        statistic_channel_id = rows[int(index)][0]
 
         statistic_channel = c.execute(
             select(synced_channels.c.cname)
-            .where((synced_channels.c.cid == statistic_channel_id.split(";")[0]) & (synced_channels.c.gid == auth["guild"]))
+            .where((synced_channels.c.cid == statistic_channel_id) & (synced_channels.c.gid == auth["guild"]))
         ).fetchone()
         if statistic_channel is None:
             return redirect("/settings/statistic_channels", 302)
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            setting_statistic_channels.remove_from_list(c, auth["guild"], statistic_channel_id)
+            c.execute(
+                delete(statistic_channels).where(
+                    (statistic_channels.c.gid == auth["guild"])
+                    & (statistic_channels.c.cid == statistic_channel_id)
+                )
+            )
             return redirect("/settings/statistic_channels", 302)
 
     return render_template("statistic_channels_delete.html", channel_name=statistic_channel[0], index=index)

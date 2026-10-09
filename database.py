@@ -115,6 +115,16 @@ roles_on_join = Table(
     UniqueConstraint("gid", "rid"),
 )
 
+statistic_channels = Table(
+    "statistic_channels",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    Column("template", VARCHAR, nullable=False),
+    UniqueConstraint("gid", "cid"),
+)
+
 # Chat Summary
 
 chat_summary_channels = Table(
