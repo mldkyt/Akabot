@@ -10,11 +10,13 @@ from database import (
     engine,
     synced_automod_rules,
     synced_channels,
+    synced_emojis,
     synced_roles,
     web_tokens,
 )
 from logger import akabot_logger
 from utils.automod_actions import setting_automod_sync_error
+from utils.reaction_roles import update_bot_permission
 
 
 async def sync_text_channels(c: Connection, guild: Guild):
@@ -164,6 +166,50 @@ async def sync_roles(c: Connection, guild: Guild):
             )
 
 
+async def sync_emojis(c: Connection, guild: Guild):
+    db_emojis = {
+        i[0]: (i[1], i[2])
+        for i in c.execute(
+            select(
+                synced_emojis.c.eid, synced_emojis.c.name, synced_emojis.c.animated
+            ).where(synced_emojis.c.gid == str(guild.id))
+        ).fetchall()
+    }
+    guild_emojis = {str(i.id): i for i in guild.emojis}
+
+    for eid in db_emojis:
+        if eid not in guild_emojis:
+            c.execute(
+                delete(synced_emojis).where(
+                    (synced_emojis.c.gid == str(guild.id))
+                    & (synced_emojis.c.eid == eid)
+                )
+            )
+
+    for eid, emoji in guild_emojis.items():
+        if eid in db_emojis:
+            if db_emojis[eid] == (emoji.name, emoji.animated):
+                continue
+
+            c.execute(
+                update(synced_emojis)
+                .where(
+                    (synced_emojis.c.gid == str(guild.id))
+                    & (synced_emojis.c.eid == eid)
+                )
+                .values(name=emoji.name, animated=emoji.animated)
+            )
+        else:
+            c.execute(
+                insert(synced_emojis).values(
+                    gid=str(guild.id),
+                    eid=eid,
+                    name=emoji.name,
+                    animated=emoji.animated,
+                )
+            )
+
+
 async def sync_automod_actions(c: Connection, guild: Guild):
     if not guild.me.guild_permissions.manage_guild:
         raise ValueError(
@@ -223,6 +269,8 @@ async def sync_guild(guild: Guild):
             await sync_text_channels(c, guild)
             await sync_voice_channels(c, guild)
             await sync_roles(c, guild)
+            await sync_emojis(c, guild)
+            update_bot_permission(c, guild)
             try:
                 await sync_automod_actions(c, guild)
                 setting_automod_sync_error.set(c, guild.id, "")

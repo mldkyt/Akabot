@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 :root {
     --bg-base: #1e1e2e;
@@ -20,17 +20,20 @@
     --sidebar-width: 260px;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     height: 100%;
     background-color: var(--bg-base);
     color: var(--text);
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     font-size: 15px;
     line-height: 1.6;
 }
@@ -116,7 +119,9 @@ html, body {
     color: var(--text-dim);
     text-decoration: none;
     font-size: 13px;
-    transition: background-color 0.15s, color 0.15s;
+    transition:
+        background-color 0.15s,
+        color 0.15s;
     border-left: 3px solid transparent;
 }
 
@@ -147,7 +152,6 @@ html, body {
     flex: 1;
     margin-left: var(--sidebar-width);
     padding: 32px 40px;
-    max-width: 900px;
 }
 
 /* Typography */
@@ -299,7 +303,7 @@ textarea {
     width: 100%;
     max-width: 400px;
     padding: 8px 12px;
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     font-size: 14px;
     color: var(--text);
     background-color: var(--bg-overlay);
@@ -343,10 +347,11 @@ input[type="checkbox"] + label {
 }
 
 /* Buttons */
-button, .btn {
+button,
+.btn {
     display: inline-block;
     padding: 8px 20px;
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     font-size: 13px;
     font-weight: 500;
     color: var(--bg-base);
@@ -354,16 +359,20 @@ button, .btn {
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background-color 0.15s, transform 0.1s;
+    transition:
+        background-color 0.15s,
+        transform 0.1s;
     text-decoration: none;
 }
 
-button:hover, .btn:hover {
+button:hover,
+.btn:hover {
     background-color: var(--accent-hover);
     text-decoration: none;
 }
 
-button:active, .btn:active {
+button:active,
+.btn:active {
     transform: scale(0.98);
 }
 

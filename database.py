@@ -508,3 +508,59 @@ premium_guilds = Table(
     Column("unlimited", Boolean, nullable=False, default=False),
     Column("activated_at", DateTime, nullable=False),
 )
+
+# Tasks
+
+tasks = Table(
+    "tasks",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("direction", VARCHAR, nullable=False, comment="bot or web"),
+    Column("type", VARCHAR, nullable=False, comment="Module consuming the task"),
+    Column("data", VARCHAR, nullable=False, comment="JSON string"),
+    Column("attempts", Integer, nullable=False, server_default="0"),
+    Column("next_attempt", DateTime(timezone=True)),
+    Column("error", VARCHAR),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+
+# Reaction Roles
+
+reaction_roles = Table(
+    "reaction_roles",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    Column("mid", VARCHAR, comment="Message ID, null until posted"),
+    Column("type", VARCHAR, nullable=False, server_default="n"),
+    Column("content", VARCHAR),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+
+reaction_roles_options = Table(
+    "reaction_roles_options",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "rr_id",
+        Integer,
+        ForeignKey("reaction_roles.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("position", Integer, nullable=False, server_default="0"),
+    Column("style", VARCHAR, nullable=False, server_default="primary"),
+    Column("label", VARCHAR),
+    Column("emoji", VARCHAR),
+    Column("rid", VARCHAR, nullable=False),
+    UniqueConstraint("rr_id", "rid"),
+)
+
+synced_emojis = Table(
+    "synced_emojis",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("eid", VARCHAR, primary_key=True),
+    Column("name", VARCHAR, nullable=False),
+    Column("animated", Boolean, nullable=False, server_default="0"),
+)

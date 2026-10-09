@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, session, flash, redirect
 from sqlalchemy import select
 
-from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, sticky_messages, tags, temporary_vcs
+from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs
 from utils.anti_raid import setting_flood_enabled, setting_duplicate_enabled, setting_mentions_enabled, \
     setting_invite_enabled, setting_caps_enabled, setting_emoji_enabled, setting_sticker_enabled, \
     setting_joinburst_enabled, setting_mrbeast_scam
@@ -156,6 +156,13 @@ def get_usage(c, guild_id):
             select(markov.c.channel_id).where(markov.c.guild_id == str(guild_id))
         ).fetchall()),
         "free_limit": 1,
+    })
+    usage.append({
+        "name": "Reaction role messages",
+        "usage": len(c.execute(
+            select(reaction_roles.c.id).where(reaction_roles.c.gid == str(guild_id))
+        ).fetchall()),
+        "free_limit": 3,
     })
 
     return usage

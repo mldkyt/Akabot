@@ -26,6 +26,7 @@ from web.blueprints.meow_back import meow_back_bp
 from web.blueprints.message_counting import message_counting_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.periodic_messages import periodic_messages_bp
+from web.blueprints.reaction_roles import reaction_roles_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
 from web.blueprints.statistic_channels import statistic_channels_bp
 from web.blueprints.sticky_messages import sticky_messages_bp
@@ -74,6 +75,7 @@ PAGE_USAGE = {
     "/settings/suggestions": ("Suggestion channels", 1),
     "/settings/tags": ("Tags", 3),
     "/settings/markov": ("Markov channels", 1),
+    "/settings/reaction_roles": ("Reaction role messages", 3),
 }
 
 
@@ -142,6 +144,7 @@ app.register_blueprint(feedback_bp)
 app.register_blueprint(suggestions_bp)
 app.register_blueprint(sticky_messages_bp)
 app.register_blueprint(periodic_messages_bp)
+app.register_blueprint(reaction_roles_bp)
 app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)

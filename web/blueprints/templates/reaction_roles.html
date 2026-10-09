@@ -1,0 +1,287 @@
+{% extends 'page.html' %}
+
+{% macro option_row(role_list, selected_rid='', emoji='', label='', style='primary') %}
+<div class="option-row">
+    <select name="role">
+        <option value="">Select role</option>
+        {% for role in role_list %}
+        <option value="{{role.id}}" {% if role.id == selected_rid %}selected{% endif %}>{{role.name}}</option>
+        {% endfor %}
+    </select>
+    <select name="style">
+        <option value="primary" {% if style == 'primary' %}selected{% endif %}>Primary</option>
+        <option value="secondary" {% if style == 'secondary' %}selected{% endif %}>Secondary</option>
+        <option value="success" {% if style == 'success' %}selected{% endif %}>Success</option>
+        <option value="danger" {% if style == 'danger' %}selected{% endif %}>Danger</option>
+    </select>
+    <input type="text" class="emoji-input" name="emoji" value="{{emoji}}" placeholder="Emoji (unicode or custom)">
+    <input type="text" name="label" value="{{label}}" placeholder="Label (optional)">
+    <button type="button" class="move-up">Up</button>
+    <button type="button" class="move-down">Down</button>
+    <button type="button" class="remove-option">Remove</button>
+</div>
+{% endmacro %}
+
+{% macro type_select(current) %}
+<select name="type">
+    <option value="n" {% if current == 'n' %}selected{% endif %}>Normal (toggle)</option>
+    <option value="a" {% if current == 'a' %}selected{% endif %}>Add only</option>
+    <option value="r" {% if current == 'r' %}selected{% endif %}>Remove only</option>
+    <option value="s" {% if current == 's' %}selected{% endif %}>Single choice</option>
+</select>
+{% endmacro %}
+
+{% macro emoji_picker(emojis) %}
+<div class="emoji-picker">
+    <span>Insert custom emoji:</span>
+    {% for emoji in emojis %}
+    <button type="button" class="emoji-insert"
+        data-emoji="{% if emoji.animated %}<a:{{emoji.name}}:{{emoji.id}}>{% else %}<:{{emoji.name}}:{{emoji.id}}>{% endif %}">
+        <img src="https://cdn.discordapp.com/emojis/{{emoji.id}}.png" alt="{{emoji.name}}">{{emoji.name}}
+    </button>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% block main %}
+<h1>Reaction Roles</h1>
+
+<p>Create messages where members can pick up roles by clicking buttons. Supported types: normal, add only, remove only, and single choice.</p>
+
+{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 3 reaction role messages.</p>{% endif %}
+
+{% for flash in get_flashed_messages() %}
+<div class="flash">
+    <p>{{flash}}</p>
+</div>
+{% endfor %}
+
+{% if not bot_ok %}
+<div class="flash flash--warning">
+    <p>Akabot is missing the Manage Roles permission, so it cannot assign roles. Grant it and it will sync automatically.</p>
+</div>
+{% endif %}
+
+{% for task in failed_tasks %}
+<div class="flash flash--warning">
+    <p>{{task.type}} failed: {{task.error}}</p>
+    <form method="post" action="/settings/reaction_roles">
+        <input type="hidden" name="action" value="dismiss">
+        <input type="hidden" name="dismiss" value="{{task.id}}">
+        <button type="submit">Dismiss</button>
+    </form>
+</div>
+{% endfor %}
+
+<h2>Create new reaction role</h2>
+
+<form class="rr-form" method="post" action="/settings/reaction_roles">
+    <input type="hidden" name="action" value="create">
+
+    <label for="channel">Channel</label>
+    <select name="channel" id="channel">
+        {% for channel in text_channels %}
+        <option value="{{channel.id}}">#{{channel.name}}</option>
+        {% endfor %}
+    </select>
+    <br>
+
+    <label>Type</label>
+    {{ type_select('n') }}
+    <br>
+
+    <label for="content">Message content</label>
+    <br />
+    <textarea name="content" id="content"></textarea>
+    <br>
+
+    <label>Options</label>
+    <div class="options">
+        {{ option_row(roles) }}
+    </div>
+
+    <button type="button" class="add-option">Add option</button>
+    <br><br>
+
+    {{ emoji_picker(emojis) }}
+
+    <button type="submit">Create</button>
+</form>
+
+<h2>Edit existing roles</h2>
+
+{% for rr in reaction_roles %}
+<div class="data-card">
+    <p><strong>#{{rr.channel_name}}</strong> - {% if rr.mid %}message {{rr.mid}}{% else %}pending{% endif %}</p>
+
+    <form class="rr-form" method="post" action="/settings/reaction_roles">
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="id" value="{{rr.id}}">
+
+        <label>Type</label>
+        {{ type_select(rr.type) }}
+        <br>
+
+        <label>Message content</label>
+        <br />
+        <textarea name="content">{{rr.content}}</textarea>
+        <br>
+
+        <label>Options</label>
+        <div class="options">
+            {% for option in rr.options %}
+            {{ option_row(roles, option.rid, option.emoji, option.label, option.style) }}
+            {% endfor %}
+        </div>
+
+        <button type="button" class="add-option">Add option</button>
+
+        <div class="current-options">
+            {% for option in rr.options %}
+            <span>
+                {% if option.emoji_url %}<img src="{{option.emoji_url}}" alt="">{% endif %}
+                {% if option.emoji and not option.emoji_url %}{{option.emoji}}{% endif %}
+                {{option.role_name}} ({{option.style}}){% if option.label %} - {{option.label}}{% endif %}
+            </span>
+            {% endfor %}
+        </div>
+
+        {{ emoji_picker(emojis) }}
+
+        <button type="submit">Save</button>
+    </form>
+
+    <form method="post" action="/settings/reaction_roles">
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="delete" value="{{rr.id}}">
+        <button type="submit" class="btn-danger">Delete message</button>
+    </form>
+</div>
+{% else %}
+<p>No reaction roles set up</p>
+{% endfor %}
+
+<style>
+.option-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.option-row select,
+.option-row input[type="text"] {
+    margin-bottom: 0;
+    max-width: 220px;
+}
+.option-row input.emoji-input {
+    max-width: 160px;
+}
+.emoji-picker {
+    margin: 8px 0;
+    padding: 8px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.emoji-picker span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+.emoji-insert {
+    padding: 4px 8px;
+    font-size: 12px;
+    margin: 2px;
+}
+.emoji-insert img {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+.current-options span {
+    display: inline-block;
+    margin: 4px 8px 4px 0;
+}
+.current-options img {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
+</style>
+
+<script>
+$(function () {
+    var MAX_OPTIONS = {{ max_options }};
+
+    $('.rr-form').each(function () {
+        var $form = $(this);
+        var $options = $form.find('.options');
+
+        function update() {
+            var rows = $options.children('.option-row');
+            var count = rows.length;
+
+            rows.each(function (index) {
+                $(this).find('.move-up').prop('disabled', index === 0);
+                $(this).find('.move-down').prop('disabled', index === count - 1);
+                $(this).find('.remove-option').prop('disabled', count <= 1);
+            });
+
+            $form.find('.add-option').prop('disabled', count >= MAX_OPTIONS);
+        }
+
+        $form.on('click', '.add-option', function () {
+            if ($options.children('.option-row').length >= MAX_OPTIONS) {
+                return;
+            }
+
+            var $row = $options.children('.option-row').first().clone();
+            $row.find('select').val('');
+            $row.find('input[type="text"]').val('');
+            $options.append($row);
+            update();
+        });
+
+        $form.on('click', '.remove-option', function () {
+            if ($options.children('.option-row').length <= 1) {
+                return;
+            }
+
+            $(this).closest('.option-row').remove();
+            update();
+        });
+
+        $form.on('click', '.move-up', function () {
+            var $row = $(this).closest('.option-row');
+            $row.prev('.option-row').before($row);
+            update();
+        });
+
+        $form.on('click', '.move-down', function () {
+            var $row = $(this).closest('.option-row');
+            $row.next('.option-row').after($row);
+            update();
+        });
+
+        update();
+    });
+
+    var $focused = null;
+
+    $(document).on('focus', '.emoji-input', function () {
+        $focused = $(this);
+    });
+
+    $(document).on('click', '.emoji-insert', function () {
+        if (!$focused || !$focused.length) {
+            $focused = $('.emoji-input').first();
+        }
+
+        $focused.val($(this).data('emoji')).focus();
+    });
+});
+</script>
+{% endblock %}

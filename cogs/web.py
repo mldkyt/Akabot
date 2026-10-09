@@ -1,6 +1,6 @@
 import os
 
-from discord import Cog, Bot, ApplicationContext, slash_command, default_permissions, AutoModRule, Guild, Role
+from discord import Cog, Bot, ApplicationContext, slash_command, default_permissions, AutoModRule, Emoji, Guild, Role
 from discord.abc import GuildChannel
 
 from utils.web import sync_guild, generate_token
@@ -61,6 +61,12 @@ class Website(Cog):
     @Cog.listener()
     async def on_guild_role_update(self, before: Role, after: Role):
         await sync_guild(after.guild)
+
+    @Cog.listener()
+    async def on_guild_emojis_update(
+        self, guild: Guild, before: tuple[Emoji], after: tuple[Emoji]
+    ):
+        await sync_guild(guild)
 
     @slash_command()
     @default_permissions(manage_guild=True)
