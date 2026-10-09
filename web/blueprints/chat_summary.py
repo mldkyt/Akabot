@@ -1,8 +1,8 @@
 from flask import Blueprint, session, render_template, request, flash, redirect
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_channels
-from utils.chat_summary import chat_summary, chat_summary_extra, chat_summary_history, chat_summary_rows, chat_summary_rows_extra, \
+from database import chat_summary_channels, engine, synced_channels
+from utils.chat_summary import chat_summary_extra, chat_summary_history, chat_summary_rows, chat_summary_rows_extra, \
     chat_summary_unique
 from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
@@ -53,16 +53,34 @@ def handle_settings(auth):
 def handle_adding_channels(auth):
     with engine.begin() as c:
         if "channel" in request.form and validate_text_channel_id(request.form["channel"]):
-            if chat_summary.is_in_list(c, auth["guild"], request.form["channel"]):
+            existing = c.execute(
+                select(chat_summary_channels.c.cid).where(
+                    (chat_summary_channels.c.gid == str(auth["guild"]))
+                    & (chat_summary_channels.c.cid == request.form["channel"])
+                )
+            ).fetchone()
+            if existing is not None:
                 flash("This channel was already added")
                 return
 
             limit = get_limit(c, auth["guild"], 1)
-            if limit is not None and len(chat_summary.get(c, auth["guild"])) >= limit:
+            current = c.execute(
+                select(chat_summary_channels.c.cid).where(
+                    chat_summary_channels.c.gid == str(auth["guild"])
+                )
+            ).fetchall()
+            if limit is not None and len(current) >= limit:
                 flash("Free plan is limited to 1 chat summary channel")
                 return
 
-            chat_summary.add_to_list(c, auth["guild"], request.form["channel"])
+            c.execute(
+                insert(chat_summary_channels).values(
+                    gid=str(auth["guild"]),
+                    cid=request.form["channel"],
+                    messages=0,
+                    last_member="0",
+                )
+            )
 
 @chat_summary_bp.route("/settings/chat_summary", methods=["GET", "POST"])
 def chat_summary_index():
@@ -87,7 +105,14 @@ def chat_summary_index():
         ).fetchall()]
 
         chat_summaries = []
-        chs = chat_summary.get(c, auth["guild"])
+        chs = [
+            i[0]
+            for i in c.execute(
+                select(chat_summary_channels.c.cid)
+                .where(chat_summary_channels.c.gid == str(auth["guild"]))
+                .order_by(chat_summary_channels.c.cid)
+            ).fetchall()
+        ]
         for index in range(len(chs)):
             channel = chs[index]
             channel = c.execute(
@@ -127,7 +152,14 @@ def chat_summary_delete(index: str):
         return redirect("/settings/chat_summary", 302)
 
     with engine.begin() as c:
-        chs = chat_summary.get(c, auth["guild"])
+        chs = [
+            i[0]
+            for i in c.execute(
+                select(chat_summary_channels.c.cid)
+                .where(chat_summary_channels.c.gid == str(auth["guild"]))
+                .order_by(chat_summary_channels.c.cid)
+            ).fetchall()
+        ]
         if len(chs) <= int(index):
             return redirect("/settings/chat_summary", 302)
 
@@ -138,7 +170,12 @@ def chat_summary_delete(index: str):
         ).fetchone()
 
         if "confirm" in request.args and request.args["confirm"] == "yes":
-            chat_summary.remove_from_list(c, auth["guild"], chs)
+            c.execute(
+                delete(chat_summary_channels).where(
+                    (chat_summary_channels.c.gid == str(auth["guild"]))
+                    & (chat_summary_channels.c.cid == chs)
+                )
+            )
             return redirect("/settings/chat_summary", 302)
 
     return render_template("chat_summary_delete.html", channel=("#" + chs_parsed[0]) if chs_parsed is not None else chs)

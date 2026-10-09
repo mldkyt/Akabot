@@ -7,12 +7,12 @@ from discord import (
     TextChannel,
 )
 from discord.ext.tasks import loop
+from sqlalchemy import select
 
-from database import engine
+from database import chat_summary_channels, engine
 from logger import akabot_logger
 from utils.chat_summary import (
     SummaryHistoryView,
-    chat_summary,
     inc,
     perform_backfill,
     summarize,
@@ -37,8 +37,13 @@ class ChatSummary(Cog):
 
                 with engine.begin() as c:
                     async for i in self.bot.fetch_guilds(limit=None):
-                        for j in chat_summary.get(c, i.id):
-                            channel = await i.fetch_channel(int(j))
+                        configured = c.execute(
+                            select(chat_summary_channels.c.cid)
+                            .where(chat_summary_channels.c.gid == str(i.id))
+                            .order_by(chat_summary_channels.c.cid)
+                        ).fetchall()
+                        for j in configured:
+                            channel = await i.fetch_channel(int(j[0]))
                             if not isinstance(channel, TextChannel):
                                 continue
 
@@ -58,7 +63,13 @@ class ChatSummary(Cog):
                 if msg.guild is None:
                     return
 
-                if not chat_summary.is_in_list(c, msg.guild.id, str(msg.channel.id)):
+                configured = c.execute(
+                    select(chat_summary_channels.c.cid).where(
+                        (chat_summary_channels.c.gid == str(msg.guild.id))
+                        & (chat_summary_channels.c.cid == str(msg.channel.id))
+                    )
+                ).fetchone()
+                if configured is None:
                     return
 
                 # Count into chat summary
@@ -93,7 +104,13 @@ class ChatSummary(Cog):
             return
 
         with engine.begin() as c:
-            if not chat_summary.is_in_list(c, ctx.guild.id, str(ctx.channel.id)):
+            configured = c.execute(
+                select(chat_summary_channels.c.cid).where(
+                    (chat_summary_channels.c.gid == str(ctx.guild.id))
+                    & (chat_summary_channels.c.cid == str(ctx.channel.id))
+                )
+            ).fetchone()
+            if configured is None:
                 await ctx.respond(
                     "This channel is not a chat summary channel", ephemeral=True
                 )

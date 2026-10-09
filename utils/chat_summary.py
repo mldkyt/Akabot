@@ -30,11 +30,6 @@ from utils.server_settings import (
 )
 from utils.timezones import get_now
 
-chat_summary = ServerSetting(
-    "Chat summary channels",
-    setting_type=SettingType.LIST,
-)
-
 chat_summary_rows = ServerSetting(
     "Chat summary rows",
     setting_type=SettingType.NORMAL,
@@ -324,7 +319,14 @@ class SummaryHistoryView(View):
 async def summarize(c: Connection, g: Guild):
     now = get_now(g.id, c)
     yesterday = now - datetime.timedelta(days=1)
-    chat_summaries = chat_summary.get(c, g.id)
+    chat_summaries = [
+        i[0]
+        for i in c.execute(
+            select(chat_summary_channels.c.cid)
+            .where(chat_summary_channels.c.gid == str(g.id))
+            .order_by(chat_summary_channels.c.cid)
+        ).fetchall()
+    ]
     premium = has_premium(c, g.id)
     extra = chat_summary_extra.get(c, g.id) == "true" and premium
     history_enabled = chat_summary_history.get(c, g.id) == "true" and premium
@@ -499,8 +501,12 @@ async def summarize(c: Connection, g: Guild):
                 & (chat_summary_members.c.cid == str(channel.id))
             )
         )
+        # The channel row doubles as the chat summary configuration, so it must
+        # survive the daily reset. Only the counter is cleared.
         c.execute(
-            delete(chat_summary_channels).where(
+            update(chat_summary_channels)
+            .values(messages=0, last_member="0")
+            .where(
                 (chat_summary_channels.c.gid == str(g.id))
                 & (chat_summary_channels.c.cid == str(channel.id))
             )

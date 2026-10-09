@@ -17,7 +17,7 @@ from database import (
 from logger import akabot_logger
 from utils.ads import get_ad
 from utils.chat_streaks import handle_send_reply
-from utils.chat_summary import chat_summary, summarize
+from utils.chat_summary import summarize
 
 
 class Devel(Cog):
@@ -123,8 +123,6 @@ class Devel(Cog):
         total = sum(range(1, len(member_ids) + 1))
 
         with engine.begin() as c:
-            chat_summary.add_to_list(c, ctx.guild.id, cid, silent=True)
-
             c.execute(
                 delete(chat_summary_channels).where(
                     (chat_summary_channels.c.gid == gid)
