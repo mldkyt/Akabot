@@ -3,14 +3,8 @@ from random import randint
 from discord import Member, VoiceState
 from sqlalchemy import delete, insert, select
 
-from database import engine, temporary_vcs
+from database import engine, temporary_vc_creator_channels, temporary_vcs
 from utils.premium import get_limit
-from utils.server_settings import ServerSetting, SettingType
-
-setting_temporary_vcs = ServerSetting(
-    name="Temporary VCs",
-    setting_type=SettingType.LIST,
-)
 
 # Guilds with a channel creation still in flight. Joined with the stored row
 # count before any await, so concurrent joins cannot all pass the limit check
@@ -22,9 +16,14 @@ async def h_join_channel(member: Member, after: VoiceState):
     # Handle joining creator channel
 
     with engine.begin() as c:
-        temporary_vcs_ids = setting_temporary_vcs.get(c, member.guild.id)
+        configured = c.execute(
+            select(temporary_vc_creator_channels.c.cid).where(
+                (temporary_vc_creator_channels.c.gid == str(member.guild.id))
+                & (temporary_vc_creator_channels.c.cid == str(after.channel.id))
+            )
+        ).fetchone()
 
-    if str(after.channel.id) not in temporary_vcs_ids:
+    if configured is None:
         return
 
     with engine.begin() as c:

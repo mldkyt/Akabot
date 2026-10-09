@@ -134,6 +134,15 @@ suggestion_channels = Table(
     UniqueConstraint("gid", "cid"),
 )
 
+temporary_vc_creator_channels = Table(
+    "temporary_vc_creator_channels",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    UniqueConstraint("gid", "cid"),
+)
+
 # Chat Summary
 
 chat_summary_channels = Table(

@@ -1,8 +1,7 @@
 from flask import Blueprint, session, render_template, redirect, request, flash
-from sqlalchemy import select
-from utils.temporary_vc import setting_temporary_vcs
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_channels
+from database import engine, synced_channels, temporary_vc_creator_channels
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import get_token_data, authorize
 
@@ -11,11 +10,21 @@ temporary_vcs_bp = Blueprint("temporary_vcs", __name__)
 def handle_add(auth):
     with engine.begin() as c:
         if "channel" in request.form and validate_voice_channel_id(request.form["channel"]):
-            if setting_temporary_vcs.is_in_list(c, auth["guild"], request.form["channel"]):
+            existing = c.execute(
+                select(temporary_vc_creator_channels.c.cid).where(
+                    (temporary_vc_creator_channels.c.gid == auth["guild"])
+                    & (temporary_vc_creator_channels.c.cid == request.form["channel"])
+                )
+            ).fetchone()
+            if existing is not None:
                 flash("Already present")
                 return
 
-            setting_temporary_vcs.add_to_list(c, auth["guild"], request.form["channel"])
+            c.execute(
+                insert(temporary_vc_creator_channels).values(
+                    gid=auth["guild"], cid=request.form["channel"]
+                )
+            )
             flash("Added temporary VC creator channel")
 
 @temporary_vcs_bp.route("/settings/temporary_vcs", methods=["GET", "POST"])
@@ -31,7 +40,14 @@ def temporary_vcs_index():
         handle_add(auth)
 
     with engine.begin() as c:
-        temporary_vcs_ids = setting_temporary_vcs.get(c, auth["guild"])
+        temporary_vcs_ids = [
+            i[0]
+            for i in c.execute(
+                select(temporary_vc_creator_channels.c.cid)
+                .where(temporary_vc_creator_channels.c.gid == auth["guild"])
+                .order_by(temporary_vc_creator_channels.c.id)
+            ).fetchall()
+        ]
         temporary_vcs = []
 
         for i in range(len(temporary_vcs_ids)):
@@ -73,7 +89,14 @@ def temporary_vcs_delete(index: str):
         return redirect("/settings/temporary_vcs", 302)
 
     with engine.begin() as c:
-        temporary_vcs_ids = setting_temporary_vcs.get(c, auth["guild"])
+        temporary_vcs_ids = [
+            i[0]
+            for i in c.execute(
+                select(temporary_vc_creator_channels.c.cid)
+                .where(temporary_vc_creator_channels.c.gid == auth["guild"])
+                .order_by(temporary_vc_creator_channels.c.id)
+            ).fetchall()
+        ]
         if len(temporary_vcs_ids) <= int(index):
             return redirect("/settings/temporary_vcs", 302)
 
@@ -88,7 +111,12 @@ def temporary_vcs_delete(index: str):
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            setting_temporary_vcs.remove_from_list(c, auth["guild"], temporary_vc_id)
+            c.execute(
+                delete(temporary_vc_creator_channels).where(
+                    (temporary_vc_creator_channels.c.gid == auth["guild"])
+                    & (temporary_vc_creator_channels.c.cid == temporary_vc_id)
+                )
+            )
             return redirect("/settings/temporary_vcs", 302)
 
     return render_template("temporary_vcs_delete.html", channel_name=temporary_vc[0], index=index)
