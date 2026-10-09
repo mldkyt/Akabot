@@ -106,6 +106,15 @@ moderator_roles = Table(
     UniqueConstraint("gid", "rid"),
 )
 
+roles_on_join = Table(
+    "roles_on_join",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("rid", VARCHAR, nullable=False),
+    UniqueConstraint("gid", "rid"),
+)
+
 # Chat Summary
 
 chat_summary_channels = Table(

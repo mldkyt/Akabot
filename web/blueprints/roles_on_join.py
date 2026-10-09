@@ -1,10 +1,9 @@
 from dateparser.data.date_translation_data import sn
 from flask import Blueprint, session, render_template, redirect, request, flash
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_roles
+from database import engine, roles_on_join, synced_roles
 from utils.premium import get_limit
-from utils.roles_on_join import setting_roles_on_join
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import get_token_data, authorize
 
@@ -13,16 +12,29 @@ roles_on_join_bp = Blueprint("roles_on_join", __name__)
 def handle_add(auth):
     with engine.begin() as c:
         if "role" in request.form and validate_role_id(request.form["role"]):
-            if setting_roles_on_join.is_in_list(c, auth["guild"], request.form["role"]):
+            existing = c.execute(
+                select(roles_on_join.c.rid).where(
+                    (roles_on_join.c.gid == auth["guild"])
+                    & (roles_on_join.c.rid == request.form["role"])
+                )
+            ).fetchone()
+            if existing is not None:
                 flash("Already present")
                 return
 
             limit = get_limit(c, auth["guild"], 3)
-            if limit is not None and len(setting_roles_on_join.get(c, auth["guild"])) >= limit:
+            current = c.execute(
+                select(roles_on_join.c.rid).where(roles_on_join.c.gid == auth["guild"])
+            ).fetchall()
+            if limit is not None and len(current) >= limit:
                 flash("Free plan is limited to 3 roles on join")
                 return
 
-            setting_roles_on_join.add_to_list(c, auth["guild"], request.form["role"])
+            c.execute(
+                insert(roles_on_join).values(
+                    gid=auth["guild"], rid=request.form["role"]
+                )
+            )
             flash("Added role on join")
 
 @roles_on_join_bp.route("/settings/roles_on_join", methods=["GET", "POST"])
@@ -38,8 +50,15 @@ def roles_on_join_index():
         handle_add(auth)
 
     with engine.begin() as c:
-        roles_on_join_ids = setting_roles_on_join.get(c, auth["guild"])
-        roles_on_join = []
+        roles_on_join_ids = [
+            i[0]
+            for i in c.execute(
+                select(roles_on_join.c.rid)
+                .where(roles_on_join.c.gid == auth["guild"])
+                .order_by(roles_on_join.c.id)
+            ).fetchall()
+        ]
+        roles_on_join_list = []
 
         for i in range(len(roles_on_join_ids)):
             name = c.execute(
@@ -49,7 +68,7 @@ def roles_on_join_index():
             if name is None:
                 continue
 
-            roles_on_join.append({
+            roles_on_join_list.append({
                 "index": i,
                 "id": roles_on_join_ids[i],
                 "name": name[0]
@@ -63,7 +82,7 @@ def roles_on_join_index():
             .where(synced_roles.c.gid == auth["guild"])
         ).fetchall()]
 
-    return render_template("roles_on_join.html", roles_on_join=roles_on_join, roles=roles)
+    return render_template("roles_on_join.html", roles_on_join=roles_on_join_list, roles=roles)
 
 
 @roles_on_join_bp.route("/settings/roles_on_join/delete/<index>")
@@ -79,7 +98,14 @@ def roles_on_join_delete(index: str):
         return redirect("/settings/roles_on_join", 302)
 
     with engine.begin() as c:
-        roles_on_join_ids = setting_roles_on_join.get(c, auth["guild"])
+        roles_on_join_ids = [
+            i[0]
+            for i in c.execute(
+                select(roles_on_join.c.rid)
+                .where(roles_on_join.c.gid == auth["guild"])
+                .order_by(roles_on_join.c.id)
+            ).fetchall()
+        ]
         if len(roles_on_join_ids) <= int(index):
             return redirect("/settings/roles_on_join", 302)
 
@@ -94,7 +120,12 @@ def roles_on_join_delete(index: str):
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            setting_roles_on_join.remove_from_list(c, auth["guild"], role_on_join_id)
+            c.execute(
+                delete(roles_on_join).where(
+                    (roles_on_join.c.gid == auth["guild"])
+                    & (roles_on_join.c.rid == role_on_join_id)
+                )
+            )
             return redirect("/settings/roles_on_join", 302)
 
     return render_template("roles_on_join_delete.html", role_name=role_on_join[0], index=index)

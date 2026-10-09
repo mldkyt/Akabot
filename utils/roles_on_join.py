@@ -1,27 +1,24 @@
 from discord import Forbidden, HTTPException, Member
+from sqlalchemy import select
 
-from database import engine
+from database import engine, roles_on_join
 from logger import akabot_logger
-from utils.server_settings import ServerSetting, SettingType
-
-setting_roles_on_join = ServerSetting(
-    name="Roles on join",
-    setting_type=SettingType.LIST,
-)
 
 
 async def apply_roles(member: Member):
     with engine.begin() as c:
-        roles_ids = setting_roles_on_join.get(c, member.guild.id)
+        roles_ids = c.execute(
+            select(roles_on_join.c.rid).where(roles_on_join.c.gid == str(member.guild.id))
+        ).fetchall()
         roles = []
 
         for role_id in roles_ids:
             try:
-                role = await member.guild.fetch_role(int(role_id))
+                role = await member.guild.fetch_role(int(role_id[0]))
                 roles.append(role)
             except HTTPException:
                 akabot_logger.warning(
-                    f"Failed to fetch role {role_id} on join for {member} in guild {member.guild.id}"
+                    f"Failed to fetch role {role_id[0]} on join for {member} in guild {member.guild.id}"
                 )
 
         try:

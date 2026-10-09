@@ -1,13 +1,12 @@
 from flask import Blueprint, render_template, request, session, flash, redirect
 from sqlalchemy import select
 
-from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels, chat_summary_channels, counting_channels, leveling_rewards, moderator_roles
+from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels, chat_summary_channels, counting_channels, leveling_rewards, moderator_roles, roles_on_join
 from utils.anti_raid import setting_flood_enabled, setting_duplicate_enabled, setting_mentions_enabled, \
     setting_invite_enabled, setting_caps_enabled, setting_emoji_enabled, setting_sticker_enabled, \
     setting_joinburst_enabled, setting_mrbeast_scam
 from utils.automod_actions import automod_actions
 from utils.premium import generate_tokens, get_premium_context, is_owner, redeem_token, usage_bar
-from utils.roles_on_join import setting_roles_on_join
 from utils.statistic_channels import setting_statistic_channels
 from utils.suggestions import suggestion_channels
 from utils.verification import setting_verification_role
@@ -73,7 +72,9 @@ def get_usage(c, guild_id):
     })
     usage.append({
         "name": "Roles on join",
-        "usage": len(setting_roles_on_join.get(c, guild_id)),
+        "usage": len(c.execute(
+            select(roles_on_join.c.rid).where(roles_on_join.c.gid == str(guild_id))
+        ).fetchall()),
         "free_limit": 3,
     })
     usage.append({
