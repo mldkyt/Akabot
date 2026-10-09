@@ -1,8 +1,7 @@
 from flask import Blueprint, session, render_template, request, flash, redirect
-from sqlalchemy import select
+from sqlalchemy import delete, insert, select
 
-from database import engine, synced_roles
-from utils.moderation_commands import moderator_roles
+from database import engine, moderator_roles, synced_roles
 from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
@@ -12,16 +11,29 @@ moderation_bp = Blueprint("moderation", __name__)
 def handle_add(auth):
     with engine.begin() as c:
         if "role" in request.form and validate_role_id(request.form["role"]):
-            if moderator_roles.is_in_list(c, auth["guild"], request.form["role"]):
+            existing = c.execute(
+                select(moderator_roles.c.rid).where(
+                    (moderator_roles.c.gid == auth["guild"])
+                    & (moderator_roles.c.rid == request.form["role"])
+                )
+            ).fetchone()
+            if existing is not None:
                 flash("Already present")
                 return
 
             limit = get_limit(c, auth["guild"], 5)
-            if limit is not None and len(moderator_roles.get(c, auth["guild"])) >= limit:
+            current = c.execute(
+                select(moderator_roles.c.rid).where(moderator_roles.c.gid == auth["guild"])
+            ).fetchall()
+            if limit is not None and len(current) >= limit:
                 flash("Free plan is limited to 5 moderator roles")
                 return
 
-            moderator_roles.add_to_list(c, auth["guild"], request.form["role"])
+            c.execute(
+                insert(moderator_roles).values(
+                    gid=auth["guild"], rid=request.form["role"]
+                )
+            )
             flash("Added moderation role")
 
 
@@ -40,7 +52,14 @@ def moderation_index():
         return redirect("/settings/moderation", 303)
 
     with engine.begin() as c:
-        the_roles_ids = moderator_roles.get(c, auth["guild"])
+        the_roles_ids = [
+            i[0]
+            for i in c.execute(
+                select(moderator_roles.c.rid)
+                .where(moderator_roles.c.gid == auth["guild"])
+                .order_by(moderator_roles.c.id)
+            ).fetchall()
+        ]
         the_roles = []
 
         for role in range(len(the_roles_ids)):
@@ -83,7 +102,14 @@ def moderation_delete(index: str):
         return redirect("/settings/moderation", 302)
 
     with engine.begin() as c:
-        the_roles_ids = moderator_roles.get(c, auth["guild"])
+        the_roles_ids = [
+            i[0]
+            for i in c.execute(
+                select(moderator_roles.c.rid)
+                .where(moderator_roles.c.gid == auth["guild"])
+                .order_by(moderator_roles.c.id)
+            ).fetchall()
+        ]
         if len(the_roles_ids) <= int(index):
             return redirect("/settings/moderation", 302)
 
@@ -98,7 +124,12 @@ def moderation_delete(index: str):
 
     if "confirm" in request.args and request.args["confirm"] == "yes":
         with engine.begin() as c:
-            moderator_roles.remove_from_list(c, auth["guild"], the_role_id)
+            c.execute(
+                delete(moderator_roles).where(
+                    (moderator_roles.c.gid == auth["guild"])
+                    & (moderator_roles.c.rid == the_role_id)
+                )
+            )
             return redirect("/settings/moderation", 302)
 
     return render_template("moderation_delete.html", role_name=the_role[0], index=index)

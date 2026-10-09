@@ -1,12 +1,11 @@
 from flask import Blueprint, render_template, request, session, flash, redirect
 from sqlalchemy import select
 
-from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels, chat_summary_channels, counting_channels, leveling_rewards
+from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels, chat_summary_channels, counting_channels, leveling_rewards, moderator_roles
 from utils.anti_raid import setting_flood_enabled, setting_duplicate_enabled, setting_mentions_enabled, \
     setting_invite_enabled, setting_caps_enabled, setting_emoji_enabled, setting_sticker_enabled, \
     setting_joinburst_enabled, setting_mrbeast_scam
 from utils.automod_actions import automod_actions
-from utils.moderation_commands import moderator_roles
 from utils.premium import generate_tokens, get_premium_context, is_owner, redeem_token, usage_bar
 from utils.roles_on_join import setting_roles_on_join
 from utils.statistic_channels import setting_statistic_channels
@@ -37,7 +36,9 @@ def get_usage(c, guild_id):
     })
     usage.append({
         "name": "Moderator roles",
-        "usage": len(moderator_roles.get(c, guild_id)),
+        "usage": len(c.execute(
+            select(moderator_roles.c.rid).where(moderator_roles.c.gid == str(guild_id))
+        ).fetchall()),
         "free_limit": 5,
     })
     usage.append({

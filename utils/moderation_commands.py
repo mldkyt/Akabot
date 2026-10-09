@@ -1,22 +1,16 @@
 from discord import ApplicationContext, Member
-from sqlalchemy import Connection
+from sqlalchemy import Connection, select
 
-from utils.server_settings import (
-    ServerSetting,
-    SettingType,
-)
-
-moderator_roles = ServerSetting(
-    name="Moderator roles",
-    setting_type=SettingType.LIST,
-)
+from database import moderator_roles
 
 
 def is_user_moderator(c: Connection, m: Member):
-    moderators = moderator_roles.get(c, m.guild.id)
+    moderators = c.execute(
+        select(moderator_roles.c.rid).where(moderator_roles.c.gid == str(m.guild.id))
+    ).fetchall()
     for i in moderators:
         for j in m.roles:
-            if int(i) == j.id:
+            if int(i[0]) == j.id:
                 return True
 
     return False

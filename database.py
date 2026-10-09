@@ -97,6 +97,15 @@ leveling_multipliers = Table(
     Column("multiplier", Integer, nullable=False),
 )
 
+moderator_roles = Table(
+    "moderator_roles",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("rid", VARCHAR, nullable=False),
+    UniqueConstraint("gid", "rid"),
+)
+
 # Chat Summary
 
 chat_summary_channels = Table(
