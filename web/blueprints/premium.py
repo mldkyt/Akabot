@@ -1,12 +1,11 @@
 from flask import Blueprint, render_template, request, session, flash, redirect
 from sqlalchemy import select
 
-from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs
+from database import engine, giveaways, logging_channels, markov, message_counting_rewards, periodic_messages, premium_guilds, premium_tokens, reaction_roles, sticky_messages, tags, temporary_vcs, chat_revive_channels
 from utils.anti_raid import setting_flood_enabled, setting_duplicate_enabled, setting_mentions_enabled, \
     setting_invite_enabled, setting_caps_enabled, setting_emoji_enabled, setting_sticker_enabled, \
     setting_joinburst_enabled, setting_mrbeast_scam
 from utils.automod_actions import automod_actions
-from utils.chat_revive import setting_chat_revive_channels
 from utils.chat_summary import chat_summary
 from utils.counting import setting_counting_channels
 from utils.leveling import setting_leveling_rewards
@@ -75,7 +74,9 @@ def get_usage(c, guild_id):
     })
     usage.append({
         "name": "Chat revive channels",
-        "usage": len(setting_chat_revive_channels.get(c, guild_id)),
+        "usage": len(c.execute(
+            select(chat_revive_channels.c.id).where(chat_revive_channels.c.gid == str(guild_id))
+        ).fetchall()),
         "free_limit": 1,
     })
     usage.append({

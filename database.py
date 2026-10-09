@@ -208,6 +208,16 @@ chat_revive = Table(
     Column("notif_time", DateTime, nullable=False),
 )
 
+chat_revive_channels = Table(
+    "chat_revive_channels",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("cid", VARCHAR, nullable=False),
+    Column("minutes", Integer, nullable=False),
+    UniqueConstraint("gid", "cid"),
+)
+
 temporary_vcs = Table(
     "temporary_vcs",
     md_obj,
