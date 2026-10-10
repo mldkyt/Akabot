@@ -20,7 +20,7 @@
         {% endfor %}
     </select>
     <br>
-    
+
     <button type="submit">Add</button>
 </form>
 
@@ -31,7 +31,7 @@
     <ul>
         <li>Channel: {{temporary_vc.name}}</li>
     </ul>
-    <a href="/settings/temporary_vcs/delete/{{temporary_vc.index}}">Delete</a>
+    <a href="/settings/temporary_vcs?delete={{temporary_vc.id}}">Delete</a>
 </div>
 {% else %}
 <p>No temporary VC creators</p>
