@@ -37,7 +37,7 @@
     <input type="number" id="count_frequency_min" name="count_frequency_min" value="{{count_frequency_min}}">
     {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
-    
+
     <button type="submit">Save</button>
 </form>
 
@@ -62,7 +62,7 @@
     <ul>
         <li>{{channel.name}}</li>
     </ul>
-    <a href="/settings/counting/delete/{{channel.index}}">Delete</a>
+    <a href="/settings/counting?delete={{channel.cid}}">Delete</a>
 </div>
 {% else %}
 <p>No counting channels set up</p>
