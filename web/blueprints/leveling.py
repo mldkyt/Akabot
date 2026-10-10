@@ -177,6 +177,28 @@ def handle_multipliers(auth, is_edit: bool = True, remove_id: int | None = None)
 
     return True
 
+def handle_delete(auth):
+    with engine.begin() as c:
+        if "delete_reward" in request.args:
+            c.execute(
+                delete(leveling_rewards).where(
+                    (leveling_rewards.c.gid == auth["guild"])
+                    & (leveling_rewards.c.id == request.args["delete_reward"])
+                )
+            )
+            return True
+
+        if "delete_multiplier" in request.args:
+            c.execute(
+                delete(leveling_multipliers).where(
+                    (leveling_multipliers.c.gid == auth["guild"])
+                    & (leveling_multipliers.c.id == request.args["delete_multiplier"])
+                )
+            )
+            return True
+
+    return False
+
 
 @leveling_bp.route('/settings/leveling', methods=["GET", "POST"])
 def leveling_index():
@@ -191,6 +213,8 @@ def leveling_index():
         handle_settings(auth)
         handle_rewards(auth)
         handle_multipliers(auth)
+
+    handle_delete(auth)
 
     with engine.begin() as c:
         xp_per_message = setting_xp_per_message.get(c, auth["guild"])
@@ -213,7 +237,8 @@ def leveling_index():
 
             reward_roles.append({
                 "index": reward_role_i,
-                "id": reward_role[1],
+                "id": reward_role[0],
+                "rid": reward_role[1],
                 "level": reward_role[2],
                 "name": reward_role_name[0] if reward_role_name else "Unknown role"
             })
@@ -225,6 +250,7 @@ def leveling_index():
                 leveling_multipliers.c.end_month,
                 leveling_multipliers.c.end_day,
                 leveling_multipliers.c.multiplier,
+                leveling_multipliers.c.id,
             )
             .where(leveling_multipliers.c.gid == auth["guild"])
             .order_by(leveling_multipliers.c.id)
@@ -234,6 +260,7 @@ def leveling_index():
             multiplier = multiplier_rows[multiplier_i]
             multipliers.append({
                 "index": multiplier_i,
+                "id": multiplier[5],
                 "start": f"{multiplier[0]:02}-{multiplier[1]:02}",
                 "end": f"{multiplier[2]:02}-{multiplier[3]:02}",
                 "multiplier": str(multiplier[4])
@@ -280,47 +307,6 @@ def edit_reward(index: str):
     handle_rewards(auth, is_edit=True, remove_id=remove_id)
     return redirect("/settings/leveling", 303)
 
-@leveling_bp.route("/settings/leveling/delete/reward/<index>")
-def remove_reward(index: str):
-    if not index.isnumeric():
-        return redirect("/settings/leveling", 302)
-
-    authorization = authorize("/settings/leveling")
-    if authorization is not None:
-        return authorization
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        reward_rows = c.execute(
-            select(leveling_rewards.c.id, leveling_rewards.c.rid, leveling_rewards.c.level)
-            .where(leveling_rewards.c.gid == auth["guild"])
-            .order_by(leveling_rewards.c.id)
-        ).fetchall()
-        if len(reward_rows) <= int(index):
-            return redirect("/settings/leveling")
-
-        reward_role_id = reward_rows[int(index)]
-        reward_role_name = c.execute(
-            select(synced_roles.c.rname)
-            .where((synced_roles.c.gid == auth["guild"]) & (synced_roles.c.rid == reward_role_id[1]))
-        ).fetchone()
-
-    if "confirm" in request.args and request.args["confirm"] == "yes":
-        with engine.begin() as c:
-            c.execute(
-                delete(leveling_rewards).where(
-                    (leveling_rewards.c.gid == auth["guild"])
-                    & (leveling_rewards.c.id == reward_role_id[0])
-                )
-            )
-            return redirect("/settings/leveling", 303)
-
-    return render_template("leveling_remove_reward.html",
-                           role_name=reward_role_name[0] if reward_role_name else "Unknown role",
-                           index=index, level=reward_role_id[2])
-
 @leveling_bp.route("/settings/leveling/edit/multiplier/<index>", methods=["POST"])
 def edit_multiplier(index: str):
     if not index.isnumeric():
@@ -346,50 +332,3 @@ def edit_multiplier(index: str):
 
     handle_multipliers(auth, is_edit=True, remove_id=remove_id)
     return redirect("/settings/leveling", 303)
-
-
-@leveling_bp.route("/settings/leveling/delete/multiplier/<index>")
-def delete_multiplier(index: str):
-    if not index.isnumeric():
-        return redirect("/settings/leveling", 302)
-
-    authorization = authorize("/settings/leveling")
-    if authorization is not None:
-        return authorization
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        multiplier_rows = c.execute(
-            select(
-                leveling_multipliers.c.id,
-                leveling_multipliers.c.start_month,
-                leveling_multipliers.c.start_day,
-                leveling_multipliers.c.end_month,
-                leveling_multipliers.c.end_day,
-                leveling_multipliers.c.multiplier,
-            )
-            .where(leveling_multipliers.c.gid == auth["guild"])
-            .order_by(leveling_multipliers.c.id)
-        ).fetchall()
-        if len(multiplier_rows) <= int(index):
-            return redirect("/settings/leveling", 302)
-
-        multiplier = multiplier_rows[int(index)]
-
-    if "confirm" in request.args and request.args["confirm"] == "yes":
-        with engine.begin() as c:
-            c.execute(
-                delete(leveling_multipliers).where(
-                    (leveling_multipliers.c.gid == auth["guild"])
-                    & (leveling_multipliers.c.id == multiplier[0])
-                )
-            )
-
-        return redirect("/settings/leveling", 303)
-
-    return render_template("leveling_delete_multiplier.html",
-                           start_date=f"{multiplier[1]:02}-{multiplier[2]:02}",
-                           end_date=f"{multiplier[3]:02}-{multiplier[4]:02}",
-                           multiplier=multiplier[5])

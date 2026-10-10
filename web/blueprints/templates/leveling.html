@@ -59,7 +59,7 @@
         <label for="reward_role">Role to add</label>
         <select name="reward_role" id="reward_role">
             {% for role in roles %}
-            <option value="{{role.id}}" {% if reward.id == role.id %}selected{% endif %}>{{role.name}}</option>
+            <option value="{{role.id}}" {% if reward.rid == role.id %}selected{% endif %}>{{role.name}}</option>
             {% endfor %}
         </select>
         <br>
@@ -68,7 +68,7 @@
         <br>
         <button type="submit">Save</button>
     </form>
-    <a href="/settings/leveling/delete/reward/{{reward.index}}">Delete</a>
+    <a href="/settings/leveling?delete_reward={{reward.id}}">Delete</a>
 </div>
 {% else %}
 <p>No rewards set up</p>
@@ -113,7 +113,7 @@
 
         <button type="submit">Edit multiplier</button>
     </form>
-    <a href="/settings/leveling/delete/multiplier/{{multiplier.index}}">Delete</a>
+    <a href="/settings/leveling?delete_multiplier={{multiplier.id}}">Delete</a>
 </div>
 {% else %}
 <p>No multipliers set up</p>
