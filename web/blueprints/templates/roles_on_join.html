@@ -20,7 +20,7 @@
         {% endfor %}
     </select>
     <br>
-    
+
     <button type="submit">Add</button>
 </form>
 
@@ -31,7 +31,7 @@
     <ul>
         <li>Role: {{role.name}}</li>
     </ul>
-    <a href="/settings/roles_on_join/delete/{{role.index}}">Delete</a>
+    <a href="/settings/roles_on_join?delete={{role.id}}">Delete</a>
 </div>
 {% else %}
 <p>No roles on join</p>
