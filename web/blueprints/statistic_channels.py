@@ -1,4 +1,4 @@
-from flask import Blueprint, session, render_template, request, flash, redirect
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, statistic_channels, synced_channels
@@ -7,6 +7,7 @@ from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
 statistic_channels_bp = Blueprint("statistic_channels", __name__)
+
 
 def handle_post(auth, is_edit: bool = False):
     if "channel" not in request.form or "template" not in request.form:
@@ -33,7 +34,9 @@ def handle_post(auth, is_edit: bool = False):
             return
 
         current = c.execute(
-            select(statistic_channels.c.cid).where(statistic_channels.c.gid == auth["guild"])
+            select(statistic_channels.c.cid).where(
+                statistic_channels.c.gid == auth["guild"]
+            )
         ).fetchall()
         limit = get_limit(c, auth["guild"], 2)
         if limit is not None and len(current) >= limit:
@@ -48,6 +51,17 @@ def handle_post(auth, is_edit: bool = False):
             )
         )
 
+
+def handle_delete(auth):
+    with engine.begin() as c:
+        c.execute(
+            delete(statistic_channels).where(
+                (statistic_channels.c.gid == auth["guild"])
+                & (statistic_channels.c.cid == request.args["delete"])
+            )
+        )
+
+
 @statistic_channels_bp.route("/settings/statistic_channels", methods=["GET", "POST"])
 def statistic_channels_index():
     authorization = authorize("/settings/statistic_channels")
@@ -60,6 +74,10 @@ def statistic_channels_index():
     if request.method == "POST":
         handle_post(auth)
 
+    if "delete" in request.args:
+        handle_delete(auth)
+        return redirect("/settings/statistic_channels", 303)
+
     with engine.begin() as c:
         statistic_channels_rows = c.execute(
             select(statistic_channels.c.cid, statistic_channels.c.template)
@@ -70,31 +88,44 @@ def statistic_channels_index():
         for i in range(len(statistic_channels_rows)):
             args = statistic_channels_rows[i]
             channel_name = c.execute(
-                select(synced_channels.c.cname)
-                .where((synced_channels.c.cid == args[0]) & (synced_channels.c.gid == auth["guild"]))
+                select(synced_channels.c.cname).where(
+                    (synced_channels.c.cid == args[0])
+                    & (synced_channels.c.gid == auth["guild"])
+                )
             ).fetchone()
 
             if channel_name is None:
                 continue
 
-            statistic_channels_list.append({
-                "index": i,
-                "id": args[0],
-                "name": channel_name[0],
-                "template": args[1]
-            })
+            statistic_channels_list.append(
+                {
+                    "index": i,
+                    "id": args[0],
+                    "name": channel_name[0],
+                    "template": args[1],
+                }
+            )
 
-        channels = [{
-            "id": i[0],
-            "name": i[1]
-        } for i in c.execute(
-            select(synced_channels.c.cid, synced_channels.c.cname)
-            .where((synced_channels.c.gid == auth["guild"]) & (synced_channels.c.ctype == "voice"))
-        ).fetchall()]
+        channels = [
+            {"id": i[0], "name": i[1]}
+            for i in c.execute(
+                select(synced_channels.c.cid, synced_channels.c.cname).where(
+                    (synced_channels.c.gid == auth["guild"])
+                    & (synced_channels.c.ctype == "voice")
+                )
+            ).fetchall()
+        ]
 
-    return render_template("statistic_channels.html", statistic_channels=statistic_channels_list, channels=channels)
+    return render_template(
+        "statistic_channels.html",
+        statistic_channels=statistic_channels_list,
+        channels=channels,
+    )
 
-@statistic_channels_bp.route("/settings/statistic_channels/edit/<index>", methods=["POST"])
+
+@statistic_channels_bp.route(
+    "/settings/statistic_channels/edit/<index>", methods=["POST"]
+)
 def statistic_channels_edit(index: str):
     authorization = authorize("/settings/statistic_channels")
     if authorization is not None:
@@ -124,49 +155,3 @@ def statistic_channels_edit(index: str):
 
     handle_post(auth, is_edit=True)
     return redirect("/settings/statistic_channels", 303)
-
-
-
-@statistic_channels_bp.route("/settings/statistic_channels/delete/<index>")
-def statistic_channels_delete(index: str):
-    authorization = authorize("/settings/statistic_channels")
-    if authorization is not None:
-        return authorization
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    if not index.isnumeric():
-        return redirect("/settings/statistic_channels", 302)
-
-    with engine.begin() as c:
-        rows = c.execute(
-            select(statistic_channels.c.cid)
-            .where(statistic_channels.c.gid == auth["guild"])
-            .order_by(statistic_channels.c.id)
-        ).fetchall()
-        if len(rows) <= int(index):
-            return redirect("/settings/statistic_channels", 302)
-
-        statistic_channel_id = rows[int(index)][0]
-
-        statistic_channel = c.execute(
-            select(synced_channels.c.cname)
-            .where((synced_channels.c.cid == statistic_channel_id) & (synced_channels.c.gid == auth["guild"]))
-        ).fetchone()
-        if statistic_channel is None:
-            return redirect("/settings/statistic_channels", 302)
-
-    if "confirm" in request.args and request.args["confirm"] == "yes":
-        with engine.begin() as c:
-            c.execute(
-                delete(statistic_channels).where(
-                    (statistic_channels.c.gid == auth["guild"])
-                    & (statistic_channels.c.cid == statistic_channel_id)
-                )
-            )
-            return redirect("/settings/statistic_channels", 302)
-
-    return render_template("statistic_channels_delete.html", channel_name=statistic_channel[0], index=index)
-
-
