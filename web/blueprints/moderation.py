@@ -1,4 +1,4 @@
-from flask import Blueprint, session, render_template, request, flash, redirect
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, moderator_roles, synced_roles
@@ -7,6 +7,7 @@ from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
 moderation_bp = Blueprint("moderation", __name__)
+
 
 def handle_add(auth):
     with engine.begin() as c:
@@ -23,7 +24,9 @@ def handle_add(auth):
 
             limit = get_limit(c, auth["guild"], 5)
             current = c.execute(
-                select(moderator_roles.c.rid).where(moderator_roles.c.gid == auth["guild"])
+                select(moderator_roles.c.rid).where(
+                    moderator_roles.c.gid == auth["guild"]
+                )
             ).fetchall()
             if limit is not None and len(current) >= limit:
                 flash("Free plan is limited to 5 moderator roles")
@@ -35,6 +38,16 @@ def handle_add(auth):
                 )
             )
             flash("Added moderation role")
+
+
+def handle_delete(auth):
+    with engine.begin() as c:
+        c.execute(
+            delete(moderator_roles).where(
+                (moderator_roles.c.gid == auth["guild"])
+                & (moderator_roles.c.rid == request.args["delete"])
+            )
+        )
 
 
 @moderation_bp.route("/settings/moderation", methods=["GET", "POST"])
@@ -51,6 +64,10 @@ def moderation_index():
 
         return redirect("/settings/moderation", 303)
 
+    if "delete" in request.args:
+        handle_delete(auth)
+        return redirect("/settings/moderation", 302)
+
     with engine.begin() as c:
         the_roles_ids = [
             i[0]
@@ -64,30 +81,34 @@ def moderation_index():
 
         for role in range(len(the_roles_ids)):
             role_name = c.execute(
-                select(synced_roles.c.rname)
-                .where((synced_roles.c.gid == auth["guild"]) & (synced_roles.c.rid == the_roles_ids[role]))
+                select(synced_roles.c.rname).where(
+                    (synced_roles.c.gid == auth["guild"])
+                    & (synced_roles.c.rid == the_roles_ids[role])
+                )
             ).fetchone()
 
             if role_name is None:
                 continue
 
-            the_roles.append({
-                "index": role,
-                "id": the_roles_ids[role],
-                "name": role_name[0]
-            })
+            the_roles.append(
+                {"index": role, "id": the_roles_ids[role], "name": role_name[0]}
+            )
 
-        roles = [{
-            "id": i[0],
-            "name": i[1]
-        } for i in c.execute(
-            select(synced_roles.c.rid, synced_roles.c.rname)
-            .where(synced_roles.c.gid == auth["guild"])
-        ).fetchall()]
+        roles = [
+            {"id": i[0], "name": i[1]}
+            for i in c.execute(
+                select(synced_roles.c.rid, synced_roles.c.rname).where(
+                    synced_roles.c.gid == auth["guild"]
+                )
+            ).fetchall()
+        ]
 
         premium = get_premium_context(c, auth["guild"])
 
-    return render_template("moderation.html", roles=roles, moderator_roles=the_roles, premium=premium)
+    return render_template(
+        "moderation.html", roles=roles, moderator_roles=the_roles, premium=premium
+    )
+
 
 @moderation_bp.route("/settings/moderation/delete/<index>")
 def moderation_delete(index: str):
@@ -116,8 +137,10 @@ def moderation_delete(index: str):
         the_role_id = the_roles_ids[int(index)]
 
         the_role = c.execute(
-            select(synced_roles.c.rname)
-            .where((synced_roles.c.rid == the_role_id) & (synced_roles.c.gid == auth["guild"]))
+            select(synced_roles.c.rname).where(
+                (synced_roles.c.rid == the_role_id)
+                & (synced_roles.c.gid == auth["guild"])
+            )
         ).fetchone()
         if the_role is None:
             return redirect("/settings/moderation", 302)

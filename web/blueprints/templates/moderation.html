@@ -31,7 +31,7 @@
         <li>Moderator role: {{moderator_role.name}}</li>
     </ul>
 
-    <a href="/settings/moderation/delete/{{moderator_role.index}}">Delete</a>
+    <a href="/settings/moderation?delete={{moderator_role.id}}">Delete</a>
 </div>
 {% else %}
 <p>No moderation roles</p>
