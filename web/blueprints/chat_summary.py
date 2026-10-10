@@ -82,6 +82,16 @@ def handle_adding_channels(auth):
                 )
             )
 
+def handle_delete(auth):
+    with engine.begin() as c:
+        c.execute(
+            delete(chat_summary_channels).where(
+                (chat_summary_channels.c.gid == str(auth["guild"]))
+                & (chat_summary_channels.c.cid == request.args["delete"])
+            )
+        )
+
+
 @chat_summary_bp.route("/settings/chat_summary", methods=["GET", "POST"])
 def chat_summary_index():
     authorization = authorize("/settings/chat_summary")
@@ -94,6 +104,10 @@ def chat_summary_index():
     if request.method == "POST":
         handle_settings(auth)
         handle_adding_channels(auth)
+
+    if "delete" in request.args:
+        handle_delete(auth)
+        return redirect("/settings/chat_summary", 302)
 
     with engine.begin() as c:
         chans = [{
@@ -123,6 +137,7 @@ def chat_summary_index():
             if channel is not None:
                 chat_summaries.append({
                     "index": index,
+                    "id": chs[index],
                     "channel": "#" + channel[0]
                 })
 
@@ -138,45 +153,3 @@ def chat_summary_index():
                            chat_summaries=chat_summaries, extra=extra,
                            row_count=row_count, row_count_extra=row_count_extra,
                            unique_mode=unique_mode, history=history, premium=premium)
-
-@chat_summary_bp.route("/settings/chat_summary/delete/<index>")
-def chat_summary_delete(index: str):
-    authorization = authorize("/settings/chat_summary")
-    if authorization is not None:
-        return authorization
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    if not index.isnumeric():
-        return redirect("/settings/chat_summary", 302)
-
-    with engine.begin() as c:
-        chs = [
-            i[0]
-            for i in c.execute(
-                select(chat_summary_channels.c.cid)
-                .where(chat_summary_channels.c.gid == str(auth["guild"]))
-                .order_by(chat_summary_channels.c.cid)
-            ).fetchall()
-        ]
-        if len(chs) <= int(index):
-            return redirect("/settings/chat_summary", 302)
-
-        chs = chs[int(index)]
-        chs_parsed = c.execute(
-            select(synced_channels.c.cname)
-            .where((synced_channels.c.gid == auth["guild"]) & (synced_channels.c.cid == chs))
-        ).fetchone()
-
-        if "confirm" in request.args and request.args["confirm"] == "yes":
-            c.execute(
-                delete(chat_summary_channels).where(
-                    (chat_summary_channels.c.gid == str(auth["guild"]))
-                    & (chat_summary_channels.c.cid == chs)
-                )
-            )
-            return redirect("/settings/chat_summary", 302)
-
-    return render_template("chat_summary_delete.html", channel=("#" + chs_parsed[0]) if chs_parsed is not None else chs)
-    
