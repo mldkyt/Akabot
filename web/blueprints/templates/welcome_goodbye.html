@@ -13,12 +13,12 @@
 <form action="/settings/welcome_goodbye" method="post">
 
     <h2>Welcome</h2>
-    
+
     <label for="welcome_channel">Welcome channel</label>
     <select name="welcome_channel" id="welcome_channel">
         <option value="unset">-- unset --</option>
         {% for channel in channels %}
-        <option value="{{channel.id}}" {% if channel.id == welcome_channel %}selected{% endif %}>#{{channel.name}}</option>
+        <option value="{{channel.id}}" {% if channel.id == welcome_channel %}selected{% endif %}>{{channel.name}}</option>
         {% endfor %}
     </select>
     <br>
@@ -47,17 +47,17 @@
     <input type="number" name="welcome_second" id="welcome_second" value="{{welcome_second}}">
     <p><small>This is the grace period between sending the message and not deleting it after leaving, in seconds. If the member leaves during the second grace period, the welcome message will be deleted instead of sending a goodbye message.</small></p>
 
-    <h2>Goodbye</h2>  
-    
+    <h2>Goodbye</h2>
+
     <label for="goodbye_channel">Goodbye channel</label>
     <select name="goodbye_channel" id="goodbye_channel">
         <option value="unset">-- unset --</option>
         {% for channel in channels %}
-        <option value="{{channel.id}}" {% if channel.id == goodbye_channel %}selected{% endif %}>#{{channel.name}}</option>
+        <option value="{{channel.id}}" {% if channel.id == goodbye_channel %}selected{% endif %}>{{channel.name}}</option>
         {% endfor %}
     </select>
-    <br>  
-    
+    <br>
+
     <label for="goodbye_title">Goodbye message title</label>
     <input type="text" name="goodbye_title" id="goodbye_title" value="{{goodbye_title}}">
     <br>
@@ -88,4 +88,3 @@
 </ul>
 
 {% endblock %}
-

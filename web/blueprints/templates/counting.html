@@ -48,7 +48,7 @@
     <br>
     <select name="channel" id="channel">
         {% for channel in text_channels %}
-        <option value="{{channel.id}}">#{{channel.name}}</option>
+        <option value="{{channel.id}}">{{channel.name}}</option>
         {% endfor %}
     </select>
     <br>

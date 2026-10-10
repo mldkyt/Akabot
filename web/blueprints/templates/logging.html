@@ -61,7 +61,7 @@ function deactivateAllButtons(id) {
         <select id="channel_id" name="channel_id">
             <option value="unset">-- Unset --</option>
             {% for channel in channels %}
-            <option value="{{channel.id}}">#{{channel.name}}</option>
+            <option value="{{channel.id}}">{{channel.name}}</option>
             {% endfor %}
         </select>
         <br>

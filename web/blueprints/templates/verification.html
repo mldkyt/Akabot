@@ -33,7 +33,7 @@
     <select name="introductionchannel" id="introductionchannel">
         <option value="unset">-- unset --</option>
         {% for channel in text_channels %}
-        <option value="{{channel.id}}" {% if channel.id == introduction_channel %}selected{% endif %}>#{{channel.name}}</option>
+        <option value="{{channel.id}}" {% if channel.id == introduction_channel %}selected{% endif %}>{{channel.name}}</option>
         {% endfor %}
     </select>
     {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
