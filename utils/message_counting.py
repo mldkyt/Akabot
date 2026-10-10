@@ -3,20 +3,19 @@ from sqlalchemy import Connection, delete, insert, select, update
 
 from database import engine, message_counting, message_counting_members, message_counting_rewards
 from logger import akabot_logger
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
-setting_enable_leaderboard = ServerSetting(
+setting_enable_leaderboard = KV(
     name="Message Counting leaderboard",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_enable_indexer = ServerSetting(
-    name="Enable indexer command", setting_type=SettingType.NORMAL, default="false"
+setting_enable_indexer = KV(
+    name="Enable indexer command", default="false"
 )
 
-setting_count_deletes = ServerSetting(
-    name="Count deletes", setting_type=SettingType.NORMAL, default="true"
+setting_count_deletes = KV(
+    name="Count deletes", default="true"
 )
 
 

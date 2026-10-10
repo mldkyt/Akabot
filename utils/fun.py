@@ -11,28 +11,25 @@ from sqlalchemy import select, update, insert, Connection, Row
 from database import engine, consent, rp_counters
 from logger import akabot_logger
 from utils.message_appends import apply_appends
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
 FEDI_INSTANCE = os.getenv("FEDI_INSTANCE")
 
 YURIBOT_ID = os.getenv("YURIBOT_ID")
 YAOIBOT_ID = os.getenv("YAOIBOT_ID")
 
-setting_allow_rp_commands = ServerSetting(
+setting_allow_rp_commands = KV(
     name="Allow RP commands",
-    setting_type=SettingType.NORMAL,
     default="true"
 )
 
-setting_disable_yaoi_command = ServerSetting(
+setting_disable_yaoi_command = KV(
     name="Disable yaoi command",
-    setting_type=SettingType.NORMAL,
     default="false"
 )
 
-setting_disable_yuri_command = ServerSetting(
+setting_disable_yuri_command = KV(
     name="Disable yuri command",
-    setting_type=SettingType.NORMAL,
     default="false"
 )
 

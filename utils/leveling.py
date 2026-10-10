@@ -15,24 +15,22 @@ from database import (
 )
 from logger import akabot_logger
 from utils.premium import has_premium
-from utils.server_settings import (
-    ServerSetting,
-)
+from utils.server_settings import KV
 from utils.timezones import get_now
 
-setting_xp_per_message = ServerSetting(
+setting_xp_per_message = KV(
     name="Leveling XP per message",
     default="3",
 )
-setting_level_up_message = ServerSetting(
+setting_level_up_message = KV(
     name="Leveling enable level-up message",
     default="true",
 )
-setting_level_up_message_text = ServerSetting(
+setting_level_up_message_text = KV(
     name="Leveling level-up message content",
     default="**You leveled up!** {old} -> {new}",
 )
-setting_xp_per_level = ServerSetting(
+setting_xp_per_level = KV(
     name="Leveling XP per level",
     default="500",
 )

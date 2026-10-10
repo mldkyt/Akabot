@@ -15,7 +15,7 @@ from sqlalchemy import Connection, delete, select, update
 from database import engine, reaction_roles, reaction_roles_options
 from logger import akabot_logger
 from utils.message_appends import apply_appends
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 from utils.tasks import register_task
 
 CUSTOM_EMOJI_RE = re.compile(r"<(a)?:([^:]+):(\d+)>")
@@ -27,9 +27,8 @@ BUTTON_STYLES = {
     "danger": ButtonStyle.danger,
 }
 
-setting_reaction_roles_bot_ok = ServerSetting(
+setting_reaction_roles_bot_ok = KV(
     name="Reaction Roles: Bot can manage roles",
-    setting_type=SettingType.NORMAL,
     default="true",
 )
 

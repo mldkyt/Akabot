@@ -5,41 +5,35 @@ from discord import Message
 from sqlalchemy import select
 
 from database import engine, meow_back_settings
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
-meowing = ServerSetting(
+meowing = KV(
     name="Meow back at messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-wafing = ServerSetting(
+wafing = KV(
     name="Waf back at messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-barking = ServerSetting(
+barking = KV(
     name="Bark back at messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-colon_3 = ServerSetting(
+colon_3 = KV(
     name=":3 back at messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-owo = ServerSetting(
+owo = KV(
     name="OwO back at messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-awawa = ServerSetting(
+awawa = KV(
     name="awawa back at messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 

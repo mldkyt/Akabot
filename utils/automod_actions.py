@@ -15,7 +15,7 @@ from sqlalchemy import Connection, select
 from database import automod_actions, engine
 from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
 
 def time_str_to_time(time: str):
@@ -37,9 +37,8 @@ async def fetch_actions(g: Guild):
     cached_automod_actions[g.id] = await g.fetch_auto_moderation_rules()
 
 
-setting_automod_sync_error = ServerSetting(
+setting_automod_sync_error = KV(
     name="Automod actions sync error",
-    setting_type=SettingType.NORMAL,
     default="",
 )
 

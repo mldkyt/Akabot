@@ -5,12 +5,11 @@ from sqlalchemy import delete, insert, select, update
 
 from database import chat_revive, chat_revive_channels, engine
 from logger import akabot_logger
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 from utils.timezones import get_now
 
-setting_chat_revive_role = ServerSetting(
+setting_chat_revive_role = KV(
     name="Chat Revive Role",
-    setting_type=SettingType.NORMAL,
 )
 
 

@@ -15,43 +15,37 @@ from sqlalchemy import Connection, desc, insert, select, update
 from database import chat_streak_last_members, chat_streaks, engine
 from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 from utils.timezones import get_now
 from utils.user_settings import UserSetting
 
-server_response_setting = ServerSetting(
+server_response_setting = KV(
     "Chat streaks response setting",
-    setting_type=SettingType.NORMAL,
     default="on",
 )
 
 user_response_setting = UserSetting(
     "Chat streaks response setting",
-    setting_type=SettingType.NORMAL,
     default="on",
 )
 
-server_message_delay = ServerSetting(
+server_message_delay = KV(
     "Chat streaks message duration",
-    setting_type=SettingType.NORMAL,
     default="5",
 )
 
-server_streak_minimum_enabled = ServerSetting(
+server_streak_minimum_enabled = KV(
     "Chat streaks minimum enabled",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-server_streak_minimum = ServerSetting(
+server_streak_minimum = KV(
     "Chat streaks minimum messages",
-    setting_type=SettingType.NORMAL,
     default="5",
 )
 
-server_streak_same_member_check = ServerSetting(
+server_streak_same_member_check = KV(
     "Chat streaks same member check",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 

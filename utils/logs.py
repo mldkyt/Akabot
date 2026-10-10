@@ -11,14 +11,10 @@ from discord import (
 from sqlalchemy import Connection, select
 
 from database import logging_channels
-from utils.server_settings import (
-    ServerSetting,
-    SettingType,
-)
+from utils.server_settings import KV
 
-logging_channel = ServerSetting(
+logging_channel = KV(
     name="Logging channel",
-    setting_type=SettingType.NORMAL,
 )
 
 logging_settings: list[tuple[str, str]] = [

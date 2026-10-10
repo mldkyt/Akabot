@@ -8,51 +8,50 @@ from sqlalchemy.util.langhelpers import MemoizedSlots
 from database import engine
 from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 from utils.timezones import get_now
 
 # Welcome
-welcome_channel = ServerSetting(
-    name="Welcome channel", setting_type=SettingType.NORMAL, default=""
+welcome_channel = KV(
+    name="Welcome channel", default=""
 )
 
-welcome_grace_period_first = ServerSetting(
-    name="Welcoming first grace period", setting_type=SettingType.NORMAL, default="5"
+welcome_grace_period_first = KV(
+    name="Welcoming first grace period", default="5"
 )
 
-welcome_grace_period_second = ServerSetting(
-    name="Welcoming second grace period", setting_type=SettingType.NORMAL, default="5"
+welcome_grace_period_second = KV(
+    name="Welcoming second grace period", default="5"
 )
 
-welcome_message_title = ServerSetting(
-    name="Welcome message title", setting_type=SettingType.NORMAL, default="Welcome %m!"
+welcome_message_title = KV(
+    name="Welcome message title", default="Welcome %m!"
 )
 
-welcome_message_message = ServerSetting(
+welcome_message_message = KV(
     name="Welcome message",
-    setting_type=SettingType.NORMAL,
     default="Welcome %m to %s. Hope you enjoy your stay.",
 )
 
-welcome_message_type = ServerSetting(
-    name="Welcome message type", setting_type=SettingType.NORMAL, default="embed"
+welcome_message_type = KV(
+    name="Welcome message type", default="embed"
 )
 
 # Goodbye
-goodbye_channel = ServerSetting(
-    name="Goodbye channel", setting_type=SettingType.NORMAL, default=""
+goodbye_channel = KV(
+    name="Goodbye channel", default=""
 )
 
-goodbye_message_title = ServerSetting(
-    name="Goodbye message title", setting_type=SettingType.NORMAL, default="Goodbye %u"
+goodbye_message_title = KV(
+    name="Goodbye message title", default="Goodbye %u"
 )
 
-goodbye_message_message = ServerSetting(
-    name="Goodbye message", setting_type=SettingType.NORMAL, default="%s will miss you."
+goodbye_message_message = KV(
+    name="Goodbye message", default="%s will miss you."
 )
 
-goodbye_message_type = ServerSetting(
-    name="Goodbye message type", setting_type=SettingType.NORMAL, default="embed"
+goodbye_message_type = KV(
+    name="Goodbye message type", default="embed"
 )
 
 grace_period_first = {}

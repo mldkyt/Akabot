@@ -3,10 +3,10 @@ from discord.ui import Button, View, button
 from sqlalchemy import insert, select
 
 from database import engine, suggestion_channels, suggestion_voting, suggestions
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
-suggestion_threads = ServerSetting(
-    name="Suggestion threads", setting_type=SettingType.NORMAL
+suggestion_threads = KV(
+    name="Suggestion threads"
 )
 
 

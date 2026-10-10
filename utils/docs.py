@@ -1,4 +1,4 @@
-from utils.server_settings import ServerSetting
+from utils.server_settings import KV
 
 
 class DocsCommandParameter:
@@ -55,7 +55,7 @@ class Docs:
         *,
         description: str = "No description set for this command",
         commands: list[DocsCommand] = None,
-            settings: list[ServerSetting] = None,
+            settings: list[KV] = None,
     ):
         if commands is None:
             commands = []

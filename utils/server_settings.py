@@ -1,13 +1,8 @@
-from decimal import InvalidOperation
 from enum import Enum
-from typing import Callable
 
-from discord import AutocompleteContext, Member
-from sqlalchemy import Connection, delete, insert, select, update
+from sqlalchemy import Connection, insert, select, update
 
-from database import server_settings, server_settings_list
-from logger import akabot_logger
-from utils.conversion import convert_role, convert_text_channel, convert_voice_channel
+from database import kv
 
 
 class SettingType(Enum):
@@ -15,155 +10,47 @@ class SettingType(Enum):
     LIST = 2
 
 
-class ServerSetting:
-    def __init__(
-        self,
-        name: str,
-        *,
-        setting_type: SettingType = SettingType.NORMAL,
-        default: str | None = None
-    ):
+class KV:
+    def __init__(self, name: str, *, default: str | None = None):
         self.name = name
-        self.setting_type = setting_type
+        self.default_value = default
 
-        if self.setting_type == SettingType.NORMAL:
-            self.default_value = default
-        elif self.setting_type == SettingType.LIST:
-            self.default_value = []
-
-    def default(self) -> list | str:
+    def default(self) -> str | None:
         return self.default_value
 
-    def get(self, c: Connection, guild_id: int) -> str | list[str]:
-        if self.setting_type == SettingType.NORMAL:
-            setting = c.execute(
-                select(server_settings.c.value).where(
-                    (server_settings.c.uid == str(guild_id))
-                    & (server_settings.c.name == self.name)
-                )
-            ).fetchone()
+    def get(self, c: Connection, guild_id: int) -> str | None:
+        setting = c.execute(
+            select(kv.c.value).where(
+                (kv.c.uid == str(guild_id))
+                & (kv.c.name == self.name)
+            )
+        ).fetchone()
 
-            if setting is None:
-                return self.default_value
+        if setting is None:
+            return self.default_value
 
-            return setting[0]
-        elif self.setting_type == SettingType.LIST:
-            setting = c.execute(
-                select(server_settings_list.c.value).where(
-                    (server_settings_list.c.uid == str(guild_id))
-                    & (server_settings_list.c.name == self.name)
-                )
-            ).fetchall()
-
-            if len(setting) == 0:
-                return []
-
-            return [i[0] for i in setting]
-        else:
-            raise ValueError(f"Variable type {self.setting_type} is invalid")
+        return setting[0]
 
     def set(self, c: Connection, guild_id: int, value: str):
-        if self.setting_type != SettingType.NORMAL:
-            raise InvalidOperation(
-                f"Cannot operate on type {self.setting_type}, it must be {SettingType.NORMAL}"
-            )
-
         setting = c.execute(
-            select(server_settings.c.value).where(
-                (server_settings.c.uid == str(guild_id))
-                & (server_settings.c.name == self.name)
+            select(kv.c.value).where(
+                (kv.c.uid == str(guild_id))
+                & (kv.c.name == self.name)
             )
         ).fetchone()
 
         if setting is None:
             c.execute(
-                insert(server_settings).values(
+                insert(kv).values(
                     uid=str(guild_id), name=self.name, value=value
                 )
             )
         else:
             c.execute(
-                update(server_settings)
+                update(kv)
                 .values(value=value)
                 .where(
-                    (server_settings.c.uid == str(guild_id))
-                    & (server_settings.c.name == self.name)
+                    (kv.c.uid == str(guild_id))
+                    & (kv.c.name == self.name)
                 )
             )
-
-    def add_to_list(
-            self, c: Connection, guild_id: int, value: str, silent: bool = False
-    ):
-        if self.setting_type != SettingType.LIST:
-            raise InvalidOperation(
-                f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
-            )
-
-        a = c.execute(
-            select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(guild_id))
-                & (server_settings_list.c.name == self.name)
-                & (server_settings_list.c.value == value)
-            )
-        ).fetchone()
-
-        if a is not None:
-            if silent:
-                return
-
-            raise ValueError(f"Value {value} is already in list {self.name}")
-
-        c.execute(
-            insert(server_settings_list).values(
-                uid=str(guild_id), name=self.name, value=value
-            )
-        )
-
-    def remove_from_list(
-            self, c: Connection, guild_id: int, value: str, silent: bool = False
-    ):
-        if self.setting_type != SettingType.LIST:
-            raise InvalidOperation(
-                f"Cannot operate on type {self.setting_type}, it must be {SettingType.LIST}"
-            )
-
-        a = c.execute(
-            select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(guild_id))
-                & (server_settings_list.c.name == self.name)
-                & (server_settings_list.c.value == value)
-            )
-        ).fetchone()
-
-        if a is None:
-            if silent:
-                return
-
-            raise ValueError(f"Value {value} not found in list {self.name}")
-
-        c.execute(
-            delete(server_settings_list).where(
-                (server_settings_list.c.uid == str(guild_id))
-                & (server_settings_list.c.name == self.name)
-                & (server_settings_list.c.value == value)
-            )
-        )
-
-    def is_in_list(self, c: Connection, guild_id: int, value: str) -> bool:
-        a = c.execute(
-            select(server_settings_list.c.value).where(
-                (server_settings_list.c.uid == str(guild_id))
-                & (server_settings_list.c.name == self.name)
-                & (server_settings_list.c.value == value)
-            )
-        ).fetchone()
-
-        return a is not None
-
-    def clear_list(self, c: Connection, member: Member):
-        c.execute(
-            delete(server_settings_list).where(
-                (server_settings_list.c.uid == str(member.guild.id))
-                & (server_settings_list.c.name == self.name)
-            )
-        )

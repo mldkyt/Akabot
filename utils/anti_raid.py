@@ -13,7 +13,7 @@ from discord import Embed, EmbedField, Member, Message
 from database import engine
 from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
 INVITE_RE = re.compile(r"discord(?:app)?\.com/invite/\w+|discord\.gg/\w+", re.IGNORECASE)
 
@@ -63,380 +63,350 @@ DEFAULT_EMOJI_REASON = "Emoji flood: {count} emojis in {window} seconds"
 DEFAULT_STICKER_REASON = "Sticker flood: {count} stickers in {window} seconds"
 DEFAULT_JOINBURST_REASON = "Join burst: {count} members joined in {window} seconds"
 
-setting_no_avatar = ServerSetting(
-    name="Kick users with no avatar", setting_type=SettingType.NORMAL, default="false"
+setting_no_avatar = KV(
+    name="Kick users with no avatar", default="false"
 )
 
-setting_minimum_age = ServerSetting(
-    name="Minimum user age (days)", setting_type=SettingType.NORMAL, default="0"
+setting_minimum_age = KV(
+    name="Minimum user age (days)", default="0"
 )
 
-setting_mrbeast_scam = ServerSetting(
+setting_mrbeast_scam = KV(
     name="MrBeast scam detection",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_mrbeast_action = ServerSetting(
+setting_mrbeast_action = KV(
     name="MrBeast scam detection action",
-    setting_type=SettingType.NORMAL,
     default="timeout",
 )
 
-setting_mrbeast_dm = ServerSetting(
+setting_mrbeast_dm = KV(
     name="MrBeast scam detection dm",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_mrbeast_timeout = ServerSetting(
+setting_mrbeast_timeout = KV(
     name="MrBeast scam detection timeout",
-    setting_type=SettingType.NORMAL,
     default="3600",
 )
 
-setting_mrbeast_dm_message = ServerSetting(
+setting_mrbeast_dm_message = KV(
     name="MrBeast scam detection dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_mrbeast_reason = ServerSetting(
+setting_mrbeast_reason = KV(
     name="MrBeast scam detection reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_MR_BEAST_REASON,
 )
 
-setting_mrbeast_delete = ServerSetting(
+setting_mrbeast_delete = KV(
     name="MrBeast scam detection delete messages",
-    setting_type=SettingType.NORMAL,
     default="true",
 )
 
-setting_flood_enabled = ServerSetting(
-    name="Anti Raid: Flood enabled", setting_type=SettingType.NORMAL, default="false"
+setting_flood_enabled = KV(
+    name="Anti Raid: Flood enabled", default="false"
 )
 
-setting_flood_action = ServerSetting(
-    name="Anti Raid: Flood action", setting_type=SettingType.NORMAL, default="timeout"
+setting_flood_action = KV(
+    name="Anti Raid: Flood action", default="timeout"
 )
 
-setting_flood_dm = ServerSetting(
-    name="Anti Raid: Flood dm", setting_type=SettingType.NORMAL, default="false"
+setting_flood_dm = KV(
+    name="Anti Raid: Flood dm", default="false"
 )
 
-setting_flood_timeout = ServerSetting(
-    name="Anti Raid: Flood timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_flood_timeout = KV(
+    name="Anti Raid: Flood timeout", default="3600"
 )
 
-setting_flood_dm_message = ServerSetting(
+setting_flood_dm_message = KV(
     name="Anti Raid: Flood dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_flood_reason = ServerSetting(
+setting_flood_reason = KV(
     name="Anti Raid: Flood reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_FLOOD_REASON,
 )
 
-setting_flood_delete = ServerSetting(
+setting_flood_delete = KV(
     name="Anti Raid: Flood delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_flood_count = ServerSetting(
-    name="Anti Raid: Flood count", setting_type=SettingType.NORMAL, default="10"
+setting_flood_count = KV(
+    name="Anti Raid: Flood count", default="10"
 )
 
-setting_flood_window = ServerSetting(
-    name="Anti Raid: Flood window", setting_type=SettingType.NORMAL, default="5"
+setting_flood_window = KV(
+    name="Anti Raid: Flood window", default="5"
 )
 
-setting_duplicate_enabled = ServerSetting(
-    name="Anti Raid: Duplicate enabled", setting_type=SettingType.NORMAL, default="false"
+setting_duplicate_enabled = KV(
+    name="Anti Raid: Duplicate enabled", default="false"
 )
 
-setting_duplicate_action = ServerSetting(
-    name="Anti Raid: Duplicate action", setting_type=SettingType.NORMAL, default="timeout"
+setting_duplicate_action = KV(
+    name="Anti Raid: Duplicate action", default="timeout"
 )
 
-setting_duplicate_dm = ServerSetting(
-    name="Anti Raid: Duplicate dm", setting_type=SettingType.NORMAL, default="false"
+setting_duplicate_dm = KV(
+    name="Anti Raid: Duplicate dm", default="false"
 )
 
-setting_duplicate_timeout = ServerSetting(
-    name="Anti Raid: Duplicate timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_duplicate_timeout = KV(
+    name="Anti Raid: Duplicate timeout", default="3600"
 )
 
-setting_duplicate_dm_message = ServerSetting(
+setting_duplicate_dm_message = KV(
     name="Anti Raid: Duplicate dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_duplicate_reason = ServerSetting(
+setting_duplicate_reason = KV(
     name="Anti Raid: Duplicate reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DUPLICATE_REASON,
 )
 
-setting_duplicate_delete = ServerSetting(
+setting_duplicate_delete = KV(
     name="Anti Raid: Duplicate delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_duplicate_count = ServerSetting(
-    name="Anti Raid: Duplicate count", setting_type=SettingType.NORMAL, default="5"
+setting_duplicate_count = KV(
+    name="Anti Raid: Duplicate count", default="5"
 )
 
-setting_duplicate_window = ServerSetting(
-    name="Anti Raid: Duplicate window", setting_type=SettingType.NORMAL, default="30"
+setting_duplicate_window = KV(
+    name="Anti Raid: Duplicate window", default="30"
 )
 
-setting_mentions_enabled = ServerSetting(
-    name="Anti Raid: Mentions enabled", setting_type=SettingType.NORMAL, default="false"
+setting_mentions_enabled = KV(
+    name="Anti Raid: Mentions enabled", default="false"
 )
 
-setting_mentions_action = ServerSetting(
-    name="Anti Raid: Mentions action", setting_type=SettingType.NORMAL, default="timeout"
+setting_mentions_action = KV(
+    name="Anti Raid: Mentions action", default="timeout"
 )
 
-setting_mentions_dm = ServerSetting(
-    name="Anti Raid: Mentions dm", setting_type=SettingType.NORMAL, default="false"
+setting_mentions_dm = KV(
+    name="Anti Raid: Mentions dm", default="false"
 )
 
-setting_mentions_timeout = ServerSetting(
-    name="Anti Raid: Mentions timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_mentions_timeout = KV(
+    name="Anti Raid: Mentions timeout", default="3600"
 )
 
-setting_mentions_dm_message = ServerSetting(
+setting_mentions_dm_message = KV(
     name="Anti Raid: Mentions dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_mentions_reason = ServerSetting(
+setting_mentions_reason = KV(
     name="Anti Raid: Mentions reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_MENTIONS_REASON,
 )
 
-setting_mentions_delete = ServerSetting(
+setting_mentions_delete = KV(
     name="Anti Raid: Mentions delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_mentions_count = ServerSetting(
-    name="Anti Raid: Mentions count", setting_type=SettingType.NORMAL, default="5"
+setting_mentions_count = KV(
+    name="Anti Raid: Mentions count", default="5"
 )
 
-setting_invite_enabled = ServerSetting(
-    name="Anti Raid: Invite enabled", setting_type=SettingType.NORMAL, default="false"
+setting_invite_enabled = KV(
+    name="Anti Raid: Invite enabled", default="false"
 )
 
-setting_invite_action = ServerSetting(
-    name="Anti Raid: Invite action", setting_type=SettingType.NORMAL, default="timeout"
+setting_invite_action = KV(
+    name="Anti Raid: Invite action", default="timeout"
 )
 
-setting_invite_dm = ServerSetting(
-    name="Anti Raid: Invite dm", setting_type=SettingType.NORMAL, default="false"
+setting_invite_dm = KV(
+    name="Anti Raid: Invite dm", default="false"
 )
 
-setting_invite_timeout = ServerSetting(
-    name="Anti Raid: Invite timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_invite_timeout = KV(
+    name="Anti Raid: Invite timeout", default="3600"
 )
 
-setting_invite_dm_message = ServerSetting(
+setting_invite_dm_message = KV(
     name="Anti Raid: Invite dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_invite_reason = ServerSetting(
+setting_invite_reason = KV(
     name="Anti Raid: Invite reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_INVITE_REASON,
 )
 
-setting_invite_delete = ServerSetting(
+setting_invite_delete = KV(
     name="Anti Raid: Invite delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_invite_count = ServerSetting(
-    name="Anti Raid: Invite count", setting_type=SettingType.NORMAL, default="3"
+setting_invite_count = KV(
+    name="Anti Raid: Invite count", default="3"
 )
 
-setting_invite_window = ServerSetting(
-    name="Anti Raid: Invite window", setting_type=SettingType.NORMAL, default="60"
+setting_invite_window = KV(
+    name="Anti Raid: Invite window", default="60"
 )
 
-setting_caps_enabled = ServerSetting(
-    name="Anti Raid: Caps enabled", setting_type=SettingType.NORMAL, default="false"
+setting_caps_enabled = KV(
+    name="Anti Raid: Caps enabled", default="false"
 )
 
-setting_caps_action = ServerSetting(
-    name="Anti Raid: Caps action", setting_type=SettingType.NORMAL, default="timeout"
+setting_caps_action = KV(
+    name="Anti Raid: Caps action", default="timeout"
 )
 
-setting_caps_dm = ServerSetting(
-    name="Anti Raid: Caps dm", setting_type=SettingType.NORMAL, default="false"
+setting_caps_dm = KV(
+    name="Anti Raid: Caps dm", default="false"
 )
 
-setting_caps_timeout = ServerSetting(
-    name="Anti Raid: Caps timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_caps_timeout = KV(
+    name="Anti Raid: Caps timeout", default="3600"
 )
 
-setting_caps_dm_message = ServerSetting(
+setting_caps_dm_message = KV(
     name="Anti Raid: Caps dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_caps_reason = ServerSetting(
+setting_caps_reason = KV(
     name="Anti Raid: Caps reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_CAPS_REASON,
 )
 
-setting_caps_delete = ServerSetting(
+setting_caps_delete = KV(
     name="Anti Raid: Caps delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_caps_percentage = ServerSetting(
-    name="Anti Raid: Caps percentage", setting_type=SettingType.NORMAL, default="80"
+setting_caps_percentage = KV(
+    name="Anti Raid: Caps percentage", default="80"
 )
 
-setting_caps_min_length = ServerSetting(
-    name="Anti Raid: Caps min length", setting_type=SettingType.NORMAL, default="10"
+setting_caps_min_length = KV(
+    name="Anti Raid: Caps min length", default="10"
 )
 
-setting_emoji_enabled = ServerSetting(
-    name="Anti Raid: Emoji enabled", setting_type=SettingType.NORMAL, default="false"
+setting_emoji_enabled = KV(
+    name="Anti Raid: Emoji enabled", default="false"
 )
 
-setting_emoji_action = ServerSetting(
-    name="Anti Raid: Emoji action", setting_type=SettingType.NORMAL, default="timeout"
+setting_emoji_action = KV(
+    name="Anti Raid: Emoji action", default="timeout"
 )
 
-setting_emoji_dm = ServerSetting(
-    name="Anti Raid: Emoji dm", setting_type=SettingType.NORMAL, default="false"
+setting_emoji_dm = KV(
+    name="Anti Raid: Emoji dm", default="false"
 )
 
-setting_emoji_timeout = ServerSetting(
-    name="Anti Raid: Emoji timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_emoji_timeout = KV(
+    name="Anti Raid: Emoji timeout", default="3600"
 )
 
-setting_emoji_dm_message = ServerSetting(
+setting_emoji_dm_message = KV(
     name="Anti Raid: Emoji dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_emoji_reason = ServerSetting(
+setting_emoji_reason = KV(
     name="Anti Raid: Emoji reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_EMOJI_REASON,
 )
 
-setting_emoji_delete = ServerSetting(
+setting_emoji_delete = KV(
     name="Anti Raid: Emoji delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_emoji_count = ServerSetting(
-    name="Anti Raid: Emoji count", setting_type=SettingType.NORMAL, default="10"
+setting_emoji_count = KV(
+    name="Anti Raid: Emoji count", default="10"
 )
 
-setting_emoji_window = ServerSetting(
-    name="Anti Raid: Emoji window", setting_type=SettingType.NORMAL, default="5"
+setting_emoji_window = KV(
+    name="Anti Raid: Emoji window", default="5"
 )
 
-setting_sticker_enabled = ServerSetting(
-    name="Anti Raid: Sticker enabled", setting_type=SettingType.NORMAL, default="false"
+setting_sticker_enabled = KV(
+    name="Anti Raid: Sticker enabled", default="false"
 )
 
-setting_sticker_action = ServerSetting(
-    name="Anti Raid: Sticker action", setting_type=SettingType.NORMAL, default="timeout"
+setting_sticker_action = KV(
+    name="Anti Raid: Sticker action", default="timeout"
 )
 
-setting_sticker_dm = ServerSetting(
-    name="Anti Raid: Sticker dm", setting_type=SettingType.NORMAL, default="false"
+setting_sticker_dm = KV(
+    name="Anti Raid: Sticker dm", default="false"
 )
 
-setting_sticker_timeout = ServerSetting(
-    name="Anti Raid: Sticker timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_sticker_timeout = KV(
+    name="Anti Raid: Sticker timeout", default="3600"
 )
 
-setting_sticker_dm_message = ServerSetting(
+setting_sticker_dm_message = KV(
     name="Anti Raid: Sticker dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_sticker_reason = ServerSetting(
+setting_sticker_reason = KV(
     name="Anti Raid: Sticker reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_STICKER_REASON,
 )
 
-setting_sticker_delete = ServerSetting(
+setting_sticker_delete = KV(
     name="Anti Raid: Sticker delete messages",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-setting_sticker_count = ServerSetting(
-    name="Anti Raid: Sticker count", setting_type=SettingType.NORMAL, default="5"
+setting_sticker_count = KV(
+    name="Anti Raid: Sticker count", default="5"
 )
 
-setting_sticker_window = ServerSetting(
-    name="Anti Raid: Sticker window", setting_type=SettingType.NORMAL, default="10"
+setting_sticker_window = KV(
+    name="Anti Raid: Sticker window", default="10"
 )
 
-setting_joinburst_enabled = ServerSetting(
-    name="Anti Raid: Join burst enabled", setting_type=SettingType.NORMAL, default="false"
+setting_joinburst_enabled = KV(
+    name="Anti Raid: Join burst enabled", default="false"
 )
 
-setting_joinburst_action = ServerSetting(
-    name="Anti Raid: Join burst action", setting_type=SettingType.NORMAL, default="ban"
+setting_joinburst_action = KV(
+    name="Anti Raid: Join burst action", default="ban"
 )
 
-setting_joinburst_dm = ServerSetting(
-    name="Anti Raid: Join burst dm", setting_type=SettingType.NORMAL, default="false"
+setting_joinburst_dm = KV(
+    name="Anti Raid: Join burst dm", default="false"
 )
 
-setting_joinburst_timeout = ServerSetting(
-    name="Anti Raid: Join burst timeout", setting_type=SettingType.NORMAL, default="3600"
+setting_joinburst_timeout = KV(
+    name="Anti Raid: Join burst timeout", default="3600"
 )
 
-setting_joinburst_dm_message = ServerSetting(
+setting_joinburst_dm_message = KV(
     name="Anti Raid: Join burst dm message",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_DM_MESSAGE,
 )
 
-setting_joinburst_reason = ServerSetting(
+setting_joinburst_reason = KV(
     name="Anti Raid: Join burst reason",
-    setting_type=SettingType.NORMAL,
     default=DEFAULT_JOINBURST_REASON,
 )
 
-setting_joinburst_count = ServerSetting(
-    name="Anti Raid: Join burst count", setting_type=SettingType.NORMAL, default="10"
+setting_joinburst_count = KV(
+    name="Anti Raid: Join burst count", default="10"
 )
 
-setting_joinburst_window = ServerSetting(
-    name="Anti Raid: Join burst window", setting_type=SettingType.NORMAL, default="30"
+setting_joinburst_window = KV(
+    name="Anti Raid: Join burst window", default="30"
 )
 
 

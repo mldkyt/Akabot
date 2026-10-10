@@ -5,10 +5,10 @@ from zoneinfo import ZoneInfo, available_timezones
 from sqlalchemy import Connection
 
 from database import engine
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
-setting_timezone = ServerSetting(
-    name="Timezone", setting_type=SettingType.NORMAL, default="UTC"
+setting_timezone = KV(
+    name="Timezone", default="UTC"
 )
 
 # Per-guild timezone cache to avoid a database query on every call.

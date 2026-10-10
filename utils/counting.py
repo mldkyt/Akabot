@@ -5,38 +5,30 @@ from discord import Message
 from sqlalchemy import Connection, select, update
 
 from database import counting_channels
-from utils.server_settings import (
-    ServerSetting,
-    SettingType,
-)
+from utils.server_settings import KV
 
-same_member_counting_mode = ServerSetting(
+same_member_counting_mode = KV(
     name="Counting same member mode",
-    setting_type=SettingType.NORMAL,
     default="true",
 )
 
-any_count_mode = ServerSetting(
+any_count_mode = KV(
     name="Counting any count mode",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-any_count_mode_count_frequency = ServerSetting(
+any_count_mode_count_frequency = KV(
     name="Counting any count mode: Count frequency of words",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-any_count_mode_count_words = ServerSetting(
+any_count_mode_count_words = KV(
     name="Counting any count mode: Count total word count",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-any_count_mode_minimum_frequency = ServerSetting(
+any_count_mode_minimum_frequency = KV(
     name="Counting any count mode: Minimum frequency",
-    setting_type=SettingType.NORMAL,
     default="1",
 )
 

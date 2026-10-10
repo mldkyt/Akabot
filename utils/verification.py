@@ -3,29 +3,25 @@ import datetime
 from discord import Guild
 
 from database import engine
-from utils.server_settings import ServerSetting, SettingType
+from utils.server_settings import KV
 
 
-setting_verification_role = ServerSetting(
+setting_verification_role = KV(
     name="Verification role",
-    setting_type=SettingType.NORMAL,
 )
 
-setting_verification_mode = ServerSetting(
+setting_verification_mode = KV(
     name="Verification mode",
-    setting_type=SettingType.NORMAL,
     default="none"
 )
 
-setting_introduction_channel = ServerSetting(
+setting_introduction_channel = KV(
     name="Introduction channel",
-    setting_type=SettingType.NORMAL,
     default=""
 )
 
-setting_kick_unverified_users = ServerSetting(
+setting_kick_unverified_users = KV(
     name="Kick unverified users",
-    setting_type=SettingType.NORMAL,
     default="false"
 )
 

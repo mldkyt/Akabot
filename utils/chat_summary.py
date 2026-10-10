@@ -24,39 +24,31 @@ from database import (
 from logger import akabot_logger
 from utils.ads import get_ad
 from utils.premium import has_premium
-from utils.server_settings import (
-    ServerSetting,
-    SettingType,
-)
+from utils.server_settings import KV
 from utils.timezones import get_now
 
-chat_summary_rows = ServerSetting(
+chat_summary_rows = KV(
     "Chat summary rows",
-    setting_type=SettingType.NORMAL,
     default="5",
 )
 
-chat_summary_extra = ServerSetting(
+chat_summary_extra = KV(
     "Chat summary extra summaries",
-    setting_type=SettingType.NORMAL,
     default="true",
 )
 
-chat_summary_rows_extra = ServerSetting(
+chat_summary_rows_extra = KV(
     "Chat summary rows (monthly, yearly)",
-    setting_type=SettingType.NORMAL,
     default="10",
 )
 
-chat_summary_unique = ServerSetting(
+chat_summary_unique = KV(
     "Chat summary unique mode",
-    setting_type=SettingType.NORMAL,
     default="false",
 )
 
-chat_summary_history = ServerSetting(
+chat_summary_history = KV(
     "Chat summary history",
-    setting_type=SettingType.NORMAL,
     default="true",
 )
 

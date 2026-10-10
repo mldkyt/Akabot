@@ -31,8 +31,8 @@ md_obj = MetaData()
 
 # Declare tables
 
-server_settings = Table(
-    "server_settings",
+kv = Table(
+    "kv",
     md_obj,
     Column("uid", VARCHAR, primary_key=True),
     Column("name", VARCHAR, primary_key=True),
@@ -45,16 +45,6 @@ user_settings = Table(
     Column("uid", VARCHAR, primary_key=True),
     Column("name", VARCHAR, primary_key=True),
     Column("value", VARCHAR),
-)
-
-server_settings_list = Table(
-    "server_settings_list",
-    md_obj,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("uid", VARCHAR),
-    Column("name", VARCHAR),
-    Column("value", VARCHAR),
-    UniqueConstraint("uid", "name", "value"),
 )
 
 user_settings_list = Table(
