@@ -5,11 +5,6 @@ from sqlalchemy import Connection, insert, select, update
 from database import kv
 
 
-class SettingType(Enum):
-    NORMAL = 1
-    LIST = 2
-
-
 class KV:
     def __init__(self, name: str, *, default: str | None = None):
         self.name = name

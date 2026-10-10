@@ -17,16 +17,16 @@ from logger import akabot_logger
 from utils.bot_channel import setting_bot_channel
 from utils.server_settings import KV
 from utils.timezones import get_now
-from utils.user_settings import UserSetting
+from utils.user_settings import UserKV
 
 server_response_setting = KV(
     "Chat streaks response setting",
     default="on",
 )
 
-user_response_setting = UserSetting(
+user_response_setting = UserKV(
     "Chat streaks response setting",
-    default="on",
+    "on",
 )
 
 server_message_delay = KV(
@@ -50,8 +50,9 @@ server_streak_same_member_check = KV(
 )
 
 
-user_setting_receive_notifications = UserSetting(
-    name="Remind about chat streaks in DM's", default="false"
+user_setting_receive_notifications = UserKV(
+    "Remind about chat streaks in DM's",
+    "false"
 )
 
 
