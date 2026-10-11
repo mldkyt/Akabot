@@ -211,9 +211,7 @@ async def sync_emojis(c: Connection, guild: Guild):
 
 async def sync_automod_actions(c: Connection, guild: Guild):
     if not guild.me.guild_permissions.manage_guild:
-        raise ValueError(
-            f"Akabot is missing the Manage Server permission in {guild.name}"
-        )
+        return
 
     automod_rules = await guild.fetch_auto_moderation_rules()
     automod_rule_ids = [i.id for i in automod_rules]
