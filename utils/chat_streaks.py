@@ -24,6 +24,11 @@ server_response_setting = KV(
     default="on",
 )
 
+server_response_name_setting = KV(
+    "Chat streaks response name setting",
+    default="on",
+)
+
 user_response_setting = UserKV(
     "Chat streaks response setting",
     "on",
@@ -323,6 +328,7 @@ async def handle_send_reply(
         with engine.begin() as c:
             bot_channel_id = setting_bot_channel.get(c, msg.guild.id)
             setting_response = server_response_setting.get(c, msg.guild.id)
+            setting_name = server_response_name_setting.get(c, msg.guild.id)
 
         if setting_response == "off":
             return None, False
@@ -354,7 +360,8 @@ async def handle_send_reply(
         if setting_response != "bot_noping":
             content = f"{msg.author.mention} {content}"
         else:
-            content = f"{msg.author.name}, {content}"
+            name = msg.author.display_name if setting_name == "display_name" else msg.author.name
+            content = f"{name}, {content}"
 
         return await bot_channel.send(content, view=view), False
     except Exception as e:

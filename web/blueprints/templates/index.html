@@ -43,6 +43,14 @@
     </select>
     <br>
 
+    <!-- Response name setting -->
+    <label for="response_name">When not pinging, use </label>
+    <select id="response_name" name="response_name">
+        <option value="display_name" {% if response_name == "display_name" %}selected{% endif %}>display name</option>
+        <option value="global_name" {% if response_name == "global_name" %}selected{% endif %}>global name</option>
+    </select>
+    <br>
+
     <!-- Response deletion delay -->
     <label for="responsedelete">Response delete delay</label>
     <input type="number" id="responsedelete" name="responsedelete" value="{{response_delete_delay}}">

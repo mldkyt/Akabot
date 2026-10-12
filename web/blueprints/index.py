@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from database import engine, synced_channels
 from utils.bot_channel import setting_admin_bot_channel, setting_bot_channel
-from utils.chat_streaks import server_message_delay, server_response_setting
+from utils.chat_streaks import server_message_delay, server_response_setting, server_response_name_setting
 from utils.timezones import (
     get_timezone,
     invalidate_timezone_cache,
@@ -66,6 +66,14 @@ def save_settings(auth):
         else:
             flash(f"Invalid value {request.form['response']} for bot response setting")
 
+    # Response name setting
+    if "response_name" in request.form:
+        if request.form["response_name"] in ["global_name", "display_name"]:
+            with engine.begin() as c:
+                server_response_name_setting.set(c, auth["guild"], request.form["response_name"])
+        else:
+            flash(f"Invalid value {request.form['response_name']} for bot response name setting")
+
     if "responsedelete" in request.form:
         if (
             request.form["responsedelete"].isnumeric()
@@ -115,6 +123,7 @@ def settings_index():
         ]
 
         response = server_response_setting.get(c, auth["guild"])
+        response_name = server_response_name_setting.get(c, auth["guild"])
         response_delete_delay = server_message_delay.get(c, auth["guild"])
         timezone = get_timezone(auth["guild"], c)
 
@@ -124,6 +133,7 @@ def settings_index():
         current_admin_bot_channel=admin_bot_chan,
         text_channels=text_channels,
         response=response,
+        response_name=response_name,
         response_delete_delay=response_delete_delay,
         timezone=timezone,
         timezone_groups=get_timezone_groups(),
