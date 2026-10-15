@@ -1,7 +1,6 @@
 [![Discord](https://img.shields.io/discord/1362400131206348930?style=plastic&label=Discord&color=%235762F0)](https://discord.gg/aE2MXH5Qp6)
-[![Follow mldkyt on @mldkyt@soc.mldkyt.com](https://img.shields.io/badge/Fediverse-%40mldkyt%40soc.mldkyt.com-purple?style=plastic)](https://soc.mldkyt.com/@mldkyt)
-[![Forgejo Issues](https://img.shields.io/gitea/issues/open/mldkyt/Akabot?gitea_url=https%3A%2F%2Fgit.mldkyt.com&style=plastic)](https://git.mldkyt.com/mldkyt/Akabot/issues)
-[![Forgejo Pull Requests](https://img.shields.io/gitea/pull-requests/open/mldkyt/Akabot?gitea_url=https%3A%2F%2Fgit.mldkyt.com&style=plastic)](https://git.mldkyt.com/mldkyt/Akabot/pulls)
+[![GitHub Issues](https://img.shields.io/github/issues/mldkyt/Akabot?style=plastic)](https://github.com/mldkyt/Akabot/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/mldkyt/Akabot?style=plastic)](https://github.com/mldkyt/Akabot/pulls)
 
 # Akabot
 
@@ -72,7 +71,7 @@ Features:
 ## Support
 
 - Join the Discord server: https://discord.gg/aE2MXH5Qp6
-- Read the documentation: https://git.mldkyt.com/mldkyt/akabot/wiki
+- Read the documentation: https://github.com/mldkyt/akabot/wiki
 
 ## Contributions
 
