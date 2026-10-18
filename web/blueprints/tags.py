@@ -72,6 +72,4 @@ def template_index():
             ).fetchall()
         ]
 
-        premium = get_premium_context(c, auth["guild"])
-
-    return render_template("tags.html", tags=tags_data, premium=premium)
+    return render_template("tags.html", tags=tags_data, premium=get_premium_context(c, auth["guild"]))

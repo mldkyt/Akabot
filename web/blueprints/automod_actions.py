@@ -1,8 +1,11 @@
 from flask import Blueprint, request, render_template, session, flash, redirect
 from sqlalchemy import Connection, delete, insert, select
-
 from database import automod_actions, engine, synced_automod_rules
 from utils.automod_actions import setting_automod_sync_error, time_str_to_time
+from sqlalchemy import Connection, delete, insert, select
+
+from database import automod_actions, engine, synced_automod_rules
+from utils.automod_actions import time_str_to_time
 from utils.premium import get_limit
 from web.webutils.discord_sync import validate_automod_rule_id
 from web.webutils.tokens import authorize, get_token_data

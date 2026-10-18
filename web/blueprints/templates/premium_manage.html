@@ -15,7 +15,6 @@
     <select id="duration" name="duration">
         <option value="monthly">Monthly (30 days)</option>
         <option value="yearly">Yearly (365 days)</option>
-        <option value="unlimited">Unlimited</option>
     </select>
     <br />
     <label for="format">Code prefix</label>
@@ -38,7 +37,7 @@
         {% for token in tokens %}
         <tr>
             <td>{{token.code}}</td>
-            <td>{% if token.unlimited %}Unlimited{% else %}{{token.duration_days}} days{% endif %}</td>
+            <td>{{token.duration_days}} days</td>
             <td>{{token.created_at}}</td>
             <td>
                 {% if token.redeemed_gid %}

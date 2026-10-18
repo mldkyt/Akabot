@@ -124,11 +124,9 @@ def periodic_messages_index():
                 }
             )
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "periodic_messages.html",
         text_channels=text_channels,
         periodic_messages=periodic_messages_data,
-        premium=premium,
+        premium=get_premium_context(c, auth["guild"]),
     )

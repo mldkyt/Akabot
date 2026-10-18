@@ -62,14 +62,12 @@ def suggestions_index():
 
         suggestion_threads_val = suggestion_threads.get(c, auth["guild"]) == "true"
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "suggestions.html",
         text_channels=text_channels,
         suggestion_channels=res_suggestion_channels,
         suggestion_threads=suggestion_threads_val,
-        premium=premium,
+        premium=get_premium_context(c, auth["guild"]),
         all_channels_ok=all_channels_ok,
     )
 

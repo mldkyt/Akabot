@@ -202,19 +202,22 @@ def premium_index():
         until = None
         if premium_context["active"]:
             row = c.execute(
-                select(premium_guilds.c.premium_until, premium_guilds.c.unlimited).where(
+                select(premium_guilds.c.premium_until).where(
                     premium_guilds.c.gid == str(auth["guild"])
                 )
             ).fetchone()
             if row is not None:
-                until = "unlimited" if row[1] else row[0].strftime("%Y-%m-%d")
+                until = row[0].strftime("%Y-%m-%d")
 
         if premium_context["enabled"]:
             usage = []
             for item in get_usage(c, auth["guild"]):
-                bar = usage_bar(c, auth["guild"], item["name"], item["usage"], item["free_limit"])
-                if bar is not None:
-                    usage.append(bar)
+                limit = get_limit(c, auth["guild"], item["free_limit"])
+                if limit is None:
+                    text = f"{item['usage']}/unlimited"
+                else:
+                    text = f"{item['usage']}/{limit} ({round(item['usage'] / limit * 100)}%)"
+                usage.append({"name": item["name"], "text": text})
         else:
             usage = []
 
@@ -244,30 +247,26 @@ def premium_manage():
     with engine.begin() as c:
         if request.method == "POST":
             if "count" in request.form and request.form["count"].isnumeric():
-                duration = request.form.get("duration")
-                unlimited = duration == "unlimited"
-                duration_days = 365 if duration == "yearly" else (30 if duration == "monthly" else 0)
+                duration_days = 365 if request.form.get("duration") == "yearly" else 30
 
                 prefix = request.form.get("format", "").strip().upper()
                 if prefix == "":
                     prefix = "AKA"
 
-                codes = generate_tokens(int(request.form["count"]), duration_days, prefix, unlimited=unlimited)
+                codes = generate_tokens(int(request.form["count"]), duration_days, prefix)
                 flash(f"Generated {len(codes)} premium codes")
 
         tokens = [
             {
                 "code": i[0],
                 "duration_days": i[1],
-                "unlimited": i[2],
-                "redeemed_gid": i[3],
-                "created_at": i[4].strftime("%Y-%m-%d") if i[4] is not None else "",
+                "redeemed_gid": i[2],
+                "created_at": i[3].strftime("%Y-%m-%d") if i[3] is not None else "",
             }
             for i in c.execute(
                 select(
                     premium_tokens.c.code,
                     premium_tokens.c.duration_days,
-                    premium_tokens.c.unlimited,
                     premium_tokens.c.redeemed_gid,
                     premium_tokens.c.created_at,
                 ).order_by(premium_tokens.c.created_at.desc())

@@ -107,11 +107,9 @@ def markov_index():
             ).fetchall()
         ]
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "markov.html",
         text_channels=text_channels,
         enabled_channels=enabled_channels,
-        premium=premium,
+        premium=get_premium_context(c, auth["guild"]),
     )

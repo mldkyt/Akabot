@@ -6,7 +6,6 @@ from sqlalchemy import (
     DATETIME,
     DECIMAL,
     VARCHAR,
-    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -565,7 +564,6 @@ premium_tokens = Table(
     md_obj,
     Column("code", VARCHAR, primary_key=True),
     Column("duration_days", Integer, nullable=False),
-    Column("unlimited", Boolean, nullable=False, default=False),
     Column("redeemed_gid", VARCHAR),
     Column("redeemed_at", DateTime),
     Column("created_at", DateTime, nullable=False),
@@ -576,7 +574,6 @@ premium_guilds = Table(
     md_obj,
     Column("gid", VARCHAR, primary_key=True),
     Column("premium_until", DateTime, nullable=False),
-    Column("unlimited", Boolean, nullable=False, default=False),
     Column("activated_at", DateTime, nullable=False),
 )
 

@@ -213,12 +213,6 @@ a:hover {
     margin: 0;
 }
 
-.flash--warning {
-    border-color: var(--yellow);
-    border-left-color: var(--yellow);
-    background-color: rgba(249, 226, 175, 0.08);
-}
-
 .premium-label {
     color: var(--yellow);
     font-weight: 600;

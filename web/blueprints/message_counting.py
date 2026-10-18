@@ -12,7 +12,7 @@ from utils.message_counting import (
     setting_enable_indexer,
     setting_enable_leaderboard,
 )
-from utils.premium import get_limit, get_premium_context
+from utils.premium import get_limit
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
