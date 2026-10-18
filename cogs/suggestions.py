@@ -15,10 +15,13 @@ class Suggestions(Cog):
 
     @Cog.listener()
     async def on_message(self, message: Message):
-        if message.author.bot or message.guild is None:
-            return
+        try:
+            if message.author.bot or message.guild is None:
+                return
 
-        await handle_suggestion_message(message)
+            await handle_suggestion_message(message)
+        except Exception:
+            akabot_logger.exception("Error when handling suggestion message")
 
 
 def setup(bot: Bot):
