@@ -4,7 +4,6 @@ from sqlalchemy import Connection, delete, insert, select
 from database import automod_actions, engine, synced_automod_rules
 from utils.automod_actions import setting_automod_sync_error
 from utils.automod_actions import time_str_to_time
-from utils.premium import get_limit
 from web.webutils.discord_sync import validate_automod_rule_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -102,14 +101,6 @@ def handle_create_automod_action(is_edit: bool = False) -> bool:
         content = request.form["message"]
 
     with engine.begin() as c:
-        limit = get_limit(c, int(auth["guild"]), 3)
-        current = c.execute(
-            select(automod_actions.c.id).where(automod_actions.c.gid == str(auth["guild"]))
-        ).fetchall()
-        if limit is not None and len(current) >= limit:
-            flash("Free plan is limited to 3 automod actions")
-            return False
-
         c.execute(
             insert(automod_actions).values(
                 gid=str(auth["guild"]),
