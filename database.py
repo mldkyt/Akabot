@@ -3,7 +3,6 @@ import os.path
 
 from sqlalchemy import (
     DATE,
-    DATETIME,
     DECIMAL,
     VARCHAR,
     Column,
@@ -14,6 +13,7 @@ from sqlalchemy import (
     StaticPool,
     Table,
     UniqueConstraint,
+    Boolean,
     create_engine,
 )
 
@@ -557,24 +557,6 @@ vote_points = Table(
     Column("uid", VARCHAR, primary_key=True),
     Column("points", Integer, nullable=False, default="0"),
     Column("last_vote", DateTime),
-)
-
-premium_tokens = Table(
-    "premium_tokens",
-    md_obj,
-    Column("code", VARCHAR, primary_key=True),
-    Column("duration_days", Integer, nullable=False),
-    Column("redeemed_gid", VARCHAR),
-    Column("redeemed_at", DateTime),
-    Column("created_at", DateTime, nullable=False),
-)
-
-premium_guilds = Table(
-    "premium_guilds",
-    md_obj,
-    Column("gid", VARCHAR, primary_key=True),
-    Column("premium_until", DateTime, nullable=False),
-    Column("activated_at", DateTime, nullable=False),
 )
 
 # Tasks
