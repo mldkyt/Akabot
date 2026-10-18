@@ -1,4 +1,3 @@
-from dateparser.data.date_translation_data import sn
 from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 

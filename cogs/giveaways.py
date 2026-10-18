@@ -5,6 +5,7 @@ from sqlalchemy import select
 from zoneinfo import ZoneInfo
 
 from database import engine, giveaways
+from utils.docs import Docs, DocsCommand, DocsCommandParameter
 from utils.giveaways import create_giveaway, get_ending_giveaways, roll_winners, mark_giveaway_ended, GiveawayEndedView, \
     GiveawayView, clear_expired_giveaways, get_giveaway_joins, get_giveaway_info_by_mid
 from logger import akabot_logger

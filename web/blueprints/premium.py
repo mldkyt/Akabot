@@ -5,7 +5,7 @@ from database import engine, giveaways, logging_channels, markov, message_counti
 from utils.anti_raid import setting_flood_enabled, setting_duplicate_enabled, setting_mentions_enabled, \
     setting_invite_enabled, setting_caps_enabled, setting_emoji_enabled, setting_sticker_enabled, \
     setting_joinburst_enabled, setting_mrbeast_scam
-from utils.premium import generate_tokens, get_premium_context, is_owner, redeem_token, usage_bar
+from utils.premium import generate_tokens, get_premium_context, is_owner, premium_enabled, redeem_token, usage_bar
 from utils.verification import setting_verification_role
 from utils.welcome_goodbye import welcome_channel, goodbye_channel
 from web.webutils.tokens import authorize, get_token_data
