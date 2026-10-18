@@ -213,58 +213,6 @@ a:hover {
     margin: 0;
 }
 
-.premium-label {
-    color: var(--yellow);
-    font-weight: 600;
-}
-
-/* Channel permission status */
-.channel-status {
-    font-size: 0.85em;
-    font-weight: 600;
-}
-
-.channel-status--ok {
-    color: var(--green);
-}
-
-.channel-status--missing {
-    color: var(--yellow);
-}
-
-/* Premium usage bar */
-.premium-usage {
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--accent);
-    background-color: var(--bg-surface);
-    padding: 10px 14px;
-    margin: 12px 0;
-    border-radius: var(--radius-sm);
-}
-
-.premium-usage-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    color: var(--text);
-}
-
-.progress-bar {
-    width: 100%;
-    height: 10px;
-    background-color: var(--bg-muted);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background-color: var(--accent);
-    border-radius: var(--radius-sm);
-    transition: width 0.2s ease;
-}
-
 /* Data cards */
 .data-card {
     border: 1px solid var(--border);
