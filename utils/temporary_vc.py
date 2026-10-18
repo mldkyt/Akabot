@@ -4,7 +4,6 @@ from discord import Member, VoiceState
 from sqlalchemy import delete, insert, select
 
 from database import engine, temporary_vc_creator_channels, temporary_vcs
-from utils.premium import get_limit
 
 # Guilds with a channel creation still in flight. Joined with the stored row
 # count before any await, so concurrent joins cannot all pass the limit check
@@ -26,42 +25,8 @@ async def h_join_channel(member: Member, after: VoiceState):
     if configured is None:
         return
 
-    with engine.begin() as c:
-        existing = c.execute(
-            select(temporary_vcs.c.cid).where(temporary_vcs.c.gid == str(member.guild.id))
-        ).fetchall()
-
-        # Drop rows whose channel no longer exists (deleted by hand, by a
-        # moderator or by an earlier run), otherwise the free plan limit
-        # never recovers once it has been hit once.
-        stale = []
-        for row in existing:
-            try:
-                channel_id = int(row[0])
-            except (TypeError, ValueError):
-                stale.append(row[0])
-                continue
-
-            if member.guild.get_channel(channel_id) is None:
-                stale.append(row[0])
-
-        if stale:
-            c.execute(
-                delete(temporary_vcs).where(
-                    (temporary_vcs.c.gid == str(member.guild.id))
-                    & (temporary_vcs.c.cid.in_(stale))
-                )
-            )
-
-        limit = get_limit(c, member.guild.id, 3)
-        existing_count = len(existing) - len(stale)
-
     gid = str(member.guild.id)
     in_flight = _in_flight.get(gid, 0)
-
-    if limit is not None and existing_count + in_flight >= limit:
-        await member.send("The free plan is limited to 3 simultaneous temporary voice channels, so one wasn't created.")
-        return
 
     _in_flight[gid] = in_flight + 1
 
