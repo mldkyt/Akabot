@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, suggestion_channels, synced_channels
-from utils.suggestions import suggestion_threads
+from utils.suggestions import get_bot_permissions, suggestion_threads
 from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
@@ -42,6 +42,7 @@ def suggestions_index():
             .where(suggestion_channels.c.gid == auth["guild"])
             .order_by(suggestion_channels.c.id)
         ).fetchall()
+        bot_permissions = get_bot_permissions(c, auth["guild"])
         for suggestion_channel in suggestion_channel_rows:
             channel_name = c.execute(
                 select(synced_channels.c.cname).where(
@@ -53,8 +54,11 @@ def suggestions_index():
                 {
                     "name": channel_name[0] if channel_name is not None else "unknown",
                     "id": suggestion_channel[0],
+                    "bot_ok": bot_permissions.get(suggestion_channel[0], True),
                 }
             )
+
+        all_channels_ok = all(i["bot_ok"] for i in res_suggestion_channels)
 
         suggestion_threads_val = suggestion_threads.get(c, auth["guild"]) == "true"
 
@@ -66,6 +70,7 @@ def suggestions_index():
         suggestion_channels=res_suggestion_channels,
         suggestion_threads=suggestion_threads_val,
         premium=premium,
+        all_channels_ok=all_channels_ok,
     )
 
 

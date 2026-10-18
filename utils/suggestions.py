@@ -1,6 +1,8 @@
+import json
+
 from discord import ButtonStyle, Color, Embed, EmbedFooter, Interaction, Message
 from discord.ui import Button, View, button
-from sqlalchemy import insert, select
+from sqlalchemy import Connection, insert, select
 
 from database import engine, suggestion_channels, suggestion_voting, suggestions
 from utils.server_settings import KV
@@ -8,6 +10,62 @@ from utils.server_settings import KV
 suggestion_threads = KV(
     name="Suggestion threads"
 )
+
+suggestion_bot_permissions = KV(
+    name="Suggestion bot permissions"
+)
+
+
+def update_bot_permissions(c: Connection, guild) -> None:
+    result: dict[str, bool] = {}
+
+    channel_rows = c.execute(
+        select(suggestion_channels.c.cid).where(
+            suggestion_channels.c.gid == str(guild.id)
+        )
+    ).fetchall()
+
+    suggestion_threads_enabled = suggestion_threads.get(c, guild.id) == "true"
+
+    for channel_row in channel_rows:
+        cid = channel_row[0]
+        channel = guild.get_channel(int(cid))
+
+        if channel is None:
+            result[cid] = False
+            continue
+
+        permissions = channel.permissions_for(guild.me)
+        ok = all(
+            (
+                permissions.view_channel,
+                permissions.send_messages,
+                permissions.embed_links,
+                permissions.manage_messages,
+            )
+        )
+        if suggestion_threads_enabled:
+            ok = ok and permissions.create_public_threads
+
+        result[cid] = ok
+
+    suggestion_bot_permissions.set(c, guild.id, json.dumps(result))
+
+
+def get_bot_permissions(c: Connection, guild_id: int) -> dict[str, bool]:
+    raw = suggestion_bot_permissions.get(c, guild_id)
+    if not raw:
+        return {}
+
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return {}
+
+    if not isinstance(data, dict):
+        return {}
+
+    return {str(cid): bool(ok) for cid, ok in data.items()}
 
 
 def make_embed(message_id: int, content: str | Embed) -> Embed:
@@ -188,6 +246,8 @@ async def handle_suggestion_message(msg: Message):
         ).fetchone()
         if configured is None:
             return
+
+        update_bot_permissions(c, msg.guild)
 
         await msg.delete()
         sent_message = await msg.channel.send(

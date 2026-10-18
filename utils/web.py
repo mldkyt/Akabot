@@ -16,6 +16,7 @@ from database import (
 from logger import akabot_logger
 from utils.automod_actions import setting_automod_sync_error
 from utils.reaction_roles import update_bot_permission
+from utils.suggestions import update_bot_permissions
 
 
 async def sync_text_channels(c: Connection, guild: Guild):
@@ -268,6 +269,7 @@ async def sync_guild(guild: Guild):
             await sync_roles(c, guild)
             await sync_emojis(c, guild)
             update_bot_permission(c, guild)
+            update_bot_permissions(c, guild)
             try:
                 await sync_automod_actions(c, guild)
                 setting_automod_sync_error.set(c, guild.id, "")
