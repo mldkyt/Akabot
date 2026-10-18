@@ -32,7 +32,6 @@ function deactivateAllButtons(id) {
        {% for setting in settings %}
        <input class="logging_{{logging_channel.id}}" type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.key in logging_channel.enabled %}checked{% endif %}>
        <label for="{{setting.key}}">Log {{setting.name}}</label>
-       {% if premium.enabled and setting.key not in basic_keys %}<span class="premium-label">(Premium)</span>{% endif %}
        <br>
        {% endfor %}
 
@@ -69,7 +68,6 @@ function deactivateAllButtons(id) {
         {% for setting in settings %}
         <input class="logging_add" type="checkbox" name="{{setting.key}}" id="{{setting.key}}" checked>
         <label for="{{setting.key}}">Log {{setting.name}}</label>
-        {% if premium.enabled and setting.key not in basic_keys %}<span class="premium-label">(Premium)</span>{% endif %}
         <br>
         {% endfor %}
 

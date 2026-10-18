@@ -62,17 +62,6 @@ logging_settings: list[tuple[str, str]] = [
     ("anti_raid", "Anti Raid"),
 ]
 
-basic_logging_settings: list[tuple[str, str]] = [
-    ("member_join", "member joins"),
-    ("member_leave", "member leaves"),
-    ("member_ban", "member bans"),
-    ("member_unban", "member unbans"),
-    ("channel_create", "channel creates"),
-    ("channel_delete", "channel deletes"),
-    ("role_create", "role creates"),
-    ("role_delete", "role deletes"),
-]
-
 
 async def send_message_to_log_channel(
     c: Connection, guild: Guild, msg_type: str, message: str | Embed
