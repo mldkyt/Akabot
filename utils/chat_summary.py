@@ -23,7 +23,6 @@ from database import (
 )
 from logger import akabot_logger
 from utils.ads import get_ad
-from utils.premium import has_premium
 from utils.server_settings import KV
 from utils.timezones import get_now
 
@@ -319,9 +318,8 @@ async def summarize(c: Connection, g: Guild):
             .order_by(chat_summary_channels.c.cid)
         ).fetchall()
     ]
-    premium = has_premium(c, g.id)
-    extra = chat_summary_extra.get(c, g.id) == "true" and premium
-    history_enabled = chat_summary_history.get(c, g.id) == "true" and premium
+    extra = chat_summary_extra.get(c, g.id)
+    history_enabled = chat_summary_history.get(c, g.id) == "true"
 
     for i in chat_summaries:
         channel = g.get_channel(int(i))

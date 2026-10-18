@@ -4,7 +4,6 @@ from sqlalchemy import delete, insert, select
 from database import chat_summary_channels, engine, synced_channels
 from utils.chat_summary import chat_summary_extra, chat_summary_history, chat_summary_rows, chat_summary_rows_extra, \
     chat_summary_unique
-from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -15,8 +14,6 @@ def handle_settings(auth):
         return
 
     with engine.begin() as c:
-        free_tier = get_premium_context(c, auth["guild"])["premium_only"]
-
         if "row_count" in request.form and request.form["row_count"].isnumeric():
             if 10 >= int(request.form["row_count"]) >= 2:
                 chat_summary_rows.set(c, auth["guild"], request.form["row_count"])
@@ -29,18 +26,12 @@ def handle_settings(auth):
             chat_summary_unique.set(c, auth["guild"], "false")
 
         if request.form.get("extra") == "on":
-            if free_tier and chat_summary_extra.get(c, auth["guild"]) != "true":
-                flash("Monthly and yearly summaries are a Premium feature")
-            else:
-                chat_summary_extra.set(c, auth["guild"], "true")
+            chat_summary_extra.set(c, auth["guild"], "true")
         else:
             chat_summary_extra.set(c, auth["guild"], "false")
 
         if request.form.get("history") == "on":
-            if free_tier and chat_summary_history.get(c, auth["guild"]) != "true":
-                flash("Summary history is a Premium feature")
-            else:
-                chat_summary_history.set(c, auth["guild"], "true")
+            chat_summary_history.set(c, auth["guild"], "true")
         else:
             chat_summary_history.set(c, auth["guild"], "false")
 
@@ -63,16 +54,6 @@ def handle_adding_channels(auth):
                 flash("This channel was already added")
                 return
 
-            limit = get_limit(c, auth["guild"], 1)
-            current = c.execute(
-                select(chat_summary_channels.c.cid).where(
-                    chat_summary_channels.c.gid == str(auth["guild"])
-                )
-            ).fetchall()
-            if limit is not None and len(current) >= limit:
-                flash("Free plan is limited to 1 chat summary channel")
-                return
-
             c.execute(
                 insert(chat_summary_channels).values(
                     gid=str(auth["guild"]),
@@ -81,6 +62,7 @@ def handle_adding_channels(auth):
                     last_member="0",
                 )
             )
+
 
 def handle_delete(auth):
     with engine.begin() as c:
@@ -147,9 +129,7 @@ def chat_summary_index():
         unique_mode = chat_summary_unique.get(c, auth["guild"]) == "true"
         history = chat_summary_history.get(c, auth["guild"]) == "true"
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template("chat_summary.html", channels=chans,
                            chat_summaries=chat_summaries, extra=extra,
                            row_count=row_count, row_count_extra=row_count_extra,
-                           unique_mode=unique_mode, history=history, premium=premium)
+                           unique_mode=unique_mode, history=history)
