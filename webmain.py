@@ -27,7 +27,6 @@ from web.blueprints.message_counting import message_counting_bp
 from web.blueprints.moderation import moderation_bp
 from web.blueprints.periodic_messages import periodic_messages_bp
 from web.blueprints.reaction_roles import reaction_roles_bp
-from web.blueprints.premium import premium_bp
 from web.blueprints.roles_on_join import roles_on_join_bp
 from web.blueprints.statistic_channels import statistic_channels_bp
 from web.blueprints.sticky_messages import sticky_messages_bp
@@ -37,8 +36,6 @@ from web.blueprints.temporary_vcs import temporary_vcs_bp
 from web.blueprints.verification import verification_bp
 from web.blueprints.voting import voting_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
-
-from utils.premium import premium_enabled
 
 load_dotenv()
 
@@ -69,8 +66,6 @@ def handle_unexpected_exception(error):
     app.logger.exception("Unhandled exception")
     return "Internal Server Error", 500
 
-app.context_processor(lambda: {"premium_enabled": premium_enabled()})
-
 PAGE_USAGE = {
     "/settings/counting": ("Counting channels", 1),
     "/settings/leveling": ("Leveling rewards", 3),
@@ -94,49 +89,6 @@ PAGE_USAGE = {
     "/settings/reaction_roles": ("Reaction role messages", 3),
 }
 
-
-@app.context_processor
-def inject_premium_usage():
-    if "token" not in session:
-        return {}
-
-    match = None
-    for path, config in PAGE_USAGE.items():
-        if request.path.startswith(path):
-            match = (path, config)
-            break
-
-    if match is None:
-        return {}
-
-    auth = get_token_data(session["token"])
-    if auth is None:
-        return {}
-
-    with engine.begin() as c:
-        if not premium_enabled():
-            return {"premium_usage": None}
-
-        items = {i["name"]: i for i in get_usage(c, auth["guild"])}
-
-        if match[1] is None:
-            usage = items["Welcome messages"]["usage"] + items["Goodbye messages"]["usage"]
-            return {
-                "premium_usage": usage_bar(
-                    c, auth["guild"], "Welcome & Goodbye messages", usage, 2
-                )
-            }
-
-        name, free_limit = match[1]
-        item = items.get(name)
-        if item is None:
-            return {}
-
-        return {
-            "premium_usage": usage_bar(
-                c, auth["guild"], name, item["usage"], free_limit
-            )
-        }
 
 # Settings
 app.register_blueprint(settings_index_bp)
@@ -165,7 +117,6 @@ app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)
 app.register_blueprint(message_counting_bp)
-app.register_blueprint(premium_bp)
 
 if os.getenv("TOPGG_WEBHOOK_SECRET") is not None:
     app.register_blueprint(voting_bp)
