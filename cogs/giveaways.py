@@ -49,18 +49,6 @@ class Giveaways(Cog):
         if end_date.tzinfo is not None:
             end_date = end_date.astimezone(ZoneInfo(tz_name)).replace(tzinfo=None)
 
-        with engine.begin() as c:
-            limit = get_limit(c, ctx.guild.id, 1)
-            if limit is not None:
-                active = len(c.execute(
-                    select(giveaways.c.id).where(
-                        (giveaways.c.gid == str(ctx.guild.id)) & (giveaways.c.end.is_not(None))
-                    )
-                ).fetchall())
-                if active >= limit:
-                    await ctx.respond("Free plan is limited to 1 active giveaway", ephemeral=True)
-                    return
-
         message = await ctx.channel.send(f"**Giveaway**\n{item}", view=GiveawayView())
         create_giveaway(message, winner_count, end_date)
 
