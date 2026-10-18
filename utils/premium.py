@@ -43,28 +43,17 @@ def redeem_token(c: Connection, guild_id: int, code: str) -> tuple[bool, str]:
     code = code.strip().upper()
 
     token = c.execute(
-        select(premium_tokens.c.duration_days, premium_tokens.c.unlimited)
+        select(premium_tokens.c.duration_days, premium_tokens.c.redeemed_gid, premium_tokens.c.unlimited)
         .where(premium_tokens.c.code == code)
     ).fetchone()
 
     if token is None:
         return False, "invalid code"
 
-    now = datetime.datetime.now()
-
-    # Claim the code before granting anything. The IS NULL predicate makes the
-    # claim atomic, so a concurrent redeem of the same code updates zero rows
-    # instead of both callers extending premium.
-    claimed = c.execute(
-        update(premium_tokens)
-        .where(
-            (premium_tokens.c.code == code)
-            & (premium_tokens.c.redeemed_gid.is_(None))
-        )
-        .values(redeemed_gid=str(guild_id), redeemed_at=now)
-    )
-    if claimed.rowcount == 0:
+    if token[1] is not None:
         return False, "code was already used"
+
+    now = datetime.datetime.now()
 
     existing = c.execute(
         select(premium_guilds.c.premium_until, premium_guilds.c.unlimited).where(
@@ -77,7 +66,7 @@ def redeem_token(c: Connection, guild_id: int, code: str) -> tuple[bool, str]:
     else:
         base = now
 
-    if token[1]:
+    if token[2]:
         new_until = base
     else:
         new_until = base + datetime.timedelta(days=token[0])
@@ -86,7 +75,7 @@ def redeem_token(c: Connection, guild_id: int, code: str) -> tuple[bool, str]:
         c.execute(
             update(premium_guilds)
             .where(premium_guilds.c.gid == str(guild_id))
-            .values(activated_at=now, premium_until=new_until, unlimited=existing[1] or bool(token[1]))
+            .values(activated_at=now, premium_until=new_until, unlimited=existing[1] or bool(token[2]))
         )
     else:
         c.execute(
@@ -94,11 +83,16 @@ def redeem_token(c: Connection, guild_id: int, code: str) -> tuple[bool, str]:
                 gid=str(guild_id),
                 premium_until=new_until,
                 activated_at=now,
-                unlimited=bool(token[1]),
+                unlimited=bool(token[2]),
             )
         )
+    c.execute(
+        update(premium_tokens)
+        .where(premium_tokens.c.code == code)
+        .values(redeemed_gid=str(guild_id), redeemed_at=now)
+    )
 
-    if token[1]:
+    if token[2]:
         return True, "unlimited"
     return True, new_until.strftime("%Y-%m-%d")
 
