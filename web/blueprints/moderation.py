@@ -2,7 +2,6 @@ from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, moderator_roles, synced_roles
-from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -20,16 +19,6 @@ def handle_add(auth):
             ).fetchone()
             if existing is not None:
                 flash("Already present")
-                return
-
-            limit = get_limit(c, auth["guild"], 5)
-            current = c.execute(
-                select(moderator_roles.c.rid).where(
-                    moderator_roles.c.gid == auth["guild"]
-                )
-            ).fetchall()
-            if limit is not None and len(current) >= limit:
-                flash("Free plan is limited to 5 moderator roles")
                 return
 
             c.execute(
@@ -103,12 +92,11 @@ def moderation_index():
             ).fetchall()
         ]
 
-        premium = get_premium_context(c, auth["guild"])
+
 
     return render_template(
-        "moderation.html", roles=roles, moderator_roles=the_roles, premium=premium
+        "moderation.html", roles=roles, moderator_roles=the_roles
     )
-
 
 @moderation_bp.route("/settings/moderation/delete/<index>")
 def moderation_delete(index: str):
