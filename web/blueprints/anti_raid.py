@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, render_template, request, session
+from flask import Blueprint, render_template, request, session
 
 from database import engine
 from utils.anti_raid import (
@@ -83,7 +83,6 @@ from utils.anti_raid import (
     setting_sticker_timeout,
     setting_sticker_window,
 )
-from utils.premium import get_premium_context
 from web.webutils.tokens import authorize, get_token_data
 
 anti_raid_bp = Blueprint("anti_raid", __name__, template_folder="templates")
@@ -155,43 +154,6 @@ def _set_text(c, guild, setting, form_key):
         setting.set(c, guild, value)
 
 
-def _enabled_count(c, guild):
-    count = 0
-    for setting in (
-        setting_mrbeast_scam,
-        setting_flood_enabled,
-        setting_duplicate_enabled,
-        setting_mentions_enabled,
-        setting_invite_enabled,
-        setting_caps_enabled,
-        setting_emoji_enabled,
-        setting_sticker_enabled,
-        setting_joinburst_enabled,
-    ):
-        if setting.get(c, guild) == "true":
-            count += 1
-    return count
-
-
-def _set_enabled(c, guild, setting, form_key, free_tier, enabled_count):
-    requested = bool(request.form.get(form_key))
-    already = setting.get(c, guild) == "true"
-
-    if requested:
-        if free_tier and not already and enabled_count >= 3:
-            flash("Free plan is limited to 3 enabled anti raid protections")
-            return enabled_count
-        setting.set(c, guild, "true")
-        if not already:
-            return enabled_count + 1
-    else:
-        setting.set(c, guild, "false")
-        if already:
-            return enabled_count - 1
-
-    return enabled_count
-
-
 @anti_raid_bp.route("/settings/anti_raid", methods=["GET", "POST"])
 def anti_raid_index():
     authorization = authorize("/settings/anti_raid")
@@ -205,9 +167,6 @@ def anti_raid_index():
 
     with engine.begin() as c:
         if request.method == "POST":
-            free_tier = get_premium_context(c, auth["guild"])["premium_only"]
-            enabled_count = _enabled_count(c, auth["guild"])
-
             if request.form.get("kick_no_pfp"):
                 setting_no_avatar.set(c, auth["guild"], "true")
             else:
@@ -220,13 +179,19 @@ def anti_raid_index():
             ):
                 setting_minimum_age.set(c, auth["guild"], request.form["kick_min_age"])
 
-            enabled_count = _set_enabled(c, auth["guild"], setting_mrbeast_scam, "mrbeast_scam", free_tier, enabled_count)
+            if request.form.get("mrbeast_scam"):
+                setting_mrbeast_scam.set(c, auth["guild"], "true")
+            else:
+                setting_mrbeast_scam.set(c, auth["guild"], "false")
             if request.form.get("mrbeast_action") in VALID_ACTIONS:
                 setting_mrbeast_action.set(c, auth["guild"], request.form["mrbeast_action"])
             _set_checkbox(c, auth["guild"], setting_mrbeast_dm, "mrbeast_dm")
             _set_checkbox(c, auth["guild"], setting_mrbeast_delete, "mrbeast_delete")
 
-            enabled_count = _set_enabled(c, auth["guild"], setting_flood_enabled, "flood_enabled", free_tier, enabled_count)
+            if request.form.get("flood_enabled"):
+                setting_flood_enabled.set(c, auth["guild"], "true")
+            else:
+                setting_flood_enabled.set(c, auth["guild"], "false")
             if request.form.get("flood_action") in VALID_ACTIONS:
                 setting_flood_action.set(c, auth["guild"], request.form["flood_action"])
             _set_checkbox(c, auth["guild"], setting_flood_dm, "flood_dm")
@@ -235,7 +200,10 @@ def anti_raid_index():
             _set_number(c, auth["guild"], setting_flood_window, "flood_window")
 
             if message_intent:
-                enabled_count = _set_enabled(c, auth["guild"], setting_duplicate_enabled, "duplicate_enabled", free_tier, enabled_count)
+                if request.form.get("duplicate_enabled"):
+                    setting_duplicate_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_duplicate_enabled.set(c, auth["guild"], "false")
                 if request.form.get("duplicate_action") in VALID_ACTIONS:
                     setting_duplicate_action.set(c, auth["guild"], request.form["duplicate_action"])
                 _set_checkbox(c, auth["guild"], setting_duplicate_dm, "duplicate_dm")
@@ -243,14 +211,20 @@ def anti_raid_index():
                 _set_number(c, auth["guild"], setting_duplicate_count, "duplicate_count")
                 _set_number(c, auth["guild"], setting_duplicate_window, "duplicate_window")
 
-                enabled_count = _set_enabled(c, auth["guild"], setting_mentions_enabled, "mentions_enabled", free_tier, enabled_count)
+                if request.form.get("mentions_enabled"):
+                    setting_mentions_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_mentions_enabled.set(c, auth["guild"], "false")
                 if request.form.get("mentions_action") in VALID_ACTIONS:
                     setting_mentions_action.set(c, auth["guild"], request.form["mentions_action"])
                 _set_checkbox(c, auth["guild"], setting_mentions_dm, "mentions_dm")
                 _set_checkbox(c, auth["guild"], setting_mentions_delete, "mentions_delete")
                 _set_number(c, auth["guild"], setting_mentions_count, "mentions_count")
 
-                enabled_count = _set_enabled(c, auth["guild"], setting_invite_enabled, "invite_enabled", free_tier, enabled_count)
+                if request.form.get("invite_enabled"):
+                    setting_invite_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_invite_enabled.set(c, auth["guild"], "false")
                 if request.form.get("invite_action") in VALID_ACTIONS:
                     setting_invite_action.set(c, auth["guild"], request.form["invite_action"])
                 _set_checkbox(c, auth["guild"], setting_invite_dm, "invite_dm")
@@ -258,7 +232,10 @@ def anti_raid_index():
                 _set_number(c, auth["guild"], setting_invite_count, "invite_count")
                 _set_number(c, auth["guild"], setting_invite_window, "invite_window")
 
-                enabled_count = _set_enabled(c, auth["guild"], setting_caps_enabled, "caps_enabled", free_tier, enabled_count)
+                if request.form.get("caps_enabled"):
+                    setting_caps_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_caps_enabled.set(c, auth["guild"], "false")
                 if request.form.get("caps_action") in VALID_ACTIONS:
                     setting_caps_action.set(c, auth["guild"], request.form["caps_action"])
                 _set_checkbox(c, auth["guild"], setting_caps_dm, "caps_dm")
@@ -266,7 +243,10 @@ def anti_raid_index():
                 _set_number(c, auth["guild"], setting_caps_percentage, "caps_percentage")
                 _set_number(c, auth["guild"], setting_caps_min_length, "caps_min_length")
 
-                enabled_count = _set_enabled(c, auth["guild"], setting_emoji_enabled, "emoji_enabled", free_tier, enabled_count)
+                if request.form.get("emoji_enabled"):
+                    setting_emoji_enabled.set(c, auth["guild"], "true")
+                else:
+                    setting_emoji_enabled.set(c, auth["guild"], "false")
                 if request.form.get("emoji_action") in VALID_ACTIONS:
                     setting_emoji_action.set(c, auth["guild"], request.form["emoji_action"])
                 _set_checkbox(c, auth["guild"], setting_emoji_dm, "emoji_dm")
@@ -274,7 +254,10 @@ def anti_raid_index():
                 _set_number(c, auth["guild"], setting_emoji_count, "emoji_count")
                 _set_number(c, auth["guild"], setting_emoji_window, "emoji_window")
 
-            enabled_count = _set_enabled(c, auth["guild"], setting_sticker_enabled, "sticker_enabled", free_tier, enabled_count)
+            if request.form.get("sticker_enabled"):
+                setting_sticker_enabled.set(c, auth["guild"], "true")
+            else:
+                setting_sticker_enabled.set(c, auth["guild"], "false")
             if request.form.get("sticker_action") in VALID_ACTIONS:
                 setting_sticker_action.set(c, auth["guild"], request.form["sticker_action"])
             _set_checkbox(c, auth["guild"], setting_sticker_dm, "sticker_dm")
@@ -282,7 +265,10 @@ def anti_raid_index():
             _set_number(c, auth["guild"], setting_sticker_count, "sticker_count")
             _set_number(c, auth["guild"], setting_sticker_window, "sticker_window")
 
-            enabled_count = _set_enabled(c, auth["guild"], setting_joinburst_enabled, "joinburst_enabled", free_tier, enabled_count)
+            if request.form.get("joinburst_enabled"):
+                setting_joinburst_enabled.set(c, auth["guild"], "true")
+            else:
+                setting_joinburst_enabled.set(c, auth["guild"], "false")
             if request.form.get("joinburst_action") in VALID_ACTIONS:
                 setting_joinburst_action.set(c, auth["guild"], request.form["joinburst_action"])
             _set_checkbox(c, auth["guild"], setting_joinburst_dm, "joinburst_dm")
@@ -363,8 +349,6 @@ def anti_raid_index():
             template_data[f"{prefix}_dm_message"] = dm_message_setting.get(c, auth["guild"])
             template_data[f"{prefix}_reason"] = reason_setting.get(c, auth["guild"])
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "anti_raid.html",
         kick_no_pfp=kick_no_pfp,
@@ -420,6 +404,5 @@ def anti_raid_index():
         joinburst_count=joinburst_count,
         joinburst_window=joinburst_window,
         message_intent=message_intent,
-        premium=premium,
         **template_data,
     )

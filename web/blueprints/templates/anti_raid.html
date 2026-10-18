@@ -3,8 +3,6 @@
 {% block main %}
 <h1>Anti Raid</h1>
 
-{% if premium.enabled %}<p>The free plan is limited to 3 enabled protections.</p>{% endif %}
-
 {% for flash in get_flashed_messages() %}
 <div class="flash">
     <p>{{flash}}</p>
