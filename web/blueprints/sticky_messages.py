@@ -2,8 +2,6 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, sticky_messages, synced_channels
-from utils.premium import get_limit, get_premium_context
-from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 sticky_messages_bp = Blueprint("sticky_messages", __name__, template_folder="templates")
@@ -41,13 +39,6 @@ def sticky_messages_index():
                     )
 
                 else:
-                    limit = get_limit(c, auth["guild"], 1)
-                    sticky_count = len(c.execute(
-                        select(sticky_messages.c.channel_id).where(sticky_messages.c.guild_id == auth["guild"])
-                    ).fetchall())
-                    if limit is not None and sticky_count >= limit:
-                        return quick_response("Free plan is limited to 1 sticky message", 400)
-
                     c.execute(
                         insert(sticky_messages).values(
                             channel_id=request.form["channel"],
@@ -96,5 +87,4 @@ def sticky_messages_index():
         "sticky_messages.html",
         text_channels=text_channels,
         sticky_messages=sticky_messages_data,
-        premium=get_premium_context(c, auth["guild"]),
     )

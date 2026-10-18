@@ -4,7 +4,6 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, periodic_messages, synced_channels
-from utils.premium import get_limit, get_premium_context
 from utils.timezones import get_now
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
@@ -29,7 +28,7 @@ def periodic_messages_index():
                 request.form.get("channel")
                 and request.form.get("period")
                 and request.form.get("period_num")
-                and                 request.form.get("content")
+                and request.form.get("content")
             ):
                 if not request.form["period_num"].isnumeric():
                     return quick_response("The period number must be a number", 400)
@@ -60,13 +59,6 @@ def periodic_messages_index():
                         )
                     )
                 else:
-                    limit = get_limit(c, auth["guild"], 2)
-                    periodic_count = len(c.execute(
-                        select(periodic_messages.c.id).where(periodic_messages.c.guild_id == auth["guild"])
-                    ).fetchall())
-                    if limit is not None and periodic_count >= limit:
-                        return quick_response("Free plan is limited to 2 periodic messages", 400)
-
                     now = get_now(auth["guild"], c)
                     c.execute(
                         insert(periodic_messages).values(
@@ -128,5 +120,4 @@ def periodic_messages_index():
         "periodic_messages.html",
         text_channels=text_channels,
         periodic_messages=periodic_messages_data,
-        premium=get_premium_context(c, auth["guild"]),
     )

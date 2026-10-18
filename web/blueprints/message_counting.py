@@ -12,7 +12,6 @@ from utils.message_counting import (
     setting_enable_indexer,
     setting_enable_leaderboard,
 )
-from utils.premium import get_limit
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
@@ -55,13 +54,6 @@ def message_counting_index():
 
                 if request.form["type"] == "multiplier" and \
                     "multiplier" in request.form:
-                    limit = get_limit(c, auth["guild"], 3)
-                    reward_count = len(c.execute(
-                        select(message_counting_rewards.c.id).where(message_counting_rewards.c.gid == auth["guild"])
-                    ).fetchall())
-                    if limit is not None and reward_count >= limit:
-                        return quick_response("Free plan is limited to 3 rewards", 400)
-
                     multiplier = request.form["multiplier"]
 
                     c.execute(
@@ -71,13 +63,6 @@ def message_counting_index():
 
                 if request.form["type"] == "role" and \
                     "role" in request.form:
-                    limit = get_limit(c, auth["guild"], 3)
-                    reward_count = len(c.execute(
-                        select(message_counting_rewards.c.id).where(message_counting_rewards.c.gid == auth["guild"])
-                    ).fetchall())
-                    if limit is not None and reward_count >= limit:
-                        return quick_response("Free plan is limited to 3 rewards", 400)
-
                     role_id = request.form["role"]
                     role = c.execute(
                         select(synced_roles.c.rid)
@@ -159,17 +144,13 @@ def message_counting_index():
             .where(synced_roles.c.gid == auth["guild"])
         )]
 
-    with engine.begin() as c:
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "message_counting.html",
         enable_leaderboard=enable_leaderboard,
         enable_indexer=enable_indexer,
         count_deletes=count_deletes,
         rewards=rewards,
-        roles=roles,
-        premium=premium,
+        roles=roles
     )
 
 
