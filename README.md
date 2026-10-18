@@ -44,7 +44,6 @@ Features:
   channel and put it on top of the list, and ensure the bot has channel edit permissions.
 - **Verification**: You can set up verification for your
   server using the verification module. Members have to solve a simple math problem to verify.
-- **Premium**: Every module has a free-tier limit. Redeem a premium code (timed or unlimited) to lift the limits and
   unlock more of every feature. Usage bars in the dashboard show where you stand.
 - **Timezones**: Set your server's timezone so daily features like chat streaks and chat summaries follow your local
   day.

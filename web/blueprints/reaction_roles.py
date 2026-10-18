@@ -13,7 +13,6 @@ from database import (
     synced_roles,
     tasks,
 )
-from utils.premium import get_limit, get_premium_context
 from utils.reaction_roles import CUSTOM_EMOJI_RE, setting_reaction_roles_bot_ok
 from utils.tasks import create_task
 from web.webutils.tokens import authorize, get_token_data
@@ -401,7 +400,6 @@ def reaction_roles_index():
 
             failed_tasks.append({"id": row.id, "type": row.type, "error": row.error})
 
-        premium = get_premium_context(c, auth["guild"])
         bot_ok = setting_reaction_roles_bot_ok.get(c, auth["guild"]) == "true"
 
     return render_template(
@@ -412,6 +410,5 @@ def reaction_roles_index():
         reaction_roles=reaction_role_list,
         failed_tasks=failed_tasks,
         bot_ok=bot_ok,
-        premium=premium,
         max_options=MAX_OPTIONS,
     )
