@@ -25,6 +25,24 @@ async def h_join_channel(member: Member, after: VoiceState):
     if configured is None:
         return
 
+    with engine.begin() as c:
+        existing = c.execute(
+            select(temporary_vcs.c.cid).where(temporary_vcs.c.gid == str(member.guild.id))
+        ).fetchall()
+
+        # Drop rows whose channel no longer exists (deleted by hand, by a
+        # moderator or by an earlier run)
+        stale = []
+        for row in existing:
+            try:
+                channel_id = int(row[0])
+            except (TypeError, ValueError):
+                stale.append(row[0])
+                continue
+
+            if member.guild.get_channel(channel_id) is None:
+                stale.append(row[0])
+
     gid = str(member.guild.id)
     in_flight = _in_flight.get(gid, 0)
 
