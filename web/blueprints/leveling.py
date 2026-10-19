@@ -8,7 +8,6 @@ from database import engine, leveling_multipliers, leveling_rewards, synced_role
 from logger import akabot_logger
 from utils.leveling import setting_xp_per_message, setting_level_up_message, setting_level_up_message_text, \
     setting_xp_per_level
-from utils.premium import get_premium_context
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -29,10 +28,7 @@ def handle_settings(auth):
         level_up_message_text = request.form.get("level_up_message_text")
 
         if level_up_message_text:
-            if get_premium_context(c, auth["guild"])["premium_only"] and \
-                    level_up_message_text != setting_level_up_message_text.get(c, auth["guild"]):
-                flash("Custom level up message text is a Premium feature")
-            elif 2 < len(level_up_message_text) < 250:
+            if 2 < len(level_up_message_text) < 250:
                 setting_level_up_message_text.set(c, auth["guild"], level_up_message_text)
             else:
                 flash("Invalid length of level up message text")
@@ -67,20 +63,6 @@ def handle_rewards(auth, is_edit: bool = False, remove_id: int | None = None) ->
         return False
 
     with engine.begin() as c:
-        rewards = c.execute(
-            select(leveling_rewards.c.id).where(
-                leveling_rewards.c.gid == auth["guild"]
-            )
-        ).fetchall()
-
-        # An edit replaces an existing entry, so it must not count towards the
-        # free plan limit of the entry being replaced.
-        existing_count = len(rewards) - (1 if remove_id is not None else 0)
-
-        if get_premium_context(c, auth["guild"])["premium_only"] and existing_count >= 3:
-            flash("Free plan is limited to 3 leveling rewards")
-            return False
-
         if remove_id is not None:
             c.execute(
                 delete(leveling_rewards).where(
@@ -108,12 +90,6 @@ def handle_multipliers(auth, is_edit: bool = True, remove_id: int | None = None)
 
     if not start or not end or not multiplier:
         return False
-
-    with engine.begin() as c:
-        if get_premium_context(c, auth["guild"])["premium_only"]:
-            flash("Leveling multipliers are a Premium feature")
-            return False
-
     if not multiplier.isnumeric():
         return False
 
@@ -274,12 +250,10 @@ def leveling_index():
             .where(synced_roles.c.gid == auth["guild"])
         ).fetchall()]
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template("leveling.html",
                            xp_per_message=xp_per_message, level_up_message=level_up_message, level_up_message_text=level_up_message_text,
                            xp_per_level=xp_per_level, reward_roles=reward_roles, multipliers=multipliers,
-                           roles=roles, premium=premium)
+                           roles=roles)
 
 @leveling_bp.route("/settings/leveling/edit/reward/<index>", methods=["POST"])
 def edit_reward(index: str):

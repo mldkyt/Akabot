@@ -1,9 +1,7 @@
-from dateparser.data.date_translation_data import sn
 from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, roles_on_join, synced_roles
-from utils.premium import get_limit
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -21,14 +19,6 @@ def handle_add(auth):
             ).fetchone()
             if existing is not None:
                 flash("Already present")
-                return
-
-            limit = get_limit(c, auth["guild"], 3)
-            current = c.execute(
-                select(roles_on_join.c.rid).where(roles_on_join.c.gid == auth["guild"])
-            ).fetchall()
-            if limit is not None and len(current) >= limit:
-                flash("Free plan is limited to 3 roles on join")
                 return
 
             c.execute(

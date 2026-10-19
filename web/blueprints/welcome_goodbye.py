@@ -2,7 +2,6 @@ from flask import Blueprint, session, render_template, request, flash
 from sqlalchemy import select
 
 from database import engine, synced_channels
-from utils.premium import get_premium_context
 from utils.welcome_goodbye import welcome_message_title, welcome_message_message, welcome_message_type, \
     welcome_grace_period_first, welcome_grace_period_second, goodbye_message_title, goodbye_message_message, \
     goodbye_message_type, welcome_channel, goodbye_channel
@@ -13,8 +12,6 @@ welcome_goodbye_bp = Blueprint("welcome_goodbye", __name__)
 
 def handle_save(auth):
     with engine.begin() as c:
-        free_tier = get_premium_context(c, auth["guild"])["premium_only"]
-
         if "welcome_channel" in request.form:
             if request.form["welcome_channel"] == "unset":
                 welcome_channel.set(c, auth["guild"], "")
@@ -28,17 +25,11 @@ def handle_save(auth):
             welcome_message_message.set(c, auth["guild"], request.form["welcome_msg"])
             
         if "welcome_type" in request.form and request.form["welcome_type"] in ["text", "embed"]:
-            if free_tier and request.form["welcome_type"] == "embed" and \
-                    welcome_message_type.get(c, auth["guild"]) != "embed":
-                flash("Embed type is a Premium feature")
-            else:
-                welcome_message_type.set(c, auth["guild"], request.form["welcome_type"])
+            welcome_message_type.set(c, auth["guild"], request.form["welcome_type"])
         
-        if "welcome_first" in request.form and request.form["welcome_first"].isnumeric():
-            if free_tier and 0 < int(request.form["welcome_first"]) < 300:
-                welcome_grace_period_first.set(c, auth["guild"], request.form["welcome_first"])
-            elif not free_tier and 0 < int(request.form["welcome_first"]) < 86400:
-                welcome_grace_period_first.set(c, auth["guild"], request.form["welcome_first"])
+        if "welcome_first" in request.form and request.form["welcome_first"].isnumeric() and \
+            0 < int(request.form["welcome_first"]) < 300:
+            welcome_grace_period_first.set(c, auth["guild"], request.form["welcome_first"])
             
         if "welcome_second" in request.form and request.form["welcome_second"].isnumeric() and \
             0 < int(request.form["welcome_second"]) < 60:
@@ -56,11 +47,7 @@ def handle_save(auth):
             goodbye_message_message.set(c, auth["guild"], request.form["goodbye_msg"])
             
         if "goodbye_type" in request.form and request.form["goodbye_type"] in ["text", "embed"]:
-            if free_tier and request.form["goodbye_type"] == "embed" and \
-                    goodbye_message_type.get(c, auth["guild"]) != "embed":
-                flash("Embed type is a Premium feature")
-            else:
-                goodbye_message_type.set(c, auth["guild"], request.form["goodbye_type"])
+            goodbye_message_type.set(c, auth["guild"], request.form["goodbye_type"])
 
 
 @welcome_goodbye_bp.route("/settings/welcome_goodbye", methods=["GET", "POST"])
@@ -96,10 +83,8 @@ def welcome_goodbye_index():
             .where((synced_channels.c.gid == auth["guild"]) & (synced_channels.c.ctype == "text"))
         )]
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template("welcome_goodbye.html",
                             welcome_channel=welcome_chan, welcome_title=welcome_title, welcome_msg=welcome_msg, welcome_type=welcome_type,
                            welcome_first=welcome_first, welcome_second=welcome_second,
                            goodbye_channel=goodbye_chan, goodbye_title=goodbye_title, goodbye_msg=goodbye_msg, goodbye_type=goodbye_type,
-                           channels=channels, premium=premium)
+                           channels=channels)

@@ -1,8 +1,6 @@
 {% extends 'page.html' %} {% block main %}
 <h1>Periodic Messages</h1>
 
-{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 2 periodic messages.</p>{% endif %}
-
 {% for flash in get_flashed_messages() %}
 <div class="flash">
     <p>{{flash}}</p>

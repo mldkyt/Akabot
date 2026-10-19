@@ -1,6 +1,6 @@
 # Changelog
 
-## Akabot 0.3.0 is out!
+## Akabot 0.2.0 is out!
 
 big things:
 

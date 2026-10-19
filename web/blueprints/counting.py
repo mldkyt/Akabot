@@ -9,7 +9,6 @@ from utils.counting import (
     any_count_mode_minimum_frequency,
     same_member_counting_mode,
 )
-from utils.premium import get_limit, get_premium_context
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -21,25 +20,6 @@ def set_settings(auth):
         return
 
     with engine.begin() as c:
-        if get_premium_context(c, auth["guild"])["premium_only"]:
-            premium_only_requested = any(
-                request.form.get(key)
-                for key in (
-                    "any_count",
-                    "count_words",
-                    "count_word_frequency",
-                    "same_member",
-                )
-            )
-            if request.form.get("count_frequency_min", "").isnumeric():
-                premium_only_requested = True
-
-            if premium_only_requested:
-                flash(
-                    "Any count mode, word counting and same member modes are Premium features"
-                )
-                return
-
         if request.form.get("any_count"):
             any_count_mode.set(c, auth["guild"], "true")
         else:
@@ -83,16 +63,6 @@ def add_channel(auth):
             ).fetchone()
             if existing is not None:
                 flash("This channel is already added")
-                return
-
-            limit = get_limit(c, auth["guild"], 1)
-            current = c.execute(
-                select(counting_channels.c.cid).where(
-                    counting_channels.c.gid == str(auth["guild"])
-                )
-            ).fetchall()
-            if limit is not None and len(current) >= limit:
-                flash("Free plan is limited to 1 counting channel")
                 return
 
             c.execute(
@@ -178,8 +148,6 @@ def counting_index():
         count_frequency_min = any_count_mode_minimum_frequency.get(c, auth["guild"])
         same_member = same_member_counting_mode.get(c, auth["guild"]) == "true"
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "counting.html",
         counting_channels=counting_channel_names,
@@ -189,5 +157,4 @@ def counting_index():
         count_words=count_words,
         count_word_frequency=count_word_frequency,
         count_frequency_min=count_frequency_min,
-        premium=premium,
     )

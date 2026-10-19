@@ -24,8 +24,8 @@
     <select name="verification_mode" id="verification_mode">
         <option value="none" {% if verification_mode == "none" %}selected{% endif %}>None</option>
         <option value="math" {% if verification_mode == "math" %}selected{% endif %}>Math problem</option>
-        <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3 {% if premium.enabled %}(Premium){% endif %}</option>
-        <option value="introduction" {% if verification_mode == "introduction" %}selected{% endif %}>introduction-based {% if premium.enabled %}(Premium){% endif %}</option>
+        <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3</option>
+        <option value="introduction" {% if verification_mode == "introduction" %}selected{% endif %}>introduction-based</option>
     </select>
     <br>
 
@@ -36,7 +36,6 @@
         <option value="{{channel.id}}" {% if channel.id == introduction_channel %}selected{% endif %}>{{channel.name}}</option>
         {% endfor %}
     </select>
-    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <!-- Kick unverified users -->

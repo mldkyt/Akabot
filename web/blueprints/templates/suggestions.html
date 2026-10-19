@@ -6,14 +6,6 @@
 
 <h1>Suggestions</h1>
 
-{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 1 suggestion channel.</p>{% endif %}
-
-{% if not all_channels_ok %}
-<div class="flash flash--warning">
-    <p>Akabot is missing permissions in one or more suggestion channels, so it cannot handle suggestions there. Grant it View Channel, Send Messages, Embed Links and Manage Messages (plus Create Public Threads if threads are enabled) and it will sync automatically.</p>
-</div>
-{% endif %}
-
 <h2>Main settings</h2>
 
 <form action="/settings/suggestions" method="post">

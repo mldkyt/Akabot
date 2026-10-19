@@ -18,7 +18,6 @@ from utils.automod_actions import setting_automod_sync_error
 from utils.reaction_roles import update_bot_permission
 from utils.suggestions import update_bot_permissions
 
-
 async def sync_text_channels(c: Connection, guild: Guild):
     db_text_channels = [
         int(i[0])

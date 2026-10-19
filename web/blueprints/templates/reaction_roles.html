@@ -50,8 +50,6 @@
 
 <p>Create messages where members can pick up roles by clicking buttons. Supported types: normal, add only, remove only, and single choice.</p>
 
-{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 3 reaction role messages.</p>{% endif %}
-
 {% for flash in get_flashed_messages() %}
 <div class="flash">
     <p>{{flash}}</p>

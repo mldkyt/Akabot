@@ -22,11 +22,11 @@ def upgrade() -> None:
     """Upgrade schema."""
     with op.batch_alter_table('premium_tokens') as batch_op:
         batch_op.add_column(
-            sa.Column('unlimited', sa.Boolean(), nullable=False, server_default=sa.false())
+            sa.Column('unlimited', sa.Boolean(), nullable=False, server_default=sa.literal(False))
         )
     with op.batch_alter_table('premium_guilds') as batch_op:
         batch_op.add_column(
-            sa.Column('unlimited', sa.Boolean(), nullable=False, server_default=sa.false())
+            sa.Column('unlimited', sa.Boolean(), nullable=False, server_default=sa.literal(False))
         )
 
 

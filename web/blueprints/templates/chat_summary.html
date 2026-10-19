@@ -27,21 +27,18 @@
 
     <!-- Extended summaries -->
     <input type="checkbox" name="extra" id="extra" {% if extra %}checked{% endif %}>
-    <label for="extra">Extended summaries</label>
-    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
+    <label for="extra">Extended summaries</label>   
     <br>
 
     <!-- History -->
     <input type="checkbox" name="history" id="history" {% if history %}checked{% endif %}>
     <label for="history">Store history (Show more button)</label>
-    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <!-- Extended row count -->
     <label for="row_count_extra">Extended summaries row count</label>
     <br>
     <input type="number" name="row_count_extra" id="row_count_extra" value="{{row_count_extra}}">
-    {% if premium.enabled %}<span class="premium-label">(Premium)</span>{% endif %}
     <br>
 
     <button type="submit">Save settings</button>

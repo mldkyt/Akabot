@@ -5,8 +5,6 @@
 
 <p>Simple way to make an auto response to messages.</p>
 
-{% if premium.enabled %}<p><span class="premium-label">(Premium)</span> The free plan is limited to 3 tags.</p>{% endif %}
-
 {% for flash in get_flashed_messages() %}
 <div class="flash">
     <p>{{flash}}</p>

@@ -34,13 +34,12 @@
     <label for="welcome_type">Welcome message type</label>
     <select name="welcome_type" id="welcome_type">
         <option value="text" {% if welcome_type == "text" %}selected{% endif %}>Plain text</option>
-        <option value="embed" {% if welcome_type == "embed" %}selected{% endif %}>Embed {% if premium.enabled %}(Premium){% endif %}</option>
+        <option value="embed" {% if welcome_type == "embed" %}selected{% endif %}>Embed</option>
     </select>
     <br>
 
     <label for="welcome_first">First grace period</label>
     <input type="number" name="welcome_first" id="welcome_first" value="{{welcome_first}}">
-    {% if premium.enabled %}<span class="premium-label">Longer grace periods are a Premium feature</span>{% endif %}
     <p><small>This is the grace period between the member joining and the bot sending a welcome message, in seconds. This is to prevent sending a message when a moderation bot kicks the user right away.</small></p>
 
     <label for="welcome_second">Second grace period</label>
@@ -69,7 +68,7 @@
     <label for="goodbye_type">Goodbye message type</label>
     <select name="goodbye_type" id="goodbye_type">
         <option value="text" {% if goodbye_type == "text" %}selected{% endif %}>Plain text</option>
-        <option value="embed" {% if goodbye_type == "embed" %}selected{% endif %}>Embed {% if premium.enabled %}(Premium){% endif %}</option>
+        <option value="embed" {% if goodbye_type == "embed" %}selected{% endif %}>Embed</option>
     </select>
     <br>
 

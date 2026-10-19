@@ -2,8 +2,7 @@ from flask import Blueprint, flash, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, logging_channels, synced_channels
-from utils.logs import basic_logging_settings, logging_channel, logging_settings
-from utils.premium import get_premium_context
+from utils.logs import logging_channel, logging_settings
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -16,21 +15,6 @@ def handle_saving_settings(auth):
             if not validate_text_channel_id(request.form["channel_id"]):
                 return
 
-            free_tier = get_premium_context(c, auth["guild"])["premium_only"]
-
-            if free_tier:
-                existing_channels = [
-                    i[0]
-                    for i in c.execute(
-                        select(logging_channels.c.cid)
-                        .where(logging_channels.c.gid == auth["guild"])
-                        .group_by(logging_channels.c.cid)
-                    ).fetchall()
-                ]
-                if request.form["channel_id"] not in existing_channels and len(existing_channels) >= 1:
-                    flash("Free plan is limited to 1 logging channel")
-                    return
-
             c.execute(
                 delete(logging_channels).where(
                     (logging_channels.c.cid == request.form["channel_id"])
@@ -38,12 +22,8 @@ def handle_saving_settings(auth):
                 )
             )
 
-            basic_keys = [i[0] for i in basic_logging_settings]
             for i in logging_settings:
                 if request.form.get(i[0]) == "on":
-                    if free_tier and i[0] not in basic_keys:
-                        flash(f"{i[1]} logging is a Premium feature")
-                        continue
                     c.execute(
                         insert(logging_channels).values(
                             gid=auth["guild"], cid=request.form["channel_id"], type=i[0]
@@ -115,14 +95,10 @@ def logging_index():
                 }
             )
 
-        premium = get_premium_context(c, auth["guild"])
-
     return render_template(
         "logging.html",
         logging_channel=logging_channel_id,
         channels=channels,
         logging_channels=logging_channels_data,
         settings=settings,
-        basic_keys=[i[0] for i in basic_logging_settings],
-        premium=premium,
     )

@@ -1,15 +1,13 @@
+from zoneinfo import ZoneInfo
+
 import dateparser
 from discord import Cog, Bot, SlashCommandGroup, ApplicationContext, NotFound, default_permissions
 from discord.ext.tasks import loop
-from sqlalchemy import select
-from zoneinfo import ZoneInfo
 
-from database import engine, giveaways
+from logger import akabot_logger
 from utils.giveaways import create_giveaway, get_ending_giveaways, roll_winners, mark_giveaway_ended, GiveawayEndedView, \
     GiveawayView, clear_expired_giveaways, get_giveaway_joins, get_giveaway_info_by_mid
-from logger import akabot_logger
 from utils.message_appends import apply_appends
-from utils.premium import get_limit
 from utils.timezones import get_now, get_timezone
 
 
@@ -47,18 +45,6 @@ class Giveaways(Cog):
         # how all other timestamps are stored and compared.
         if end_date.tzinfo is not None:
             end_date = end_date.astimezone(ZoneInfo(tz_name)).replace(tzinfo=None)
-
-        with engine.begin() as c:
-            limit = get_limit(c, ctx.guild.id, 1)
-            if limit is not None:
-                active = len(c.execute(
-                    select(giveaways.c.id).where(
-                        (giveaways.c.gid == str(ctx.guild.id)) & (giveaways.c.end.is_not(None))
-                    )
-                ).fetchall())
-                if active >= limit:
-                    await ctx.respond("Free plan is limited to 1 active giveaway", ephemeral=True)
-                    return
 
         message = await ctx.channel.send(f"**Giveaway**\n{item}", view=GiveawayView())
         create_giveaway(message, winner_count, end_date)

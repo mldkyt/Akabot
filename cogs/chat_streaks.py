@@ -38,7 +38,6 @@ from utils.chat_streaks import (
     user_setting_receive_notifications,
 )
 from utils.message_appends import apply_appends
-from utils.premium import premium_required
 from utils.timezones import get_now
 from utils.voting import ChatStreakExpireView, get_voting_points
 
@@ -228,10 +227,6 @@ class ChatStreaks(Cog):
 
         try:
             with engine.begin() as c:
-                if premium_required(c, ctx.guild.id):
-                    await ctx.respond("The Chat Streak Leaderboard is a Premium feature", ephemeral=True)
-                    return
-
                 lb = get_leaderboard(c, ctx.user)
 
                 pages = []

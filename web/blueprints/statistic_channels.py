@@ -2,7 +2,6 @@ from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, statistic_channels, synced_channels
-from utils.premium import get_limit
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
@@ -31,16 +30,6 @@ def handle_post(auth, is_edit: bool = False):
         ).fetchone()
         if existing is not None:
             flash("This ID already has a template assigned, please edit instead!")
-            return
-
-        current = c.execute(
-            select(statistic_channels.c.cid).where(
-                statistic_channels.c.gid == auth["guild"]
-            )
-        ).fetchall()
-        limit = get_limit(c, auth["guild"], 2)
-        if limit is not None and len(current) >= limit:
-            flash("Free plan is limited to 2 statistic channels")
             return
 
         c.execute(

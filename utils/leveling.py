@@ -14,7 +14,6 @@ from database import (
     vote_points,
 )
 from logger import akabot_logger
-from utils.premium import has_premium
 from utils.server_settings import KV
 from utils.timezones import get_now
 
@@ -199,10 +198,7 @@ def edit_xp_rel(c: Connection, member: Member, xp: int):
 
 def calculate_level(c: Connection, member: Member, xp: int) -> int:
     xp_per_level = int(setting_xp_per_level.get(c, member.guild.id))
-    level = (xp // xp_per_level) + 1
-    if has_premium(c, member.guild.id):
-        return level
-    return min(level, 50)
+    return (xp // xp_per_level) + 1
 
 
 def xp_to_next_level(c: Connection, member: Member, xp: int) -> int:
