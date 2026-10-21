@@ -1,4 +1,4 @@
-from flask import Blueprint, session, render_template, request
+from flask import Blueprint, redirect, session, render_template, request
 
 from database import engine
 from utils.fun import setting_disable_yuri_command, setting_disable_yaoi_command, setting_allow_rp_commands
@@ -35,6 +35,7 @@ def fun_index():
 
     if request.method == "POST":
         handle_post(auth)
+        return redirect("/settings/fun", 303)
 
     with engine.begin() as c:
         yuri_command = setting_disable_yuri_command.get(c, auth["guild"]) != "true"

@@ -1,29 +1,25 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header %}{% block main %}
+{{ page_header('Fun Commands', 'Enable or disable the fun commands that fit your server.') }}
 
-{% block main %}
-<h1>Fun commands</h1>
-<p>Here you can enable and disable the fun commands.</p>
+<section class="settings-panel">
+    <form method="post" action="/settings/fun">
+        <div class="check-row">
+            <input type="checkbox" name="yuri" id="yuri" {% if yuri %}checked{% endif %}>
+            <label for="yuri">Enable the yuri command</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="yaoi" id="yaoi" {% if yaoi %}checked{% endif %}>
+            <label for="yaoi">Enable the yaoi command</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="rp" id="rp" {% if rp %}checked{% endif %}>
+            <label for="rp">Enable the RP commands</label>
+        </div>
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<form method="post" action="/settings/fun">
-    <input type="checkbox" name="yuri" id="yuri" {% if yuri %}checked{% endif %}>
-    <label for="yuri">Enable the yuri command</label>
-    <br>
-
-    <input type="checkbox" name="yaoi" id="yaoi" {% if yaoi %}checked{% endif %}>
-    <label for="yaoi">Enable the yaoi command</label>
-    <br>
-
-    <input type="checkbox" name="rp" id="rp" {% if rp %}checked{% endif %}>
-    <label for="rp">Enable the RP commands</label>
-    <br>
-
-    <button type="submit">Save</button>
-</form>
-
+        <div class="form-actions">
+            <button type="submit">Save settings</button>
+        </div>
+    </form>
+</section>
 {% endblock %}
