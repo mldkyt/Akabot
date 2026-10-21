@@ -1,5 +1,5 @@
 from flask import Blueprint, flash, redirect, render_template, request, session
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 
 from database import counting_channels, engine, synced_channels
 from utils.counting import (
@@ -96,12 +96,45 @@ def counting_index():
     assert auth is not None
 
     if request.method == "POST":
-        set_settings(auth)
-        add_channel(auth)
+        section = request.form.get("_section", "general")
+        if section == "general":
+            set_settings(auth)
+            return redirect("/settings/counting?tab=general", 303)
 
-    if "delete" in request.args:
-        handle_delete(auth)
-        return redirect("/settings/counting", 303)
+        action = request.form.get("action", "create")
+        if action == "create":
+            add_channel(auth)
+        elif action == "update":
+            old_cid = request.form.get("old_channel", "")
+            new_cid = request.form.get("channel", "")
+            if validate_text_channel_id(new_cid) and old_cid:
+                with engine.begin() as c:
+                    c.execute(
+                        update(counting_channels)
+                        .where(
+                            (counting_channels.c.gid == auth["guild"])
+                            & (counting_channels.c.cid == old_cid)
+                        )
+                        .values(cid=new_cid)
+                    )
+                flash("Edited counting channel")
+        elif action == "delete":
+            channel = request.form.get("id", "")
+            if channel:
+                with engine.begin() as c:
+                    c.execute(
+                        delete(counting_channels).where(
+                            (counting_channels.c.gid == auth["guild"])
+                            & (counting_channels.c.cid == channel)
+                        )
+                    )
+                flash("Deleted counting channel")
+
+        return redirect("/settings/counting?tab=channels", 303)
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "channels"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         counting_channel_ids = [
@@ -112,12 +145,22 @@ def counting_index():
                 .order_by(counting_channels.c.cid)
             ).fetchall()
         ]
+        counting_rows = c.execute(
+            select(
+                counting_channels.c.cid,
+                counting_channels.c.current_count,
+                counting_channels.c.last_counter,
+            )
+            .where(counting_channels.c.gid == auth["guild"])
+            .order_by(counting_channels.c.cid)
+        ).fetchall()
+
         counting_channel_names = []
-        for index in range(len(counting_channel_ids)):
+        for index, row in enumerate(counting_rows):
             result = c.execute(
                 select(synced_channels.c.cname).where(
                     (synced_channels.c.gid == auth["guild"])
-                    & (synced_channels.c.cid == counting_channel_ids[index])
+                    & (synced_channels.c.cid == row[0])
                 )
             ).fetchone()
 
@@ -125,8 +168,10 @@ def counting_index():
                 counting_channel_names.append(
                     {
                         "index": index,
-                        "cid": counting_channel_ids[index],
+                        "cid": row[0],
                         "name": "#" + result[0],
+                        "current_count": row[1],
+                        "last_counter": row[2],
                     }
                 )
 
@@ -157,4 +202,5 @@ def counting_index():
         count_words=count_words,
         count_word_frequency=count_word_frequency,
         count_frequency_min=count_frequency_min,
+        active_tab=active_tab,
     )
