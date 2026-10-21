@@ -1,44 +1,83 @@
-{% extends 'page.html' %} {% block main %} {% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
+{% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Suggestions', 'Let members submit suggestions in dedicated channels.') }}
+{{ tabs([('channels', 'Channels'), ('general', 'General')], active_tab) }}
+
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
+        <div class="check-row">
+            <input type="checkbox" name="threads" id="threads" {% if suggestion_threads %}checked{% endif %}>
+            <label for="threads">Create a thread for each suggestion</label>
+        </div>
+        <div class="form-actions"><button type="submit">Save settings</button></div>
+    </form>
+</section>
+{% else %}
+{% if not all_channels_ok %}
+<div class="flash flash--warning">
+    <p>Akabot is missing permissions in one or more suggestion channels. Grant it View Channel, Send Messages and Read Message History.</p>
 </div>
-{% endfor %}
+{% endif %}
 
-<h1>Suggestions</h1>
+<section class="settings-panel">
+    <h2>Add suggestion channel</h2>
+    <form action="?tab=channels" method="post">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="_section" value="channels">
+        <input type="hidden" name="action" value="create">
+        <label for="channel">Suggestion channel</label>
+        <select name="channel" id="channel">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+        <div class="form-actions"><button type="submit">Add channel</button></div>
+    </form>
+</section>
 
-<h2>Main settings</h2>
-
-<form action="/settings/suggestions" method="post">
-    <input type="checkbox" name="threads" id="threads" {% if suggestion_threads %}checked{% endif %} />
-    <label for="threads">Threads</label>
-    <br />
-
-    <button type="submit">Save</button>
-</form>
-
-<h2>Channels</h2>
-
-<form action="/settings/suggestions/addchannel" method="post">
-    <label for="channel">Suggestion channel</label>
-    <select name="channel" id="channel">
-        {% for text_channel in text_channels %}
-        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
-        {% endfor %}
-    </select>
-    <button type="submit">Add channel</button>
-</form>
-
+{% call table(['Channel', 'Status', 'Actions']) %}
 {% for suggestion_channel in suggestion_channels %}
-
-<form action="/settings/suggestions/deletechannel" method="post">
-    <input type="hidden" name="channel" value="{{suggestion_channel.id}}" />
-    <span>#{{suggestion_channel.name}} is a suggestion channel</span>
-    {% if suggestion_channel.bot_ok %}
-    <span class="channel-status channel-status--ok">Akabot can handle suggestions here</span>
-    {% else %}
-    <span class="channel-status channel-status--missing">Akabot is missing permissions here</span>
-    {% endif %}
-    <button type="submit">Remove</button>
-</form>
-
-{% endfor %} {% endblock %}
+{% set form_id = 'suggestion-' ~ suggestion_channel.id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if text_channel.id == suggestion_channel.id %}selected{% endif %}>{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        {% if suggestion_channel.bot_ok %}
+        <span class="channel-status channel-status--ok">Akabot can handle suggestions here</span>
+        {% else %}
+        <span class="channel-status channel-status--missing">Akabot is missing permissions here</span>
+        {% endif %}
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{suggestion_channel.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{suggestion_channel.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id, 'Remove') }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(3, 'No suggestion channels configured.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
+{% endblock %}
