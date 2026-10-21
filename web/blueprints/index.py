@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import select
 
 from database import engine, synced_channels
@@ -107,7 +107,13 @@ def settings_index():
     auth = get_token_data(session["token"])
     assert auth is not None
 
-    save_settings(auth)
+    if request.method == "POST":
+        save_settings(auth)
+        return redirect(f"/settings?tab={request.form.get('_tab', 'general')}", 303)
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "responses"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         bot_chan = setting_bot_channel.get(c, auth["guild"])
@@ -137,4 +143,5 @@ def settings_index():
         response_delete_delay=response_delete_delay,
         timezone=timezone,
         timezone_groups=get_timezone_groups(),
+        active_tab=active_tab,
     )
