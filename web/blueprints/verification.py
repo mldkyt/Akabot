@@ -1,4 +1,4 @@
-from flask import Blueprint, session, render_template, request, flash
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import select
 
 from database import engine, synced_roles, synced_channels
@@ -45,6 +45,11 @@ def verification_index():
 
     if request.method == "POST":
         handle_save(auth)
+        return redirect("/settings/verification?tab=general", 303)
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "modes"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         verification_role_id = setting_verification_role.get(c, auth["guild"])
@@ -70,5 +75,6 @@ def verification_index():
 
     return render_template("verification.html", verification_role=verification_role_id,
                            verification_mode=verification_mode, roles=roles, text_channels=text_channels,
-                           introduction_channel=introduction_channel_id, kick_unverified_users=kick_unverified_users)
+                           introduction_channel=introduction_channel_id, kick_unverified_users=kick_unverified_users,
+                           active_tab=active_tab)
 

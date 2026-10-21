@@ -1,58 +1,74 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs %}{% block main %}
+{{ page_header('Verification', 'Choose how new members verify themselves and which role they receive.') }}
+{{ tabs([('general', 'General'), ('modes', 'Verification modes')], active_tab) }}
 
-{% block main %}
-<h1>Verification</h1>
-<p>You can configure the verify role here. The message can be sent using a slash command in Discord in your verification channel. You can also configure the verification mode here.</p>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <div class="form-grid">
+            <div>
+                <label for="verification_role">Verification role</label>
+                <select name="verification_role" id="verification_role">
+                    <option value="unset">-- Unset --</option>
+                    {% for role in roles %}
+                    <option value="{{role.id}}" {% if role.id == verification_role %}selected{% endif %}>@{{role.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="verification_mode">Verification mode</label>
+                <select name="verification_mode" id="verification_mode">
+                    <option value="none" {% if verification_mode == "none" %}selected{% endif %}>None</option>
+                    <option value="math" {% if verification_mode == "math" %}selected{% endif %}>Math problem</option>
+                    <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3</option>
+                    <option value="introduction" {% if verification_mode == "introduction" %}selected{% endif %}>Introduction based</option>
+                </select>
+            </div>
+        </div>
 
-<form action="/settings/verification" method="post">
-    <label for="verification_role">Verification role</label>
-    <select name="verification_role" id="verification_role">
-        <option value="unset">-- unset --</option>
-        {% for role in roles %}
-        <option value="{{role.id}}" {% if role.id == verification_role %}selected{% endif %}>{{role.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
+        <label for="introductionchannel">Introduction channel</label>
+        <select name="introductionchannel" id="introductionchannel">
+            <option value="unset">-- Unset --</option>
+            {% for channel in text_channels %}
+            <option value="{{channel.id}}" {% if channel.id == introduction_channel %}selected{% endif %}>#{{channel.name}}</option>
+            {% endfor %}
+        </select>
 
-    <label for="verification_mode">Verification mode</label>
-    <select name="verification_mode" id="verification_mode">
-        <option value="none" {% if verification_mode == "none" %}selected{% endif %}>None</option>
-        <option value="math" {% if verification_mode == "math" %}selected{% endif %}>Math problem</option>
-        <option value="silly" {% if verification_mode == "silly" %}selected{% endif %}>SILLY verification :3</option>
-        <option value="introduction" {% if verification_mode == "introduction" %}selected{% endif %}>introduction-based</option>
-    </select>
-    <br>
+        <div class="check-row">
+            <input type="checkbox" name="kickunverified" id="kickunverified" {% if kick_unverified_users %}checked{% endif %}>
+            <label for="kickunverified">Kick unverified users after 24 hours</label>
+        </div>
 
-    <label for="introductionchannel">Introduction channel</label>
-    <select name="introductionchannel" id="introductionchannel">
-        <option value="unset">-- unset --</option>
-        {% for channel in text_channels %}
-        <option value="{{channel.id}}" {% if channel.id == introduction_channel %}selected{% endif %}>{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
+        <p>Send the verification message with the <code>/verification</code> slash command in the channel where members should verify.</p>
 
-    <!-- Kick unverified users -->
-    <input type="checkbox" name="kickunverified" id="kickunverified" {% if kick_unverified_users %}checked{% endif %}>
-    <label for="kickunverified">Kick unverified users in 24 hours</label>
-    <br>
-
-    <button type="submit">Save</button>
-</form>
-
-<h2>What is the difference between verification modes?</h2>
-
-<ul>
-    <li><strong>None</strong>: This verification method is very simple but won't protect you from attackers who can click buttons using their accounts.</li>
-    <li><strong>Math</strong>: Shows a math problem in addition of pressing the button to verify.</li>
-    <li><strong>Silly</strong>: Makes the user make a bark, meow, or a fox noise to pass the check. This one is just silly and here for no reason.</li>
-    <li><strong>Introduction based</strong>: Users write an introduction and admins approve the introduction for the user to get into the server.</li>
-</ul>
-
+        <div class="form-actions"><button type="submit">Save settings</button></div>
+    </form>
+</section>
+{% else %}
+<section class="settings-panel">
+    <h2>Verification modes</h2>
+    <div class="section-grid">
+        <div class="data-card">
+            <h3>None</h3>
+            <p>Members press the verification button and immediately receive the verification role. This is simple, but does not protect against automated button clicks.</p>
+        </div>
+        <div class="data-card">
+            <h3>Math problem</h3>
+            <p>Members must solve a simple math problem before they can verify.</p>
+        </div>
+        <div class="data-card">
+            <h3>Silly verification</h3>
+            <p>Members have to bark, meow or make a fox noise to pass the check. It is silly and here for no reason.</p>
+        </div>
+        <div class="data-card">
+            <h3>Introduction based</h3>
+            <p>Members write an introduction in the configured introduction channel. An admin then approves it before the member receives the verification role.</p>
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}
