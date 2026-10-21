@@ -55,6 +55,11 @@ def meow_back_index():
 
     if request.method == "POST":
         handle_post(auth)
+        return redirect("/settings/meow_back?tab=general", 303)
+
+    active_tab = request.args.get("tab", "channels")
+    if active_tab not in {"general", "channels"}:
+        active_tab = "channels"
 
     with engine.begin() as c:
         meow = meowing.get(c, auth["guild"]) == "true"
@@ -74,6 +79,7 @@ def meow_back_index():
                 meow_back_settings.c.owo,
                 meow_back_settings.c.awawa,
             )
+            .where(meow_back_settings.c.gid == auth["guild"])
         ).fetchall()
 
         for fetched_channel in fetched_channels:
@@ -118,6 +124,7 @@ def meow_back_index():
         awawa=awa,
         meow_back_channels=meow_back_channels,
         text_channels=text_channels,
+        active_tab=active_tab,
     )
 
 
@@ -133,8 +140,17 @@ def meow_back_channel():
     if "channel" not in request.form or not validate_text_channel_id(
         request.form["channel"]
     ):
-        print("Invalid channel")
-        return redirect("/settings/meow_back", 303)
+        return redirect("/settings/meow_back?tab=channels", 303)
+
+    if request.form.get("action") == "delete":
+        with engine.begin() as c:
+            c.execute(
+                delete(meow_back_settings).where(
+                    (meow_back_settings.c.cid == request.form["channel"])
+                    & (meow_back_settings.c.gid == auth["guild"])
+                )
+            )
+        return redirect("/settings/meow_back?tab=channels", 303)
 
     with engine.begin() as c:
         meow = 1 if request.form.get("meow") else 0
@@ -191,4 +207,4 @@ def meow_back_channel():
                 )
             )
 
-    return redirect("/settings/meow_back", 303)
+    return redirect("/settings/meow_back?tab=channels", 303)
