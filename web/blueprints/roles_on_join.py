@@ -1,42 +1,10 @@
 from flask import Blueprint, flash, redirect, render_template, request, session
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 
 from database import engine, roles_on_join, synced_roles
-from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
 roles_on_join_bp = Blueprint("roles_on_join", __name__, template_folder="templates")
-
-
-def handle_add(auth):
-    with engine.begin() as c:
-        if "role" in request.form and validate_role_id(request.form["role"]):
-            existing = c.execute(
-                select(roles_on_join.c.rid).where(
-                    (roles_on_join.c.gid == auth["guild"])
-                    & (roles_on_join.c.rid == request.form["role"])
-                )
-            ).fetchone()
-            if existing is not None:
-                flash("Already present")
-                return
-
-            c.execute(
-                insert(roles_on_join).values(
-                    gid=auth["guild"], rid=request.form["role"]
-                )
-            )
-            flash("Added role on join")
-
-
-def handle_delete(auth):
-    with engine.begin() as c:
-        c.execute(
-            delete(roles_on_join).where(
-                (roles_on_join.c.gid == auth["guild"])
-                & (roles_on_join.c.rid == request.args["delete"])
-            )
-        )
 
 
 @roles_on_join_bp.route("/settings/roles_on_join", methods=["GET", "POST"])
@@ -49,11 +17,77 @@ def roles_on_join_index():
     assert auth is not None
 
     if request.method == "POST":
-        handle_add(auth)
+        section = request.form.get("_section", "roles")
+        action = request.form.get("action", "create")
+        role_id = request.form.get("role", "")
+        old_role_id = request.form.get("id", "")
 
-    if "delete" in request.args:
-        handle_delete(auth)
-        return redirect("/settings/roles_on_join", 302)
+        if section == "roles":
+            with engine.begin() as c:
+                role = c.execute(
+                    select(synced_roles.c.rid).where(
+                        (synced_roles.c.gid == auth["guild"])
+                        & (synced_roles.c.rid == role_id)
+                    )
+                ).fetchone()
+
+                if action == "create":
+                    if role is None:
+                        flash("Unknown role")
+                    else:
+                        existing = c.execute(
+                            select(roles_on_join.c.rid).where(
+                                (roles_on_join.c.gid == auth["guild"])
+                                & (roles_on_join.c.rid == role_id)
+                            )
+                        ).fetchone()
+                        if existing is not None:
+                            flash("Already present")
+                        else:
+                            c.execute(
+                                insert(roles_on_join).values(
+                                    gid=auth["guild"], rid=role_id
+                                )
+                            )
+                            flash("Added role on join")
+                elif action == "update" and old_role_id:
+                    if role is None:
+                        flash("Unknown role")
+                    else:
+                        existing = c.execute(
+                            select(roles_on_join.c.rid).where(
+                                (roles_on_join.c.gid == auth["guild"])
+                                & (roles_on_join.c.rid == role_id)
+                            )
+                        ).fetchone()
+                        if existing is not None and role_id != old_role_id:
+                            flash("Already present")
+                        else:
+                            c.execute(
+                                update(roles_on_join)
+                                .where(
+                                    (roles_on_join.c.gid == auth["guild"])
+                                    & (roles_on_join.c.rid == old_role_id)
+                                )
+                                .values(rid=role_id)
+                            )
+                            flash("Saved role on join")
+                elif action == "delete" and old_role_id:
+                    c.execute(
+                        delete(roles_on_join).where(
+                            (roles_on_join.c.gid == auth["guild"])
+                            & (roles_on_join.c.rid == old_role_id)
+                        )
+                    )
+                    flash("Deleted role on join")
+
+        return redirect(
+            f"/settings/roles_on_join?tab={request.form.get('_tab', 'roles')}", 303
+        )
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "roles"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         roles_on_join_ids = [
@@ -90,5 +124,8 @@ def roles_on_join_index():
         ]
 
     return render_template(
-        "roles_on_join.html", roles_on_join=roles_on_join_list, roles=roles
+        "roles_on_join.html",
+        roles_on_join=roles_on_join_list,
+        roles=roles,
+        active_tab=active_tab,
     )
