@@ -6,7 +6,7 @@ from utils.logs import logging_channel, logging_settings
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
-logging_bp = Blueprint("logging", __name__)
+logging_bp = Blueprint("logging", __name__, template_folder="templates")
 
 
 def handle_saving_settings(auth):

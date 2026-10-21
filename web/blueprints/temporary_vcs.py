@@ -5,7 +5,7 @@ from database import engine, synced_channels, temporary_vc_creator_channels
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
-temporary_vcs_bp = Blueprint("temporary_vcs", __name__)
+temporary_vcs_bp = Blueprint("temporary_vcs", __name__, template_folder="templates")
 
 
 def handle_add(auth):

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, sticky_messages, synced_channels
+from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 sticky_messages_bp = Blueprint("sticky_messages", __name__, template_folder="templates")

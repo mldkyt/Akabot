@@ -4,7 +4,7 @@ from database import engine
 from utils.fun import setting_disable_yuri_command, setting_disable_yaoi_command, setting_allow_rp_commands
 from web.webutils.tokens import authorize, get_token_data
 
-fun_commands_bp = Blueprint("fun", __name__)
+fun_commands_bp = Blueprint("fun", __name__, template_folder="templates")
 
 def handle_post(auth):
     with engine.begin() as c:
@@ -26,7 +26,7 @@ def handle_post(auth):
 
 @fun_commands_bp.route("/settings/fun", methods=["GET", "POST"])
 def fun_index():
-    authorization = authorize("/settings/welcome_goodbye")
+    authorization = authorize("/settings/fun")
     if authorization is not None:
         return authorization
 

@@ -6,13 +6,16 @@
     <title>Akabot Settings</title>
     <link rel="stylesheet" href="/static/settings.css">
     <script src="/static/jquery.min.js" type="text/javascript"></script>
+    <script src="/static/settings.js" defer></script>
 </head>
 <body>
+{% from '_components.html' import flashes %}
 <div class="layout">
     <aside class="sidebar">
         {% include 'sidebar.html' %}
     </aside>
     <main class="main">
+        {{ flashes() }}
         {% block main %}{% endblock %}
     </main>
 </div>

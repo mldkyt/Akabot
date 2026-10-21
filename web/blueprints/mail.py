@@ -9,7 +9,7 @@ from utils.mail import get_all_mail, get_unread_mail_count, get_unread_mail, mar
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
-mail_bp = Blueprint("settings_mail", __name__)
+mail_bp = Blueprint("settings_mail", __name__, template_folder="templates")
 
 @mail_bp.route("/settings/mail")
 def settings_mail_index():

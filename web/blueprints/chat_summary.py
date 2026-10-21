@@ -7,7 +7,7 @@ from utils.chat_summary import chat_summary_extra, chat_summary_history, chat_su
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
-chat_summary_bp = Blueprint("chat_summary", __name__)
+chat_summary_bp = Blueprint("chat_summary", __name__, template_folder="templates")
 
 def handle_settings(auth):
     if "channel" in request.form:

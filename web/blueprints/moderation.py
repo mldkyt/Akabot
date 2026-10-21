@@ -5,7 +5,7 @@ from database import engine, moderator_roles, synced_roles
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
-moderation_bp = Blueprint("moderation", __name__)
+moderation_bp = Blueprint("moderation", __name__, template_folder="templates")
 
 
 def handle_add(auth):

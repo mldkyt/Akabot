@@ -7,7 +7,7 @@ from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
-meow_back_bp = Blueprint("meow_back", __name__)
+meow_back_bp = Blueprint("meow_back", __name__, template_folder="templates")
 
 
 def handle_post(auth):

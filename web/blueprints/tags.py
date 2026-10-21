@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, tags
+from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 tags_bp = Blueprint("tags_bp", __name__, template_folder="templates")

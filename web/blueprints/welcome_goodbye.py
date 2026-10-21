@@ -8,7 +8,7 @@ from utils.welcome_goodbye import welcome_message_title, welcome_message_message
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
-welcome_goodbye_bp = Blueprint("welcome_goodbye", __name__)
+welcome_goodbye_bp = Blueprint("welcome_goodbye", __name__, template_folder="templates")
 
 def handle_save(auth):
     with engine.begin() as c:

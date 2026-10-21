@@ -1,0 +1,56 @@
+{% macro flashes() %}
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<div class="flash{% if category and category != 'message' %} flash--{{ category }}{% endif %}">
+    <p>{{ message }}</p>
+</div>
+{% endfor %}
+{% endmacro %}
+
+{% macro page_header(title, description=None) %}
+<header class="page-header">
+    <h1>{{ title }}</h1>
+    {% if description %}<p>{{ description }}</p>{% endif %}
+</header>
+{% endmacro %}
+
+{% macro tabs(items, active) %}
+<nav class="settings-tabs" aria-label="Settings sections">
+    {% for item in items %}
+    <a class="settings-tab{% if item[0] == active %} is-active{% endif %}" href="?tab={{ item[0] }}"{% if item[0] == active %} aria-current="page"{% endif %}>{{ item[1] }}</a>
+    {% endfor %}
+</nav>
+{% endmacro %}
+
+{% macro table(headers) %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {{ caller() }}
+        </tbody>
+    </table>
+</div>
+{% endmacro %}
+
+{% macro empty_row(colspan, message) %}
+<tr>
+    <td colspan="{{ colspan }}"><div class="empty-state">{{ message }}</div></td>
+</tr>
+{% endmacro %}
+
+{% macro delete_confirm(form_id, label='Delete') %}
+<span class="confirm-actions">
+    <button type="button" class="btn btn-danger btn-sm" data-confirm-delete="{{ form_id }}">{{ label }}</button>
+    <span class="confirm-inline" hidden>
+        <span>Are you sure?</span>
+        <button type="submit" form="{{ form_id }}" class="btn btn-danger btn-sm">Yes, delete</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-confirm-cancel>Cancel</button>
+    </span>
+</span>
+{% endmacro %}

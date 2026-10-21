@@ -5,7 +5,7 @@ from database import engine, statistic_channels, synced_channels
 from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
-statistic_channels_bp = Blueprint("statistic_channels", __name__)
+statistic_channels_bp = Blueprint("statistic_channels", __name__, template_folder="templates")
 
 
 def handle_post(auth, is_edit: bool = False):

@@ -88,7 +88,7 @@ def handle_delete(auth):
 
 @counting_bp.route("/settings/counting", methods=["GET", "POST"])
 def counting_index():
-    authorization = authorize("/settings")
+    authorization = authorize("/settings/counting")
     if authorization is not None:
         return authorization
 

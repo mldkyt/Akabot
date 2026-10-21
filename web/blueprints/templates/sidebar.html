@@ -7,36 +7,36 @@
 </div>
 <nav class="sidebar-nav">
     <ul>
-        <li><a href="/settings">Home</a></li>
+        <li><a href="/settings" class="{% if request.path == '/settings' %}active{% endif %}">Home</a></li>
         <li class="nav-section">Moderation</li>
-        <li><a href="/settings/anti_raid">Anti Raid</a></li>
-        <li><a href="/settings/automod_actions">Automod Actions</a></li>
-        <li><a href="/settings/moderation">Moderation</a></li>
-        <li><a href="/settings/verification">Verification</a></li>
+        <li><a href="/settings/anti_raid" class="{% if request.path == '/settings/anti_raid' %}active{% endif %}">Anti Raid</a></li>
+        <li><a href="/settings/automod_actions" class="{% if request.path == '/settings/automod_actions' %}active{% endif %}">Automod Actions</a></li>
+        <li><a href="/settings/moderation" class="{% if request.path == '/settings/moderation' %}active{% endif %}">Moderation</a></li>
+        <li><a href="/settings/verification" class="{% if request.path == '/settings/verification' %}active{% endif %}">Verification</a></li>
         <li class="nav-section">Channels</li>
-        <li><a href="/settings/counting">Counting</a></li>
-        <li><a href="/settings/chat_revive">Chat Revive</a></li>
-        <li><a href="/settings/chat_streaks">Chat Streaks</a></li>
-        <li><a href="/settings/chat_summary">Chat Summary</a></li>
-        <li><a href="/settings/logging">Logging</a></li>
-        <li><a href="/settings/meow_back">Meow Back</a></li>
-        <li><a href="/settings/markov">Markov Chains</a></li>
-        <li><a href="/settings/message_counting">Message Counting</a></li>
-        <li><a href="/settings/roles_on_join">Roles on Join</a></li>
-        <li><a href="/settings/statistic_channels">Statistic Channels</a></li>
-        <li><a href="/settings/sticky_messages">Sticky Messages</a></li>
-        <li><a href="/settings/suggestions">Suggestions</a></li>
-        <li><a href="/settings/tags">Tags</a></li>
-        <li><a href="/settings/periodic_messages">Periodic Messages</a></li>
+        <li><a href="/settings/counting" class="{% if request.path == '/settings/counting' %}active{% endif %}">Counting</a></li>
+        <li><a href="/settings/chat_revive" class="{% if request.path == '/settings/chat_revive' %}active{% endif %}">Chat Revive</a></li>
+        <li><a href="/settings/chat_streaks" class="{% if request.path == '/settings/chat_streaks' %}active{% endif %}">Chat Streaks</a></li>
+        <li><a href="/settings/chat_summary" class="{% if request.path == '/settings/chat_summary' %}active{% endif %}">Chat Summary</a></li>
+        <li><a href="/settings/logging" class="{% if request.path == '/settings/logging' %}active{% endif %}">Logging</a></li>
+        <li><a href="/settings/meow_back" class="{% if request.path == '/settings/meow_back' %}active{% endif %}">Meow Back</a></li>
+        <li><a href="/settings/markov" class="{% if request.path == '/settings/markov' %}active{% endif %}">Markov Chains</a></li>
+        <li><a href="/settings/message_counting" class="{% if request.path == '/settings/message_counting' %}active{% endif %}">Message Counting</a></li>
+        <li><a href="/settings/roles_on_join" class="{% if request.path == '/settings/roles_on_join' %}active{% endif %}">Roles on Join</a></li>
+        <li><a href="/settings/statistic_channels" class="{% if request.path == '/settings/statistic_channels' %}active{% endif %}">Statistic Channels</a></li>
+        <li><a href="/settings/sticky_messages" class="{% if request.path == '/settings/sticky_messages' %}active{% endif %}">Sticky Messages</a></li>
+        <li><a href="/settings/suggestions" class="{% if request.path == '/settings/suggestions' %}active{% endif %}">Suggestions</a></li>
+        <li><a href="/settings/tags" class="{% if request.path == '/settings/tags' %}active{% endif %}">Tags</a></li>
+        <li><a href="/settings/periodic_messages" class="{% if request.path == '/settings/periodic_messages' %}active{% endif %}">Periodic Messages</a></li>
         <li class="nav-section">Features</li>
-        <li><a href="/settings/leveling">Leveling</a></li>
-        <li><a href="/settings/reaction_roles">Reaction Roles</a></li>
-        <li><a href="/settings/fun">Fun Commands</a></li>
-        <li><a href="/settings/welcome_goodbye">Welcome & Goodbye</a></li>
-        <li><a href="/settings/temporary_vcs">Temporary VCs</a></li>
+        <li><a href="/settings/leveling" class="{% if request.path == '/settings/leveling' %}active{% endif %}">Leveling</a></li>
+        <li><a href="/settings/reaction_roles" class="{% if request.path == '/settings/reaction_roles' %}active{% endif %}">Reaction Roles</a></li>
+        <li><a href="/settings/fun" class="{% if request.path == '/settings/fun' %}active{% endif %}">Fun Commands</a></li>
+        <li><a href="/settings/welcome_goodbye" class="{% if request.path == '/settings/welcome_goodbye' %}active{% endif %}">Welcome &amp; Goodbye</a></li>
+        <li><a href="/settings/temporary_vcs" class="{% if request.path == '/settings/temporary_vcs' %}active{% endif %}">Temporary VCs</a></li>
         <li class="nav-section">Other</li>
-        <li><a href="/settings/mail">Mail</a></li>
-        <li><a href="/settings/feedback">Send Feedback</a></li>
+        <li><a href="/settings/mail" class="{% if request.path == '/settings/mail' %}active{% endif %}">Mail</a></li>
+        <li><a href="/settings/feedback" class="{% if request.path == '/settings/feedback' %}active{% endif %}">Send Feedback</a></li>
         <li><a href="https://donate.mldkyt.com">Donate</a></li>
     </ul>
 </nav>

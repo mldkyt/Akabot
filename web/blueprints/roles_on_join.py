@@ -5,7 +5,7 @@ from database import engine, roles_on_join, synced_roles
 from web.webutils.discord_sync import validate_role_id
 from web.webutils.tokens import authorize, get_token_data
 
-roles_on_join_bp = Blueprint("roles_on_join", __name__)
+roles_on_join_bp = Blueprint("roles_on_join", __name__, template_folder="templates")
 
 
 def handle_add(auth):

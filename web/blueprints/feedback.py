@@ -8,7 +8,7 @@ from utils.feedback import ForgejoFeedback, GitHubFeedback, DiscordFeedback
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
-feedback_bp = Blueprint("feedback", __name__)
+feedback_bp = Blueprint("feedback", __name__, template_folder="templates")
 
 FEEDBACK_TYPE = os.getenv("FEEDBACK_TYPE", "none")
 
