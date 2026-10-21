@@ -1,40 +1,57 @@
-{% extends 'page.html' %} {% block main %} {% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
+{% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Sticky Messages', 'Keep an important message at the bottom of a channel automatically.') }}
+{{ tabs([('messages', 'Messages'), ('create', 'Add message')], active_tab) }}
+
+{% if active_tab == 'messages' %}
+{% call table(['Channel', 'Message', 'Actions']) %}
+{% for sticky_message in sticky_messages %}
+{% set form_id = 'sticky-' ~ sticky_message.id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if text_channel.id == sticky_message.id %}selected{% endif %}>{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td><textarea name="content" form="{{ form_id }}" style="min-width: 340px;">{{sticky_message.content}}</textarea></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=messages">
+            <input type="hidden" name="_tab" value="messages">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{sticky_message.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=messages">
+            <input type="hidden" name="_tab" value="messages">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{sticky_message.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(3, 'No sticky messages configured.') }}
 {% endfor %}
-
-<h1>Sticky messages</h1>
-
-<form action="/settings/sticky_messages" method="post">
-    <label for="channel">Channel</label>
-    <select name="channel" id="channel">
-        {% for text_channel in text_channels %}
-        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br />
-    <label for="content">Message content</label>
-    <br />
-    <textarea rows="10" cols="50" id="content" name="content"></textarea>
-    <br />
-    <button type="submit">Add channel</button>
-</form>
-
-{% for i in sticky_messages %}
-
-<h2>Channel: #{{i.name}}</h2>
-<form action="/settings/sticky_messages" method="post">
-    <input type="hidden" name="channel" value="{{i.id}}" />
-    <span>Message content:</span><br />
-    <textarea rows="10" cols="50" name="content">{{i.content}}</textarea>
-    <br />
-    <button type="submit">Update message</button>
-</form>
-
-<form action="/settings/sticky_messages" method="post">
-    <input type="hidden" name="delete" value="{{i.id}}" />
-    <button type="submit">Delete message</button>
-</form>
-
-{% endfor %} {% endblock %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <form action="?tab=create" method="post">
+        <input type="hidden" name="_tab" value="create">
+        <input type="hidden" name="action" value="create">
+        <label for="channel">Channel</label>
+        <select name="channel" id="channel">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+        <label for="content">Message content</label>
+        <textarea rows="10" id="content" name="content"></textarea>
+        <div class="form-actions"><button type="submit">Add sticky message</button></div>
+    </form>
+</section>
+{% endif %}
+{% endblock %}
