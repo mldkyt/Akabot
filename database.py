@@ -137,8 +137,8 @@ temporary_vc_creator_channels = Table(
 chat_summary_channels = Table(
     "chat_summary_channel",
     md_obj,
-    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
-    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
     Column("messages", Integer),
     Column("last_member", VARCHAR, default="0", server_default="0", nullable=False),
 )
@@ -156,8 +156,8 @@ chat_summary_members = Table(
 monthly_chat_summary_channels = Table(
     "chat_summary_channel_monthly",
     md_obj,
-    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
-    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
     Column("messages", Integer),
     Column("last_member", VARCHAR, default="0", server_default="0", nullable=False),
 )
@@ -175,8 +175,8 @@ monthly_chat_summary_members = Table(
 yearly_chat_summary_channels = Table(
     "chat_summary_channel_yearly",
     md_obj,
-    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
-    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
     Column("messages", Integer),
     Column("last_member", VARCHAR, default="0", server_default="0", nullable=False),
 )
@@ -194,7 +194,7 @@ yearly_chat_summary_members = Table(
 past_chat_summaries = Table(
     "past_chat_summaries",
     md_obj,
-    Column("id", VARCHAR, primary_key=True, comment="Message ID"),
+    Column("id", VARCHAR, primary_key=True),
     Column("gid", VARCHAR, nullable=False),
     Column("cid", VARCHAR, nullable=False),
     Column("kind", VARCHAR, nullable=False),
@@ -218,19 +218,19 @@ chat_streaks = Table(
     md_obj,
     Column("gid", VARCHAR, primary_key=True),
     Column("uid", VARCHAR, primary_key=True),
-    Column("start_date", DATE, nullable=False, comment="YYYY-MM-DD"),
-    Column("last_message_date", DATE, nullable=False, comment="YYYY-MM-DD"),
-    Column("message_count", Integer, nullable=False, server_default="0", comment="Counted messages for the count date"),
-    Column("message_count_date", DATE, comment="YYYY-MM-DD. Day the message count belongs to"),
+    Column("start_date", DATE, nullable=False),
+    Column("last_message_date", DATE, nullable=False),
+    Column("message_count", Integer, nullable=False, server_default="0"),
+    Column("message_count_date", DATE),
 )
 
 chat_streak_last_members = Table(
     "chat_streak_last_members",
     md_obj,
-    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
-    Column("cid", VARCHAR, primary_key=True, comment="Channel ID"),
-    Column("date", DATE, primary_key=True, comment="YYYY-MM-DD"),
-    Column("uid", VARCHAR, nullable=False, comment="User ID"),
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("date", DATE, primary_key=True),
+    Column("uid", VARCHAR, nullable=False),
 )
 
 counting_channels = Table(
@@ -362,7 +362,6 @@ giveaway_joins = Table(
         Integer,
         ForeignKey("giveaways.id"),
         nullable=False,
-        comment="Giveaway ID",
     ),
     Column("uid", VARCHAR, nullable=False),
 )
@@ -507,7 +506,7 @@ tags = Table(
 message_counting = Table(
     "message_counting",
     md_obj,
-    Column("gid", VARCHAR, primary_key=True, comment="Guild ID"),
+    Column("gid", VARCHAR, primary_key=True),
     Column("name", VARCHAR),
     Column("messages", Integer),
 )
@@ -565,9 +564,9 @@ tasks = Table(
     "tasks",
     md_obj,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("direction", VARCHAR, nullable=False, comment="bot or web"),
-    Column("type", VARCHAR, nullable=False, comment="Module consuming the task"),
-    Column("data", VARCHAR, nullable=False, comment="JSON string"),
+    Column("direction", VARCHAR, nullable=False),
+    Column("type", VARCHAR, nullable=False),
+    Column("data", VARCHAR, nullable=False),
     Column("attempts", Integer, nullable=False, server_default="0"),
     Column("next_attempt", DateTime(timezone=True)),
     Column("error", VARCHAR),
@@ -582,7 +581,7 @@ reaction_roles = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("gid", VARCHAR, nullable=False),
     Column("cid", VARCHAR, nullable=False),
-    Column("mid", VARCHAR, comment="Message ID, null until posted"),
+    Column("mid", VARCHAR),
     Column("type", VARCHAR, nullable=False, server_default="n"),
     Column("content", VARCHAR),
     Column("created_at", DateTime(timezone=True), nullable=False),
