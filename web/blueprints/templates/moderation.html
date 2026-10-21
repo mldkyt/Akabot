@@ -1,40 +1,68 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Moderation', 'Configure which roles can use moderation commands in your server.') }}
+{{ tabs([('general', 'General'), ('roles', 'Moderator roles')], active_tab) }}
 
-{% block main %}
-<h1>Moderation</h1>
-<p>Here you can configure things related to Akabot moderation.</p>
-
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<h2>Moderator roles</h2>
-
-<form action="/settings/moderation" method="post">
-    <label for="role">Moderator role</label>
-    <select name="role" id="role">
-        {% for role in roles %}
-        <option value="{{role.id}}">{{role.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <button type="submit">Add</button>
-</form>
-
-<h2>Existing moderator roles</h2>
-
-{% for moderator_role in moderator_roles %}
-<div class="data-card">
-    <ul>
-        <li>Moderator role: {{moderator_role.name}}</li>
-    </ul>
-
-    <a href="/settings/moderation?delete={{moderator_role.id}}">Delete</a>
-</div>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <h2>How moderator roles work</h2>
+    <p>Members with any of the roles on the Moderator roles tab can use Akabot moderation commands such as warn, timeout, kick and ban.</p>
+    <p>Make sure the roles are positioned above the roles Akabot needs to moderate. Server administrators are always allowed to use moderation commands.</p>
+    <p>You currently have <strong>{{ moderator_roles|length }}</strong> moderator role{% if moderator_roles|length != 1 %}s{% endif %} configured.</p>
+    <div class="form-actions">
+        <a class="btn" href="?tab=roles">Manage moderator roles</a>
+    </div>
+</section>
 {% else %}
-<p>No moderation roles</p>
-{% endfor %}
+<section class="settings-panel">
+    <h2>Add moderator role</h2>
+    <form action="?tab=roles" method="post">
+        <input type="hidden" name="_tab" value="roles">
+        <input type="hidden" name="_section" value="roles">
+        <input type="hidden" name="action" value="create">
+        <label for="role">Role</label>
+        <select name="role" id="role">
+            {% for role in roles %}
+            <option value="{{role.id}}">@{{role.name}}</option>
+            {% endfor %}
+        </select>
+        <div class="form-actions"><button type="submit">Add role</button></div>
+    </form>
+</section>
 
+{% call table(['Role', 'Actions']) %}
+{% for moderator_role in moderator_roles %}
+{% set form_id = 'moderator-' ~ moderator_role.id %}
+<tr>
+    <td>
+        <select name="role" form="{{ form_id }}">
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if role.id == moderator_role.id %}selected{% endif %}>@{{role.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=roles">
+            <input type="hidden" name="_tab" value="roles">
+            <input type="hidden" name="_section" value="roles">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{moderator_role.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=roles">
+            <input type="hidden" name="_tab" value="roles">
+            <input type="hidden" name="_section" value="roles">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{moderator_role.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(2, 'No moderator roles configured.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}
