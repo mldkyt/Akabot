@@ -186,11 +186,48 @@ def leveling_index():
     assert auth is not None
 
     if request.method == "POST":
-        handle_settings(auth)
-        handle_rewards(auth)
-        handle_multipliers(auth)
+        section = request.form.get("_section", "general")
+        if section == "general":
+            handle_settings(auth)
+            return redirect("/settings/leveling?tab=general", 303)
 
-    handle_delete(auth)
+        action = request.form.get("action", "create")
+        item_id = request.form.get("id", "")
+        if section == "rewards":
+            if action == "create":
+                handle_rewards(auth)
+            elif action == "update" and item_id.isnumeric():
+                handle_rewards(auth, is_edit=True, remove_id=int(item_id))
+            elif action == "delete" and item_id.isnumeric():
+                with engine.begin() as c:
+                    c.execute(
+                        delete(leveling_rewards).where(
+                            (leveling_rewards.c.gid == auth["guild"])
+                            & (leveling_rewards.c.id == int(item_id))
+                        )
+                    )
+                flash("Deleted role reward")
+            return redirect("/settings/leveling?tab=rewards", 303)
+
+        if section == "multipliers":
+            if action == "create":
+                handle_multipliers(auth, is_edit=False)
+            elif action == "update" and item_id.isnumeric():
+                handle_multipliers(auth, is_edit=True, remove_id=int(item_id))
+            elif action == "delete" and item_id.isnumeric():
+                with engine.begin() as c:
+                    c.execute(
+                        delete(leveling_multipliers).where(
+                            (leveling_multipliers.c.gid == auth["guild"])
+                            & (leveling_multipliers.c.id == int(item_id))
+                        )
+                    )
+                flash("Deleted multiplier")
+            return redirect("/settings/leveling?tab=multipliers", 303)
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "rewards", "multipliers"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         xp_per_message = setting_xp_per_message.get(c, auth["guild"])
@@ -253,56 +290,4 @@ def leveling_index():
     return render_template("leveling.html",
                            xp_per_message=xp_per_message, level_up_message=level_up_message, level_up_message_text=level_up_message_text,
                            xp_per_level=xp_per_level, reward_roles=reward_roles, multipliers=multipliers,
-                           roles=roles)
-
-@leveling_bp.route("/settings/leveling/edit/reward/<index>", methods=["POST"])
-def edit_reward(index: str):
-    if not index.isnumeric():
-        return redirect("/settings/leveling", 302)
-
-    authorization = authorize("/settings/leveling")
-    if authorization is not None:
-        return authorization
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        reward_rows = c.execute(
-            select(leveling_rewards.c.id)
-            .where(leveling_rewards.c.gid == auth["guild"])
-            .order_by(leveling_rewards.c.id)
-        ).fetchall()
-        if len(reward_rows) <= int(index):
-            return redirect("/settings/leveling")
-
-        remove_id = reward_rows[int(index)][0]
-
-    handle_rewards(auth, is_edit=True, remove_id=remove_id)
-    return redirect("/settings/leveling", 303)
-
-@leveling_bp.route("/settings/leveling/edit/multiplier/<index>", methods=["POST"])
-def edit_multiplier(index: str):
-    if not index.isnumeric():
-        return redirect("/settings/leveling", 302)
-
-    authorization = authorize("/settings/leveling")
-    if authorization is not None:
-        return authorization
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        multiplier_rows = c.execute(
-            select(leveling_multipliers.c.id)
-            .where(leveling_multipliers.c.gid == auth["guild"])
-            .order_by(leveling_multipliers.c.id)
-        ).fetchall()
-        if len(multiplier_rows) <= int(index):
-            return redirect("/settings/leveling", 302)
-
-        remove_id = multiplier_rows[int(index)][0]
-
-    handle_multipliers(auth, is_edit=True, remove_id=remove_id)
-    return redirect("/settings/leveling", 303)
+                           roles=roles, active_tab=active_tab)
