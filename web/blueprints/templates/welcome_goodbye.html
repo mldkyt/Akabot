@@ -1,89 +1,99 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs %}{% block main %}
+{{ page_header('Welcome & Goodbye', 'Greet new members and say goodbye when members leave.') }}
+{{ tabs([('welcome', 'Welcome'), ('goodbye', 'Goodbye'), ('placeholders', 'Placeholders')], active_tab) }}
 
-{% block main %}
-<h1>Welcome & Goodbye</h1>
-<p>Here you can configure welcoming of new members and saying goodbye to those who leave.</p>
+{% if active_tab == 'welcome' %}
+<section class="settings-panel">
+    <form action="?tab=welcome" method="post">
+        <input type="hidden" name="_tab" value="welcome">
+        <input type="hidden" name="_section" value="welcome">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <label for="welcome_channel">Welcome channel</label>
+        <select name="welcome_channel" id="welcome_channel">
+            <option value="unset">-- Unset --</option>
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if channel.id == welcome_channel %}selected{% endif %}>#{{channel.name}}</option>
+            {% endfor %}
+        </select>
 
-<form action="/settings/welcome_goodbye" method="post">
+        <div class="form-grid">
+            <div>
+                <label for="welcome_title">Welcome message title</label>
+                <input type="text" name="welcome_title" id="welcome_title" value="{{welcome_title}}">
+            </div>
+            <div>
+                <label for="welcome_type">Welcome message type</label>
+                <select name="welcome_type" id="welcome_type">
+                    <option value="text" {% if welcome_type == "text" %}selected{% endif %}>Plain text</option>
+                    <option value="embed" {% if welcome_type == "embed" %}selected{% endif %}>Embed</option>
+                </select>
+            </div>
+        </div>
 
-    <h2>Welcome</h2>
+        <label for="welcome_msg">Welcome message</label>
+        <textarea name="welcome_msg" id="welcome_msg" rows="5">{{welcome_msg}}</textarea>
 
-    <label for="welcome_channel">Welcome channel</label>
-    <select name="welcome_channel" id="welcome_channel">
-        <option value="unset">-- unset --</option>
-        {% for channel in channels %}
-        <option value="{{channel.id}}" {% if channel.id == welcome_channel %}selected{% endif %}>{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
+        <div class="form-grid">
+            <div>
+                <label for="welcome_first">First grace period (seconds)</label>
+                <input type="number" name="welcome_first" id="welcome_first" value="{{welcome_first}}">
+                <small>The delay between a member joining and the welcome message being sent.</small>
+            </div>
+            <div>
+                <label for="welcome_second">Second grace period (seconds)</label>
+                <input type="number" name="welcome_second" id="welcome_second" value="{{welcome_second}}">
+                <small>If the member leaves during this period, the welcome message is deleted instead of sending a goodbye message.</small>
+            </div>
+        </div>
 
-    <label for="welcome_title">Welcome message title</label>
-    <input type="text" name="welcome_title" id="welcome_title" value="{{welcome_title}}">
-    <br>
+        <div class="form-actions"><button type="submit">Save welcome settings</button></div>
+    </form>
+</section>
+{% elif active_tab == 'goodbye' %}
+<section class="settings-panel">
+    <form action="?tab=goodbye" method="post">
+        <input type="hidden" name="_tab" value="goodbye">
+        <input type="hidden" name="_section" value="goodbye">
 
-    <label for="welcome_msg">Welcome message</label>
-    <input type="text" name="welcome_msg" id="welcome_msg" value="{{welcome_msg}}">
-    <br>
+        <label for="goodbye_channel">Goodbye channel</label>
+        <select name="goodbye_channel" id="goodbye_channel">
+            <option value="unset">-- Unset --</option>
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if channel.id == goodbye_channel %}selected{% endif %}>#{{channel.name}}</option>
+            {% endfor %}
+        </select>
 
-    <label for="welcome_type">Welcome message type</label>
-    <select name="welcome_type" id="welcome_type">
-        <option value="text" {% if welcome_type == "text" %}selected{% endif %}>Plain text</option>
-        <option value="embed" {% if welcome_type == "embed" %}selected{% endif %}>Embed</option>
-    </select>
-    <br>
+        <div class="form-grid">
+            <div>
+                <label for="goodbye_title">Goodbye message title</label>
+                <input type="text" name="goodbye_title" id="goodbye_title" value="{{goodbye_title}}">
+            </div>
+            <div>
+                <label for="goodbye_type">Goodbye message type</label>
+                <select name="goodbye_type" id="goodbye_type">
+                    <option value="text" {% if goodbye_type == "text" %}selected{% endif %}>Plain text</option>
+                    <option value="embed" {% if goodbye_type == "embed" %}selected{% endif %}>Embed</option>
+                </select>
+            </div>
+        </div>
 
-    <label for="welcome_first">First grace period</label>
-    <input type="number" name="welcome_first" id="welcome_first" value="{{welcome_first}}">
-    <p><small>This is the grace period between the member joining and the bot sending a welcome message, in seconds. This is to prevent sending a message when a moderation bot kicks the user right away.</small></p>
+        <label for="goodbye_msg">Goodbye message</label>
+        <textarea name="goodbye_msg" id="goodbye_msg" rows="5">{{goodbye_msg}}</textarea>
 
-    <label for="welcome_second">Second grace period</label>
-    <input type="number" name="welcome_second" id="welcome_second" value="{{welcome_second}}">
-    <p><small>This is the grace period between sending the message and not deleting it after leaving, in seconds. If the member leaves during the second grace period, the welcome message will be deleted instead of sending a goodbye message.</small></p>
-
-    <h2>Goodbye</h2>
-
-    <label for="goodbye_channel">Goodbye channel</label>
-    <select name="goodbye_channel" id="goodbye_channel">
-        <option value="unset">-- unset --</option>
-        {% for channel in channels %}
-        <option value="{{channel.id}}" {% if channel.id == goodbye_channel %}selected{% endif %}>{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-
-    <label for="goodbye_title">Goodbye message title</label>
-    <input type="text" name="goodbye_title" id="goodbye_title" value="{{goodbye_title}}">
-    <br>
-
-    <label for="goodbye_msg">Goodbye message</label>
-    <input type="text" name="goodbye_msg" id="goodbye_msg" value="{{goodbye_msg}}">
-    <br>
-
-    <label for="goodbye_type">Goodbye message type</label>
-    <select name="goodbye_type" id="goodbye_type">
-        <option value="text" {% if goodbye_type == "text" %}selected{% endif %}>Plain text</option>
-        <option value="embed" {% if goodbye_type == "embed" %}selected{% endif %}>Embed</option>
-    </select>
-    <br>
-
-    <button type="submit">Save</button>
-</form>
-
-<h2>Formatting guidelines</h2>
-
-<p>There are a few placeholders present inside of welcome and goodbye you can use:</p>
-
-<ul>
-    <li><strong>%m</strong>: Mentions the user</li>
-    <li><strong>%u</strong>: Username of the user</li>
-    <li><strong>%U</strong>: Display name, nick name, or username on the server.</li>
-    <li><strong>%s</strong>: Server name</li>
-</ul>
-
+        <div class="form-actions"><button type="submit">Save goodbye settings</button></div>
+    </form>
+</section>
+{% else %}
+<section class="settings-panel">
+    <h2>Message placeholders</h2>
+    {% from '_components.html' import table %}
+    {% call table(['Placeholder', 'Description']) %}
+    <tr><td><code>%m</code></td><td>Mentions the user</td></tr>
+    <tr><td><code>%u</code></td><td>Username of the user</td></tr>
+    <tr><td><code>%U</code></td><td>Display name, nickname or username on the server</td></tr>
+    <tr><td><code>%s</code></td><td>Server name</td></tr>
+    {% endcall %}
+</section>
+{% endif %}
 {% endblock %}
