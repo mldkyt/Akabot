@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, session
-from sqlalchemy import select, delete, insert
+from flask import Blueprint, flash, redirect, render_template, request, session
+from sqlalchemy import select, delete, insert, update
 
 from database import (
     engine,
@@ -20,6 +20,13 @@ message_counting_bp = Blueprint(
 )
 
 
+def _parse_multiplier(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 @message_counting_bp.route("/settings/message_counting", methods=["GET", "POST"])
 def message_counting_index():
     authorization = authorize("/settings/message_counting")
@@ -31,53 +38,8 @@ def message_counting_index():
 
     with engine.begin() as c:
         if request.method == "POST":
-
-            # Delete reward
-            if "remove" in request.form:
-                remove_id = request.form["remove"]
-                if not remove_id.isnumeric():
-                    return quick_response("Invalid remove ID", 400)
-
-                c.execute(
-                    delete(message_counting_rewards)
-                    .where(
-                        (message_counting_rewards.c.id == int(remove_id))
-                        & (message_counting_rewards.c.gid == auth["guild"])
-                    )
-                )
-
-            # Role Reward
-            elif "type" in request.form and "messages" in request.form:
-                message_count = request.form["messages"]
-                if not message_count.isnumeric():
-                    return quick_response("Message count is not a number", 400)
-
-                if request.form["type"] == "multiplier" and \
-                    "multiplier" in request.form:
-                    multiplier = request.form["multiplier"]
-
-                    c.execute(
-                        insert(message_counting_rewards)
-                        .values(type="multiplier", gid=auth["guild"], messages=int(message_count), multiplier=float(multiplier))
-                    )
-
-                if request.form["type"] == "role" and \
-                    "role" in request.form:
-                    role_id = request.form["role"]
-                    role = c.execute(
-                        select(synced_roles.c.rid)
-                        .where(synced_roles.c.rid == role_id)
-                    ).fetchone()
-
-                    if role is None:
-                        return quick_response("Unknown role", 400)
-
-                    c.execute(
-                        insert(message_counting_rewards)
-                        .values(type="role", gid=auth["guild"], rid=role[0], messages=int(message_count))
-                    )
-
-            else:
+            section = request.form.get("_section", "general")
+            if section == "general":
                 if request.form.get("enable_leaderboard"):
                     setting_enable_leaderboard.set(c, auth["guild"], "true")
                 else:
@@ -93,6 +55,100 @@ def message_counting_index():
                 else:
                     setting_count_deletes.set(c, auth["guild"], "false")
 
+                return redirect("/settings/message_counting?tab=general", 303)
+
+            action = request.form.get("action", "create")
+            reward_id = request.form.get("id", "")
+            reward_type = request.form.get("type", "")
+            message_count = request.form.get("messages", "")
+
+            if action == "delete" and reward_id.isnumeric():
+                c.execute(
+                    delete(message_counting_rewards).where(
+                        (message_counting_rewards.c.id == int(reward_id))
+                        & (message_counting_rewards.c.gid == auth["guild"])
+                    )
+                )
+                flash("Deleted message counting reward")
+            elif action == "update" and reward_id.isnumeric():
+                if not message_count.isnumeric():
+                    flash("Message count is not a number")
+                elif reward_type == "multiplier":
+                    multiplier = _parse_multiplier(request.form.get("multiplier"))
+                    if multiplier is None:
+                        flash("Multiplier is not a number")
+                    else:
+                        c.execute(
+                            update(message_counting_rewards)
+                            .where(
+                                (message_counting_rewards.c.id == int(reward_id))
+                                & (message_counting_rewards.c.gid == auth["guild"])
+                            )
+                            .values(
+                                messages=int(message_count),
+                                multiplier=multiplier,
+                            )
+                        )
+                        flash("Saved message counting reward")
+                elif reward_type == "role":
+                    role_id = request.form.get("role", "")
+                    role = c.execute(
+                        select(synced_roles.c.rid).where(
+                            (synced_roles.c.rid == role_id)
+                            & (synced_roles.c.gid == auth["guild"])
+                        )
+                    ).fetchone()
+                    if role is not None:
+                        c.execute(
+                            update(message_counting_rewards)
+                            .where(
+                                (message_counting_rewards.c.id == int(reward_id))
+                                & (message_counting_rewards.c.gid == auth["guild"])
+                            )
+                            .values(messages=int(message_count), rid=role[0])
+                        )
+                        flash("Saved message counting reward")
+                    else:
+                        flash("Unknown role")
+            elif action == "create":
+                if not message_count.isnumeric():
+                    flash("Message count is not a number")
+                elif reward_type == "multiplier":
+                    multiplier = _parse_multiplier(request.form.get("multiplier"))
+                    if multiplier is None:
+                        flash("Multiplier is not a number")
+                    else:
+                        c.execute(
+                            insert(message_counting_rewards).values(
+                                type="multiplier",
+                                gid=auth["guild"],
+                                messages=int(message_count),
+                                multiplier=multiplier,
+                            )
+                        )
+                        flash("Added multiplier reward")
+                elif reward_type == "role" and "role" in request.form:
+                    role_id = request.form["role"]
+                    role = c.execute(
+                        select(synced_roles.c.rid).where(
+                            (synced_roles.c.rid == role_id)
+                            & (synced_roles.c.gid == auth["guild"])
+                        )
+                    ).fetchone()
+                    if role is None:
+                        flash("Unknown role")
+                    else:
+                        c.execute(
+                            insert(message_counting_rewards).values(
+                                type="role",
+                                gid=auth["guild"],
+                                rid=role[0],
+                                messages=int(message_count),
+                            )
+                        )
+                        flash("Added role reward")
+
+            return redirect("/settings/message_counting?tab=rewards", 303)
 
         enable_leaderboard = setting_enable_leaderboard.get(c, auth["guild"]) == "true"
         enable_indexer = setting_enable_indexer.get(c, auth["guild"]) == "true"
@@ -122,8 +178,10 @@ def message_counting_index():
                 )
             elif reward[1] == "role":
                 role_name = c.execute(
-                    select(synced_roles.c.rname)
-                    .where(synced_roles.c.rid == reward[3])
+                    select(synced_roles.c.rname).where(
+                        (synced_roles.c.rid == reward[3])
+                        & (synced_roles.c.gid == auth["guild"])
+                    )
                 ).fetchone()
 
                 rewards.append(
@@ -144,13 +202,18 @@ def message_counting_index():
             .where(synced_roles.c.gid == auth["guild"])
         )]
 
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "rewards"}:
+        active_tab = "general"
+
     return render_template(
         "message_counting.html",
         enable_leaderboard=enable_leaderboard,
         enable_indexer=enable_indexer,
         count_deletes=count_deletes,
         rewards=rewards,
-        roles=roles
+        roles=roles,
+        active_tab=active_tab,
     )
 
 
