@@ -32,7 +32,7 @@ def upgrade() -> None:
                     )
     op.create_table('giveaway_joins',
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-                    sa.Column('gid', sa.Integer(), nullable=False, comment='Giveaway ID'),
+                    sa.Column('gid', sa.Integer(), nullable=False),
                     sa.Column('uid', sa.VARCHAR(), nullable=False),
                     sa.ForeignKeyConstraint(['gid'], ['giveaways.id'], ),
                     sa.PrimaryKeyConstraint('id')

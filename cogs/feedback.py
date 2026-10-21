@@ -1,6 +1,3 @@
-from os import getenv
-
-from aiohttp import ClientSession
 from discord import (
     ApplicationContext,
     Cog,
@@ -11,7 +8,7 @@ from discord import (
 from discord.ui import InputText, Modal
 
 from logger import akabot_logger
-from utils.message_appends import apply_appends
+from utils.feedback import feedback_handler
 
 
 class BugReportModal(Modal):
@@ -40,11 +37,6 @@ class BugReportModal(Modal):
         self.add_item(self.description_input)
 
     async def submit_bug_report_on_forgejo(self, interaction):
-        forgejo_instance = getenv("FORGEJO_INSTANCE")
-        forgejo_token = getenv("FORGEJO_TOKEN")
-        forgejo_owner = getenv("FORGEJO_OWNER")
-        forgejo_project = getenv("FORGEJO_PROJECT")
-
         issue_body = (
             "- This bug report was created by {display} ({user} {id}) on Discord\n\n"
             "---\n\n"
@@ -57,24 +49,16 @@ class BugReportModal(Modal):
             )
         )
 
-        async with ClientSession() as session:
-            async with session.post(
-                f"https://{forgejo_instance}/api/v1/repos/{forgejo_owner}/{forgejo_project}/issues",
-                json={"title": self.title_input.value, "body": issue_body},
-                headers={"Authorization": f"token {forgejo_token}"},
-            ) as r:
-                if r.ok:
-                    await interaction.response.send_message(
-                        apply_appends(
-                            interaction.user.id,
-                            "The bug report was submitted successfully",
-                        ),
-                        ephemeral=True,
-                    )
-                else:
-                    await interaction.response.send_message(
-                        f"Failed to submit bug report: {await r.text()}", ephemeral=True
-                    )
+        # This is cursed but should work
+        ok, message = feedback_handler.create_issue({
+            "user_name": interaction.user.display_name,
+            "user": str(interaction.user.id)
+        }, f"Bug Report: {self.title_input.value}", issue_body)
+
+        if not ok:
+            await interaction.respond(f"An error occurred: {message}", ephemeral=True)
+        else:
+            await interaction.respond(f"Issue created: {message}", ephemeral=True)
 
     async def callback(self, interaction: Interaction):
         try:
@@ -112,11 +96,6 @@ class FeatureModal(Modal):
         self.add_item(self.description_input)
 
     async def submit_feature_on_forgejo(self, interaction):
-        forgejo_instance = getenv("FORGEJO_INSTANCE")
-        forgejo_token = getenv("FORGEJO_TOKEN")
-        forgejo_owner = getenv("FORGEJO_OWNER")
-        forgejo_project = getenv("FORGEJO_PROJECT")
-
         issue_body = (
             "- This feature request was created by {display} ({user} {id}) on Discord\n\n"
             "---\n\n"
@@ -129,24 +108,17 @@ class FeatureModal(Modal):
             )
         )
 
-        async with ClientSession() as session:
-            async with session.post(
-                f"https://{forgejo_instance}/api/v1/repos/{forgejo_owner}/{forgejo_project}/issues",
-                json={"title": self.title_input.value, "body": issue_body},
-                headers={"Authorization": f"token {forgejo_token}"},
-            ) as r:
-                if r.ok:
-                    await interaction.response.send_message(
-                        apply_appends(
-                            interaction.user.id, "Feature was submitted successfully"
-                        ),
-                        ephemeral=True,
-                    )
-                else:
-                    await interaction.response.send_message(
-                        f"Failed to submit feature request: {await r.text()}",
-                        ephemeral=True,
-                    )
+        # This is cursed but should work
+        ok, message = feedback_handler.create_issue({
+            "user_name": interaction.user.display_name,
+            "user": str(interaction.user.id)
+        }, f"Suggestion: {self.title_input.value}", issue_body)
+
+        if not ok:
+            await interaction.respond(f"An error occured: {message}", ephemeral=True)
+        else:
+            await interaction.respond(f"Issue created: {message}", ephemeral=True)
+
 
     async def callback(self, interaction: Interaction):
         try:
@@ -164,18 +136,17 @@ class Feedback(Cog):
 
     @feedback_group.command()
     async def bug_report(self, ctx: ApplicationContext):
+        if feedback_handler is None:
+            await ctx.respond("Not available", ephemeral=True)
         await ctx.response.send_modal(modal=BugReportModal(ctx.user.id))
 
     @feedback_group.command()
     async def suggestion(self, ctx: ApplicationContext):
+        if feedback_handler is None:
+            await ctx.respond("Not available", ephemeral=True)
         await ctx.response.send_modal(modal=FeatureModal(ctx.user.id))
 
 
 def setup(bot):
-    if (
-        getenv("FORGEJO_INSTANCE") is not None
-        and getenv("FORGEJO_TOKEN") is not None
-        and getenv("FORGEJO_OWNER") is not None
-        and getenv("FORGEJO_PROJECT") is not None
-    ):
+    if feedback_handler is not None:
         bot.add_cog(Feedback())

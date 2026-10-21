@@ -1,22 +1,33 @@
 import os
-from pprint import pprint
 
-import requests
-from flask import Blueprint, render_template, session, request, flash, redirect, make_response
+from flask import Blueprint, render_template, session, request, flash, redirect
 from sqlalchemy import insert, delete, select
 
 from database import engine, web_feedback_bans
+from utils.feedback import ForgejoFeedback, GitHubFeedback, DiscordFeedback
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
 feedback_bp = Blueprint("feedback", __name__)
 
-FORGEJO_INSTANCE = os.getenv("FORGEJO_INSTANCE")
-FORGEJO_TOKEN = os.getenv("FORGEJO_TOKEN")
-FORGEJO_OWNER = os.getenv("FORGEJO_OWNER")
-FORGEJO_PROJECT = os.getenv("FORGEJO_PROJECT")
+FEEDBACK_TYPE = os.getenv("FEEDBACK_TYPE", "none")
+
+feedback_handler = None
+
+if FEEDBACK_TYPE == 'forgejo':
+    feedback_handler = ForgejoFeedback()
+elif FEEDBACK_TYPE == 'github':
+    feedback_handler = GitHubFeedback()
+elif FEEDBACK_TYPE == 'discord':
+    feedback_handler = DiscordFeedback()
+
+if feedback_handler is not None and not feedback_handler.validate_auth():
+    feedback_handler = None
 
 def handle_feedback_post(auth):
+    if feedback_handler is None:
+        return None
+
     with engine.begin() as c:
         is_banned = c.execute(
             select(web_feedback_bans)
@@ -25,35 +36,19 @@ def handle_feedback_post(auth):
 
     if is_banned is not None:
         flash("You are banned from posting feedback.")
-        return
+        return None
 
     if "title" not in request.form or \
-        "body" not in request.form:
+            "body" not in request.form:
         return None
 
-    if not 4 <= len(request.form["title"]) <= 50:
-        flash("The title has an invalid length")
-        return None
+    ok, message = feedback_handler.create_issue(auth, request.form["title"], request.form["body"])
 
-    if not 10 <= len(request.form["body"]) <= 1200:
-        flash("The body has an invalid length")
-        return None
-
-    res = requests.post(f"https://{FORGEJO_INSTANCE}/api/v1/repos/{FORGEJO_OWNER}/{FORGEJO_PROJECT}/issues", headers={
-        "Authorization": f"Bearer {FORGEJO_TOKEN}"
-    }, json={
-        "title": request.form["title"],
-        "body": f"The user {auth['user_name']} ({auth['user']}) has submitted an issue through the feedback form:\n\n{request.form['body']}"
-    })
-
-    if res.status_code == 201:
-        res_json = res.json()
-        return redirect(res_json["html_url"], 303)
+    if ok:
+        return redirect(message, 303)
     else:
-        print(res.status_code, res.text)
-        flash("The server for tracking issues returned an unknown error, your issue was not submitted. We are sorry for the inconvenience")
-
-    return None
+        flash(message)
+        return None
 
 
 @feedback_bp.route("/settings/feedback", methods=["GET", "POST"])
@@ -65,7 +60,7 @@ def feedback_page():
     auth = get_token_data(session["token"])
     assert auth is not None
 
-    if FORGEJO_INSTANCE is None or FORGEJO_TOKEN is None or FORGEJO_OWNER is None or FORGEJO_PROJECT is None:
+    if feedback_handler is None:
         return render_template("feedback.html", disabled=True)
 
     if request.method == "POST":

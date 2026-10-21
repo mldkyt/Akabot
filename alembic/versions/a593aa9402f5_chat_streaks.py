@@ -24,8 +24,8 @@ def upgrade() -> None:
     op.create_table('chat_streaks',
     sa.Column('gid', sa.VARCHAR(), nullable=False),
     sa.Column('uid', sa.VARCHAR(), nullable=False),
-    sa.Column('start_date', sa.DATE(), nullable=False, comment='YYYY-MM-DD'),
-    sa.Column('last_message_date', sa.DATE(), nullable=False, comment='YYYY-MM-DD'),
+    sa.Column('start_date', sa.DATE(), nullable=False),
+    sa.Column('last_message_date', sa.DATE(), nullable=False),
     sa.PrimaryKeyConstraint('gid', 'uid')
     )
     # ### end Alembic commands ###

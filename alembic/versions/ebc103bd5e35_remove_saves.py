@@ -24,7 +24,6 @@ def upgrade() -> None:
     op.drop_table('saves')
     op.alter_column('past_chat_summaries', 'id',
                existing_type=sa.VARCHAR(),
-               comment='Message ID',
                existing_nullable=False)
     op.drop_index(op.f('ix_past_chat_summaries_gid_cid_kind_period'), table_name='past_chat_summaries')
     op.drop_index(op.f('ix_past_chat_summaries_rows_summary_id'), table_name='past_chat_summaries_rows')
@@ -38,8 +37,6 @@ def downgrade() -> None:
     op.create_index(op.f('ix_past_chat_summaries_gid_cid_kind_period'), 'past_chat_summaries', ['gid', 'cid', 'kind', 'period'], unique=False)
     op.alter_column('past_chat_summaries', 'id',
                existing_type=sa.VARCHAR(),
-               comment=None,
-               existing_comment='Message ID',
                existing_nullable=False)
     op.create_table('saves',
     sa.Column('id', sa.INTEGER(), autoincrement=True, nullable=False),
