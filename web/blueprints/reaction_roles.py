@@ -261,11 +261,12 @@ def save_edit(c, auth, form) -> None:
 
 
 def save_delete(c, auth, form) -> None:
-    if not form.get("delete", "").isdigit():
+    rr_id_value = form.get("id") or form.get("delete") or ""
+    if not rr_id_value.isdigit():
         flash("Invalid reaction role")
         return
 
-    rr_id = int(form["delete"])
+    rr_id = int(rr_id_value)
     row = c.execute(
         select(reaction_roles).where(
             (reaction_roles.c.id == rr_id) & (reaction_roles.c.gid == auth["guild"])
@@ -318,7 +319,14 @@ def reaction_roles_index():
             elif action == "dismiss":
                 save_dismiss(c, auth, request.form)
 
-            return redirect("/settings/reaction_roles", 303)
+            return redirect(
+                f"/settings/reaction_roles?tab={request.form.get('_tab', 'messages')}",
+                303,
+            )
+
+        active_tab = request.args.get("tab", "messages")
+        if active_tab not in {"messages", "create"}:
+            active_tab = "messages"
 
         text_channels = [
             {"id": i[0], "name": i[1]}
@@ -356,7 +364,8 @@ def reaction_roles_index():
         ).fetchall():
             channel = c.execute(
                 select(synced_channels.c.cname).where(
-                    synced_channels.c.cid == row.cid
+                    (synced_channels.c.cid == row.cid)
+                    & (synced_channels.c.gid == auth["guild"])
                 )
             ).fetchone()
 
@@ -411,4 +420,5 @@ def reaction_roles_index():
         failed_tasks=failed_tasks,
         bot_ok=bot_ok,
         max_options=MAX_OPTIONS,
+        active_tab=active_tab,
     )
