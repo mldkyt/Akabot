@@ -1,71 +1,86 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Chat Revive', 'Keep channels active by pinging a role when a channel has been quiet for too long.') }}
+{{ tabs([('general', 'General'), ('channels', 'Channels')], active_tab) }}
 
-{% block main %}
-<h1>Chat Revive</h1>
-<p>Revive channels to keep your server active! If a channel is not active for long enough, the bot will ping a role</p>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <label for="revive_role">Revive role</label>
+        <select name="revive_role" id="revive_role">
+            <option value="unset">-- Unset --</option>
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if role.id == chat_revive_role %}selected{% endif %}>{{role.name}}</option>
+            {% endfor %}
+        </select>
 
-<h2>Settings</h2>
+        <div class="form-actions">
+            <button type="submit">Save settings</button>
+        </div>
+    </form>
+</section>
+{% else %}
+<section class="settings-panel">
+    <h2>Add chat revive channel</h2>
+    <form action="?tab=channels" method="post">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="_section" value="channels">
+        <input type="hidden" name="action" value="create">
+        <div class="form-grid">
+            <div>
+                <label for="channel">Channel</label>
+                <select id="channel" name="channel" required>
+                    {% for channel in channels %}
+                    <option value="{{channel.id}}">{{channel.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="minutes">Minutes to revive after</label>
+                <input type="number" name="minutes" id="minutes">
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit">Add channel</button></div>
+    </form>
+</section>
 
-<form action="/settings/chat_revive" method="post">
-    <label for="revive_role">Revive Role</label>
-    <br>
-    <select name="revive_role" id="revive_role">
-        <option value="unset">-- Unset --</option>
-        {% for role in roles %}
-        <option value="{{role.id}}" {% if role.id == chat_revive_role %}selected{% endif %}>{{role.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <button type="submit">Save settings</button>
-</form>
-
-<h2>New chat revive role</h2>
-
-<form action="/settings/chat_revive" method="post">
-    <label for="channel">Channel</label>
-    <br>
-    <select id="channel" name="channel" required>
-        {% for channel in channels %}
-        <option value="{{channel.id}}">{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <label for="minutes">Minutes to revive after</label>
-    <br>
-    <input type="number" name="minutes" id="minutes">
-    <br>
-
-    <button type="submit">Create chat revive</button>
-</form>
-
-<h2>Existing chat revives</h2>
-
+{% call table(['Channel', 'Minutes', 'Actions']) %}
 {% for chat_revive in chat_revives %}
-<div class="data-card">
-    <form action="/settings/chat_revive/edit/{{chat_revive.index}}" method="post">
-        <label for="channel">Channel</label>
-        <select id="channel" name="channel" required>
+{% set form_id = 'revive-' ~ chat_revive.id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
             {% for channel in channels %}
             <option value="{{channel.id}}" {% if channel.id == chat_revive.channel_id %}selected{% endif %}>{{channel.name}}</option>
             {% endfor %}
         </select>
-        <br>
-        <label for="minutes">Minutes to revive after</label>
-        <input type="number" name="minutes" id="minutes" value="{{chat_revive.minutes}}">
-        <br>
-
-        <button type="submit">Edit chat revive</button>
-    </form>
-    <a href="/settings/chat_revive?delete={{chat_revive.id}}">Delete</a>
-</div>
+    </td>
+    <td><input type="number" name="minutes" form="{{ form_id }}" value="{{chat_revive.minutes}}"></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{chat_revive.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{chat_revive.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
 {% else %}
-<p>No chat revives set up.</p>
+{{ empty_row(3, 'No chat revives set up.') }}
 {% endfor %}
-
+{% endcall %}
+{% endif %}
 {% endblock %}
