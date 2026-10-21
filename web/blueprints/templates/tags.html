@@ -1,48 +1,47 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Tags', 'Create simple auto responses that trigger when a keyword is used.') }}
+{{ tabs([('tags', 'Tags'), ('create', 'Add tag')], active_tab) }}
 
-{% block main %}
-<h1>Tags</h1>
-
-<p>Simple way to make an auto response to messages.</p>
-
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<h2>Add a tag</h2>
-
-<form method="post" action="/settings/tags">
-    <label for="keyword">Keyword</label>
-    <input type="text" id="keyword" name="keyword" />
-    <br />
-    <label for="content">Content</label>
-    <textarea name="content" id="content"></textarea>
-    <br />
-    <button type="submit">Add</button>
-</form>
-
-<h2>Edit existing tags</h2>
-
+{% if active_tab == 'tags' %}
+{% call table(['Keyword', 'Content', 'Actions']) %}
 {% for tag in tags %}
-<form method="post" action="/settings/tags">
-    <input type="hidden" name="id" value="{{tag.id}}">
-    <label for="keyword">Keyword</label>
-    <input type="text" id="keyword" name="keyword" value="{{tag.keyword}}" />
-    <br />
-    <label for="content">Content</label>
-    <textarea name="content" id="content">{{tag.content}}</textarea>
-    <br />
-    <button type="submit">Edit</button>
-</form>
-<form method="post" action="/settings/tags">
-    <input type="hidden" name="delete" value="{{tag.id}}">
-    <button type="submit">Delete</button>
-</form>
-<br />
-<br />
-
+{% set form_id = 'tag-' ~ tag.id %}
+<tr>
+    <td><input type="text" name="keyword" form="{{ form_id }}" value="{{tag.keyword}}"></td>
+    <td><textarea name="content" form="{{ form_id }}" style="min-width: 340px;">{{tag.content}}</textarea></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=tags">
+            <input type="hidden" name="_tab" value="tags">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{tag.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=tags">
+            <input type="hidden" name="_tab" value="tags">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{tag.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(3, 'No tags configured.') }}
 {% endfor %}
-
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <form method="post" action="?tab=create">
+        <input type="hidden" name="_tab" value="tags">
+        <input type="hidden" name="action" value="create">
+        <label for="keyword">Keyword</label>
+        <input type="text" id="keyword" name="keyword">
+        <label for="content">Content</label>
+        <textarea name="content" id="content"></textarea>
+        <div class="form-actions"><button type="submit">Add tag</button></div>
+    </form>
+</section>
+{% endif %}
 {% endblock %}

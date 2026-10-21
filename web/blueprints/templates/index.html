@@ -1,76 +1,72 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs %}{% block main %}
+{{ page_header('Akabot Settings', 'Welcome to Akabot settings. Choose a feature from the sidebar to configure it.') }}
+{{ tabs([('general', 'General'), ('responses', 'Responses')], active_tab) }}
 
-{% block main %}
-<h1>Akabot settings</h1>
-<p>Welcome to Akabot settings! On the left you can choose the features of Akabot and configure them.</p>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form method="post" action="?tab=general">
+        <input type="hidden" name="_tab" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<h2>Quick settings</h2>
-<form method="post">
-    <label for="botchannel">Bot channel</label>
-    <select id="botchannel" name="botchannel">
-        <option value="unset">-- Unset --</option>
-        {% for text_channel in text_channels %}
-        <option value="{{text_channel.id}}" {% if text_channel.id == current_bot_channel %}selected{% endif %}>
-            {{text_channel.name}}
-        </option>
-        {% endfor %}
-    </select>
-    <br>
-    <label for="adminbotchannel">Admin bot channel</label>
-    <select id="adminbotchannel" name="adminbotchannel">
-        <option value="unset">-- Unset --</option>
-        {% for text_channel in text_channels %}
-        <option value="{{text_channel.id}}" {% if text_channel.id == current_admin_bot_channel %}selected{% endif %}>
-            {{text_channel.name}}
-        </option>
-        {% endfor %}
-    </select>
-    <br>
-
-    <!-- Response setting -->
-    <label for="response">Bot response setting</label>
-    <select id="response" name="response">
-        <option value="on" {% if response == "on" %}selected{% endif %}>enable</option>
-        <option value="bot" {% if response == "bot" %}selected{% endif %}>only use bot channel (with ping)</option>
-        <option value="bot_noping" {% if response == "bot_noping" %}selected{% endif %}>only use bot channel (do not ping)</option>
-        <option value="off" {% if response == "off" %}selected{% endif %}>disable</option>
-    </select>
-    <br>
-
-    <!-- Response name setting -->
-    <label for="response_name">When not pinging, use </label>
-    <select id="response_name" name="response_name">
-        <option value="display_name" {% if response_name == "display_name" %}selected{% endif %}>display name</option>
-        <option value="global_name" {% if response_name == "global_name" %}selected{% endif %}>global name</option>
-    </select>
-    <br>
-
-    <!-- Response deletion delay -->
-    <label for="responsedelete">Response delete delay</label>
-    <input type="number" id="responsedelete" name="responsedelete" value="{{response_delete_delay}}">
-    <br>
-
-    <!-- Timezone -->
-    <label for="timezone">Timezone</label>
-    <select id="timezone" name="timezone">
-        <option value="UTC" {% if timezone == "UTC" %}selected{% endif %}>UTC</option>
-        {% for region, tz_list in timezone_groups %}
-        <optgroup label="{{region}}">
-            {% for tz in tz_list %}
-            <option value="{{tz}}" {% if tz == timezone %}selected{% endif %}>{{tz}}</option>
+        <label for="botchannel">Bot channel</label>
+        <select id="botchannel" name="botchannel">
+            <option value="unset">-- Unset --</option>
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if text_channel.id == current_bot_channel %}selected{% endif %}>{{text_channel.name}}</option>
             {% endfor %}
-        </optgroup>
-        {% endfor %}
-    </select>
-    <br>
+        </select>
 
-    <button type="submit">Save</button>
-</form>
+        <label for="adminbotchannel">Admin bot channel</label>
+        <select id="adminbotchannel" name="adminbotchannel">
+            <option value="unset">-- Unset --</option>
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if text_channel.id == current_admin_bot_channel %}selected{% endif %}>{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
 
+        <label for="timezone">Timezone</label>
+        <select id="timezone" name="timezone">
+            <option value="UTC" {% if timezone == "UTC" %}selected{% endif %}>UTC</option>
+            {% for region, tz_list in timezone_groups %}
+            <optgroup label="{{region}}">
+                {% for tz in tz_list %}
+                <option value="{{tz}}" {% if tz == timezone %}selected{% endif %}>{{tz}}</option>
+                {% endfor %}
+            </optgroup>
+            {% endfor %}
+        </select>
+
+        <div class="form-actions">
+            <button type="submit">Save general settings</button>
+        </div>
+    </form>
+</section>
+{% else %}
+<section class="settings-panel">
+    <form method="post" action="?tab=responses">
+        <input type="hidden" name="_tab" value="responses">
+
+        <label for="response">Bot response setting</label>
+        <select id="response" name="response">
+            <option value="on" {% if response == "on" %}selected{% endif %}>Enable</option>
+            <option value="bot" {% if response == "bot" %}selected{% endif %}>Only use bot channel (with ping)</option>
+            <option value="bot_noping" {% if response == "bot_noping" %}selected{% endif %}>Only use bot channel (do not ping)</option>
+            <option value="off" {% if response == "off" %}selected{% endif %}>Disable</option>
+        </select>
+
+        <label for="response_name">When not pinging, use</label>
+        <select id="response_name" name="response_name">
+            <option value="display_name" {% if response_name == "display_name" %}selected{% endif %}>Display name</option>
+            <option value="global_name" {% if response_name == "global_name" %}selected{% endif %}>Global name</option>
+        </select>
+
+        <label for="responsedelete">Response delete delay (seconds)</label>
+        <input type="number" id="responsedelete" name="responsedelete" value="{{response_delete_delay}}">
+
+        <div class="form-actions">
+            <button type="submit">Save response settings</button>
+        </div>
+    </form>
+</section>
+{% endif %}
 {% endblock %}

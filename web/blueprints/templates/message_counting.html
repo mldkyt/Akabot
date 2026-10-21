@@ -1,78 +1,111 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Message Counting', 'Track message counts and reward members for staying active.') }}
+{{ tabs([('general', 'General'), ('rewards', 'Rewards')], active_tab) }}
 
-{% block main %}
-<h1>Message Counting</h1>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form method="post" action="?tab=general">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <div class="check-row">
+            <input type="checkbox" name="enable_leaderboard" id="enable_leaderboard" {% if enable_leaderboard %}checked{% endif %}>
+            <label for="enable_leaderboard">Enable the /leaderboard command. This also enables the <a href="/leaderboard/{{session.user['guild_id']}}">web leaderboard</a>.</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="enable_indexer" id="enable_indexer" {% if enable_indexer %}checked{% endif %}>
+            <label for="enable_indexer">Enable the /index command. Must be used by an admin of the server.</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="count_deletes" id="count_deletes" {% if count_deletes %}checked{% endif %}>
+            <label for="count_deletes">(Un)count deletes</label>
+        </div>
 
-<form method="post" action="/settings/message_counting">
-    <input type="checkbox" name="enable_leaderboard" id="enable_leaderboard" {% if enable_leaderboard %}checked{% endif %}>
-    <label for="enable_leaderboard">Enable the /leaderboard command <a href="/leaderboard/{{session.user['guild_id']}}">Also enables the web leaderboard.</a></label>
-    <br/>
-    <input type="checkbox" name="enable_indexer" id="enable_indexer" {% if enable_indexer %}checked{% endif %}>
-    <label for="enable_indexer">Enable the /index command. Must be used by an admin of the server.</label>
-    <br/>
-    <input type="checkbox" name="count_deletes" id="count_deletes" {% if count_deletes %}checked{% endif %}>
-    <label for="count_deletes">(Un)count deletes</label>
-    <br/>
-    <br/>
-
-    <button type="submit">Save</button>
-</form>
-
-<h2>Rewards for message counts</h2>
-
-<h3>Add a leveling multiplier reward</h3>
-<form method="post">
-    <input type="hidden" name="type" value="multiplier">
-    <label for="messages">Message count</label>
-    <input type="number" name="messages" id="messages">
-    <br />
-    <label for="multiplier">Multiplier</label>
-    <input type="number" name="multiplier" id="multiplier" step="0.1">
-    <br />
-    <button type="submit">Create</button>
-</form>
-
-<h3>Add a role reward</h3>
-<form method="post">
-    <input type="hidden" name="type" value="role">
-    <label for="messages_1">Message count</label>
-    <input type="number" name="messages" id="messages_1">
-    <br />
-    <label for="role">Role</label>
-    <select name="role" id="role">
-        {% for role in roles %}
-        <option value="{{role.id}}">@{{role.name}}</option>
-        {% endfor %}
-    </select>
-    <br />
-    <button type="submit">Create</button>
-</form>
-
-<h2>Manage existing rewards</h2>
-
-{% for reward in rewards %}
-{% if reward.type == "role" %}
-<p>Reward for {{reward.messages}} messages: Role @{{reward.role_name}}</p>
-<form method="post">
-    <input type="hidden" name="remove" value="{{reward.id}}">
-    <button type="submit">Remove</button>
-</form>
-{% endif %}
-{% if reward.type == "multiplier" %}
-<p>Reward for {{reward.messages}} messages: {{reward.multiplier}}x multiplier</p>
-<form method="post">
-    <input type="hidden" name="remove" value="{{reward.id}}">
-    <button type="submit">Remove</button>
-</form>
-{% endif %}
+        <div class="form-actions"><button type="submit">Save settings</button></div>
+    </form>
+</section>
 {% else %}
-<p>No rewards yet</p>
-{% endfor %}
+<div class="section-grid">
+    <section class="settings-panel">
+        <h2>Add a leveling multiplier reward</h2>
+        <form method="post" action="?tab=rewards">
+            <input type="hidden" name="_tab" value="rewards">
+            <input type="hidden" name="_section" value="rewards">
+            <input type="hidden" name="action" value="create">
+            <input type="hidden" name="type" value="multiplier">
+            <label for="messages">Message count</label>
+            <input type="number" name="messages" id="messages">
+            <label for="multiplier">Multiplier</label>
+            <input type="number" name="multiplier" id="multiplier" step="0.1">
+            <div class="form-actions"><button type="submit">Add multiplier reward</button></div>
+        </form>
+    </section>
 
+    <section class="settings-panel">
+        <h2>Add a role reward</h2>
+        <form method="post" action="?tab=rewards">
+            <input type="hidden" name="_tab" value="rewards">
+            <input type="hidden" name="_section" value="rewards">
+            <input type="hidden" name="action" value="create">
+            <input type="hidden" name="type" value="role">
+            <label for="messages_1">Message count</label>
+            <input type="number" name="messages" id="messages_1">
+            <label for="role">Role</label>
+            <select name="role" id="role">
+                {% for role in roles %}
+                <option value="{{role.id}}">@{{role.name}}</option>
+                {% endfor %}
+            </select>
+            <div class="form-actions"><button type="submit">Add role reward</button></div>
+        </form>
+    </section>
+</div>
+
+{% call table(['Type', 'Requirement', 'Reward', 'Actions']) %}
+{% for reward in rewards %}
+{% set form_id = 'mc-reward-' ~ reward.id %}
+<tr>
+    <td><span class="badge badge--accent">{{ reward.type|capitalize }}</span></td>
+    <td>
+        <input type="number" name="messages" form="{{ form_id }}" value="{{reward.messages}}" style="max-width: 110px;">
+        <span class="muted">messages</span>
+    </td>
+    <td>
+        {% if reward.type == "role" %}
+        <select name="role" form="{{ form_id }}">
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if role.id == reward.role_id %}selected{% endif %}>@{{role.name}}</option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <input type="number" name="multiplier" form="{{ form_id }}" value="{{reward.multiplier}}" step="0.1" style="max-width: 100px;">
+        <span class="muted">x multiplier</span>
+        {% endif %}
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=rewards">
+            <input type="hidden" name="_tab" value="rewards">
+            <input type="hidden" name="_section" value="rewards">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{reward.id}}">
+            <input type="hidden" name="type" value="{{reward.type}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=rewards">
+            <input type="hidden" name="_tab" value="rewards">
+            <input type="hidden" name="_section" value="rewards">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{reward.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(4, 'No rewards yet.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}

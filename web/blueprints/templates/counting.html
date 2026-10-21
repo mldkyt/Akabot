@@ -1,66 +1,91 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Counting', 'Turn channels into counting channels and choose how counting should work.') }}
+{{ tabs([('general', 'General'), ('channels', 'Channels')], active_tab) }}
 
-{% block main %}
-<h1>Counting</h1>
-<p>Turn channels into counting channels!</p>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <div class="check-row">
+            <input type="checkbox" name="any_count" id="any_count" {% if any_count %}checked{% endif %}>
+            <label for="any_count">Any count mode</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="count_words" id="count_words" {% if count_words %}checked{% endif %}>
+            <label for="count_words">Count words</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="count_word_frequency" id="count_word_frequency" {% if count_word_frequency %}checked{% endif %}>
+            <label for="count_word_frequency">Count word frequency</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="same_member" id="same_member" {% if same_member %}checked{% endif %}>
+            <label for="same_member">Same member counting mode - one user can't count multiple times consecutively</label>
+        </div>
 
-<h2>Settings</h2>
+        <label for="count_frequency_min">Count frequency minimum words</label>
+        <input type="number" id="count_frequency_min" name="count_frequency_min" value="{{count_frequency_min}}">
 
-<form action="/settings/counting" method="post">
-    <input type="checkbox" name="any_count" id="any_count" {% if any_count %}checked{% endif %}>
-    <label for="any_count">Any count mode</label>
-    <br>
-
-    <input type="checkbox" name="count_words" id="count_words" {% if count_words %}checked{% endif %}>
-    <label for="count_words">Count words</label>
-    <br>
-
-    <input type="checkbox" name="count_word_frequency" id="count_word_frequency" {% if count_word_frequency %}checked{% endif %}>
-    <label for="count_word_frequency">Count word frequency</label>
-    <br>
-
-    <input type="checkbox" name="same_member" id="same_member" {% if same_member %}checked{% endif %}>
-    <label for="same_member">Same member counting mode - one user can't count multiple times consecutively</label>
-    <br>
-
-    <label for="count_frequency_min">Count frequency minimum words</label>
-    <input type="number" id="count_frequency_min" name="count_frequency_min" value="{{count_frequency_min}}">
-    <br>
-
-    <button type="submit">Save</button>
-</form>
-
-<h2>Add counting channel</h2>
-
-<form action="/settings/counting" method="post">
-    <label for="channel">Counting channel</label>
-    <br>
-    <select name="channel" id="channel">
-        {% for channel in text_channels %}
-        <option value="{{channel.id}}">{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <button type="submit">Add</button>
-</form>
-
-<h2>Existing counting channels</h2>
-
-{% for channel in counting_channels %}
-<div class="data-card">
-    <ul>
-        <li>{{channel.name}}</li>
-    </ul>
-    <a href="/settings/counting?delete={{channel.cid}}">Delete</a>
-</div>
+        <div class="form-actions">
+            <button type="submit">Save settings</button>
+        </div>
+    </form>
+</section>
 {% else %}
-<p>No counting channels set up</p>
-{% endfor %}
+<section class="settings-panel">
+    <h2>Add counting channel</h2>
+    <form action="?tab=channels" method="post">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="_section" value="channels">
+        <input type="hidden" name="action" value="create">
+        <label for="channel">Counting channel</label>
+        <select name="channel" id="channel">
+            {% for channel in text_channels %}
+            <option value="{{channel.id}}">{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <div class="form-actions"><button type="submit">Add channel</button></div>
+    </form>
+</section>
 
+{% call table(['Channel', 'Current count', 'Last counter', 'Actions']) %}
+{% for channel in counting_channels %}
+{% set form_id = 'counting-' ~ channel.cid %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if text_channel.id == channel.cid %}selected{% endif %}>{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="muted">{{channel.current_count}}</td>
+    <td class="muted">{{channel.last_counter}}</td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="old_channel" value="{{channel.cid}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{channel.cid}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(4, 'No counting channels set up.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}

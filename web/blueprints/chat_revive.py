@@ -1,5 +1,5 @@
 from flask import Blueprint, flash, redirect, render_template, request, session
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 
 from database import chat_revive_channels, engine, synced_channels, synced_roles
 from utils.chat_revive import setting_chat_revive_role
@@ -83,12 +83,52 @@ def chat_revive_index():
     assert auth is not None
 
     if request.method == "POST":
-        handle_post(auth)
-        handle_settings(auth)
+        section = request.form.get("_section", "general")
+        if section == "general":
+            handle_settings(auth)
+            return redirect("/settings/chat_revive?tab=general", 303)
 
-    if "delete" in request.args:
-        handle_delete(auth)
-        return redirect("/settings/chat_revive", 303)
+        action = request.form.get("action", "create")
+        if action == "create":
+            handle_post(auth)
+        elif action == "update":
+            channel = request.form.get("channel", "")
+            minutes = request.form.get("minutes", "")
+            revive_id = request.form.get("id", "")
+            if (
+                revive_id.isnumeric()
+                and validate_text_channel_id(channel)
+                and minutes.isnumeric()
+            ):
+                with engine.begin() as c:
+                    c.execute(
+                        update(chat_revive_channels)
+                        .where(
+                            (chat_revive_channels.c.gid == str(auth["guild"]))
+                            & (chat_revive_channels.c.id == int(revive_id))
+                        )
+                        .values(cid=channel, minutes=int(minutes))
+                    )
+                flash("Edited chat revive")
+            else:
+                flash("Invalid chat revive")
+        elif action == "delete":
+            revive_id = request.form.get("id", "")
+            if revive_id.isnumeric():
+                with engine.begin() as c:
+                    c.execute(
+                        delete(chat_revive_channels).where(
+                            (chat_revive_channels.c.gid == str(auth["guild"]))
+                            & (chat_revive_channels.c.id == int(revive_id))
+                        )
+                    )
+                flash("Deleted chat revive")
+
+        return redirect("/settings/chat_revive?tab=channels", 303)
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "channels"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         chat_revives = []
@@ -145,34 +185,5 @@ def chat_revive_index():
         roles=roles,
         channels=channels,
         chat_revives=chat_revives,
+        active_tab=active_tab,
     )
-
-
-@chat_revive_bp.route("/settings/chat_revive/edit/<index>", methods=["POST"])
-def chat_revive_edit(index: str):
-    authorization = authorize("/settings/chat_revive")
-    if authorization is not None:
-        return authorization
-
-    if not index.isnumeric():
-        return redirect("/settings/chat_revive", 302)
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        chat_revives = c.execute(
-            select(chat_revive_channels.c.id)
-            .where(chat_revive_channels.c.gid == str(auth["guild"]))
-            .order_by(chat_revive_channels.c.id)
-        ).fetchall()
-        if len(chat_revives) <= int(index):
-            return redirect("/settings/chat_revive", 302)
-
-        c.execute(
-            delete(chat_revive_channels).where(
-                chat_revive_channels.c.id == chat_revives[int(index)][0]
-            )
-        )
-        handle_post(auth, is_edit=True)
-        return redirect("/settings/chat_revive", 303)

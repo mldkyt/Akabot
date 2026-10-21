@@ -1,5 +1,5 @@
 from flask import Blueprint, session, render_template, request, flash, redirect
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 
 from database import chat_summary_channels, engine, synced_channels
 from utils.chat_summary import chat_summary_extra, chat_summary_history, chat_summary_rows, chat_summary_rows_extra, \
@@ -7,7 +7,7 @@ from utils.chat_summary import chat_summary_extra, chat_summary_history, chat_su
 from web.webutils.discord_sync import validate_text_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
-chat_summary_bp = Blueprint("chat_summary", __name__)
+chat_summary_bp = Blueprint("chat_summary", __name__, template_folder="templates")
 
 def handle_settings(auth):
     if "channel" in request.form:
@@ -84,12 +84,45 @@ def chat_summary_index():
     assert auth is not None
 
     if request.method == "POST":
-        handle_settings(auth)
-        handle_adding_channels(auth)
+        section = request.form.get("_section", "general")
+        if section == "general":
+            handle_settings(auth)
+            return redirect("/settings/chat_summary?tab=general", 303)
 
-    if "delete" in request.args:
-        handle_delete(auth)
-        return redirect("/settings/chat_summary", 302)
+        action = request.form.get("action", "create")
+        if action == "create":
+            handle_adding_channels(auth)
+        elif action == "update":
+            old_cid = request.form.get("old_channel", "")
+            new_cid = request.form.get("channel", "")
+            if validate_text_channel_id(new_cid) and old_cid:
+                with engine.begin() as c:
+                    c.execute(
+                        update(chat_summary_channels)
+                        .where(
+                            (chat_summary_channels.c.gid == str(auth["guild"]))
+                            & (chat_summary_channels.c.cid == old_cid)
+                        )
+                        .values(cid=new_cid)
+                    )
+                flash("Edited chat summary channel")
+        elif action == "delete":
+            channel = request.form.get("id", "")
+            if channel:
+                with engine.begin() as c:
+                    c.execute(
+                        delete(chat_summary_channels).where(
+                            (chat_summary_channels.c.gid == str(auth["guild"]))
+                            & (chat_summary_channels.c.cid == channel)
+                        )
+                    )
+                flash("Deleted chat summary channel")
+
+        return redirect("/settings/chat_summary?tab=channels", 303)
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "channels"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         chans = [{
@@ -132,4 +165,4 @@ def chat_summary_index():
     return render_template("chat_summary.html", channels=chans,
                            chat_summaries=chat_summaries, extra=extra,
                            row_count=row_count, row_count_extra=row_count_extra,
-                           unique_mode=unique_mode, history=history)
+                           unique_mode=unique_mode, history=history, active_tab=active_tab)

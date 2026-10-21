@@ -1,10 +1,10 @@
-from flask import Blueprint, session, render_template, request
+from flask import Blueprint, redirect, session, render_template, request
 
 from database import engine
 from utils.fun import setting_disable_yuri_command, setting_disable_yaoi_command, setting_allow_rp_commands
 from web.webutils.tokens import authorize, get_token_data
 
-fun_commands_bp = Blueprint("fun", __name__)
+fun_commands_bp = Blueprint("fun", __name__, template_folder="templates")
 
 def handle_post(auth):
     with engine.begin() as c:
@@ -26,7 +26,7 @@ def handle_post(auth):
 
 @fun_commands_bp.route("/settings/fun", methods=["GET", "POST"])
 def fun_index():
-    authorization = authorize("/settings/welcome_goodbye")
+    authorization = authorize("/settings/fun")
     if authorization is not None:
         return authorization
 
@@ -35,6 +35,7 @@ def fun_index():
 
     if request.method == "POST":
         handle_post(auth)
+        return redirect("/settings/fun", 303)
 
     with engine.begin() as c:
         yuri_command = setting_disable_yuri_command.get(c, auth["guild"]) != "true"

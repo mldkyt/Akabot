@@ -1,69 +1,76 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Statistic Channels', 'Display live server statistics in voice channel names.') }}
+{{ tabs([('channels', 'Channels'), ('general', 'Placeholders')], active_tab) }}
 
-{% block main %}
-<h1>Statistic channels</h1>
-<p>Statistic channels allow you to display the stats of your Discord server using voice channels conveniently in the channel list.</p>
+{% if active_tab == 'channels' %}
+<section class="settings-panel">
+    <h2>Add statistic channel</h2>
+    <form action="?tab=channels" method="post">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="action" value="create">
+        <div class="form-grid">
+            <div>
+                <label for="channel">Voice channel</label>
+                <select name="channel" id="channel">
+                    {% for channel in channels %}
+                    <option value="{{channel.id}}">{{channel.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="template">Template</label>
+                <input type="text" id="template" name="template" placeholder="{members} members">
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit">Add statistic channel</button></div>
+    </form>
+</section>
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<h2>Configuration</h2>
-
-<p>The following placeholders are supported in Akabot:</p>
-
-<ul>
-    <li><strong>{members}</strong> - Member count</li>
-    <li><strong>{bots}</strong> - Count of bots</li>
-    <li><strong>{users}</strong> - Count of non-bot members</li>
-    <li><strong>{guild}</strong> - Server name</li>
-    <li><strong>{owner}</strong> - Current owner username</li>
-</ul>
-
-<p>More will be added later based on suggestions.</p>
-
-<h2>Add statistic channel</h2>
-<form action="/settings/statistic_channels" method="post">
-    <label for="channel">Voice channel to turn into a statistic channel</label>
-    <select name="channel" id="channel">
-        {% for channel in channels %}
-        <option value="{{channel.id}}">{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-
-    <label for="template">Template</label>
-    <input type="text" id="template" name="template" placeholder="{members} members">
-    <br>
-
-    <button type="submit">Add</button>
-</form>
-
-<h2>Statistic channels settings</h2>
-
+{% call table(['Voice channel', 'Template', 'Actions']) %}
 {% for statistic_channel in statistic_channels %}
-<div class="data-card">
-    <form action="/settings/statistic_channels/edit/{{statistic_channel.index}}" method="post">
-        <label for="channel">Voice channel</label>
-        <select name="channel" id="channel">
+{% set form_id = 'statistic-' ~ statistic_channel.id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
             {% for channel in channels %}
-            <option value="{{channel.id}}" {% if statistic_channel.id == channel.id %}selected{% endif %}>{{channel.name}}</option>
+            <option value="{{channel.id}}" {% if channel.id == statistic_channel.id %}selected{% endif %}>{{channel.name}}</option>
             {% endfor %}
         </select>
-        <br>
-
-        <label for="template">Template</label>
-        <input type="text" id="template" name="template" placeholder="{members} members" value="{{statistic_channel.template}}">
-        <br>
-
-        <button type="submit">Edit</button>
-    </form>
-    <a href="/settings/statistic_channels?delete={{statistic_channel.id}}">Delete</a>
-</div>
+    </td>
+    <td><input type="text" name="template" form="{{ form_id }}" value="{{statistic_channel.template}}"></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{statistic_channel.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{statistic_channel.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
 {% else %}
-<p>No statistic channels</p>
+{{ empty_row(3, 'No statistic channels configured.') }}
 {% endfor %}
-
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <h2>Supported placeholders</h2>
+    {% call table(['Placeholder', 'Description']) %}
+    <tr><td><code>{members}</code></td><td>Member count</td></tr>
+    <tr><td><code>{bots}</code></td><td>Count of bots</td></tr>
+    <tr><td><code>{users}</code></td><td>Count of non-bot members</td></tr>
+    <tr><td><code>{guild}</code></td><td>Server name</td></tr>
+    <tr><td><code>{owner}</code></td><td>Current owner username</td></tr>
+    {% endcall %}
+    <p>More placeholders may be added later based on suggestions.</p>
+</section>
+{% endif %}
 {% endblock %}

@@ -1,61 +1,61 @@
 {% extends 'page.html' %}
-
-{% block main %}
-<h1>Logging</h1>
-<p>Here you can configure the logging channel and every single </p>
-
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+{% from '_components.html' import page_header, tabs, delete_confirm %}{% block main %}
+{{ page_header('Logging', 'Choose which events are logged and where Akabot sends them.') }}
+{{ tabs([('channels', 'Channels'), ('add', 'Add channel')], active_tab) }}
 
 <script type="text/javascript">
 function activateAllButtons(id) {
-  $(`.logging_${id}`).prop("checked", true);
+    $(`.logging_${id}`).prop("checked", true);
 }
 function deactivateAllButtons(id) {
-  $(`.logging_${id}`).prop("checked", false);
+    $(`.logging_${id}`).prop("checked", false);
 }
 </script>
 
-<h2>Logging channels</h2>
-
+{% if active_tab == 'channels' %}
 {% for logging_channel in logging_channels %}
-
 <details>
-   <summary>Logging channel #{{logging_channel.name}}</summary>
+    <summary>Logging channel #{{logging_channel.name}}</summary>
 
-   <form method="post" action="/settings/logging">
-       <input type="hidden" name="channel_id" value="{{logging_channel.id}}">
+    <form method="post" action="?tab=channels">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="channel_id" value="{{logging_channel.id}}">
 
-       {% for setting in settings %}
-       <input class="logging_{{logging_channel.id}}" type="checkbox" name="{{setting.key}}" id="{{setting.key}}" {% if setting.key in logging_channel.enabled %}checked{% endif %}>
-       <label for="{{setting.key}}">Log {{setting.name}}</label>
-       <br>
-       {% endfor %}
+        <div class="section-grid">
+            {% for setting in settings %}
+            <div class="check-row">
+                <input class="logging_{{logging_channel.id}}" type="checkbox" name="{{setting.key}}" id="{{logging_channel.id}}-{{setting.key}}" {% if setting.key in logging_channel.enabled %}checked{% endif %}>
+                <label for="{{logging_channel.id}}-{{setting.key}}">Log {{setting.name}}</label>
+            </div>
+            {% endfor %}
+        </div>
 
-       <button type="button" onclick="activateAllButtons('{{logging_channel.id}}')">Check all</button>
-       <button type="button" onclick="deactivateAllButtons('{{logging_channel.id}}')">Uncheck all</button>
+        <div class="form-actions">
+            <button type="button" onclick="activateAllButtons('{{logging_channel.id}}')">Check all</button>
+            <button type="button" onclick="deactivateAllButtons('{{logging_channel.id}}')">Uncheck all</button>
+            <button type="submit">Save channel</button>
+        </div>
+    </form>
 
-       <br>
-       <button type="submit">Update</button>
-   </form>
-   <form method="post" action="/settings/logging">
-       <input type="hidden" name="delete" value="{{logging_channel.id}}">
-
-       <button type="submit">Delete</button>
-   </form>
+    <form id="delete-logging-{{logging_channel.id}}" method="post" action="?tab=channels">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="delete" value="{{logging_channel.id}}">
+    </form>
+    <div class="form-actions">
+        {{ delete_confirm('delete-logging-' ~ logging_channel.id, 'Delete channel') }}
+    </div>
 </details>
-
 {% else %}
-<p>No logging channels configured. Please create one</p>
+<section class="settings-panel">
+    <div class="empty-state">No logging channels configured. Add one from the Add channel tab.</div>
+</section>
 {% endfor %}
+{% else %}
+<section class="settings-panel">
+    <h2>Add a logging channel</h2>
+    <form method="post" action="?tab=add">
+        <input type="hidden" name="_tab" value="channels">
 
-<details>
-    <summary>Add a new channel</summary>
-
-    <form method="post" action="/settings/logging">
         <label for="channel_id">Logging channel</label>
         <select id="channel_id" name="channel_id">
             <option value="unset">-- Unset --</option>
@@ -63,20 +63,22 @@ function deactivateAllButtons(id) {
             <option value="{{channel.id}}">{{channel.name}}</option>
             {% endfor %}
         </select>
-        <br>
 
-        {% for setting in settings %}
-        <input class="logging_add" type="checkbox" name="{{setting.key}}" id="{{setting.key}}" checked>
-        <label for="{{setting.key}}">Log {{setting.name}}</label>
-        <br>
-        {% endfor %}
+        <div class="section-grid">
+            {% for setting in settings %}
+            <div class="check-row">
+                <input class="logging_add" type="checkbox" name="{{setting.key}}" id="add-{{setting.key}}" checked>
+                <label for="add-{{setting.key}}">Log {{setting.name}}</label>
+            </div>
+            {% endfor %}
+        </div>
 
-        <button type="button" onclick="activateAllButtons('add')">Enable all</button>
-        <button type="button" onclick="deactivateAllButtons('add')">Disable all</button>
-
-        <br>
-        <button type="submit">Save</button>
+        <div class="form-actions">
+            <button type="button" onclick="activateAllButtons('add')">Enable all</button>
+            <button type="button" onclick="deactivateAllButtons('add')">Disable all</button>
+            <button type="submit">Save channel</button>
+        </div>
     </form>
-</details>
-
+</section>
+{% endif %}
 {% endblock %}

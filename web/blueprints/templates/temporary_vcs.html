@@ -1,40 +1,68 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Temporary VCs', 'Create voice channels automatically when members join a creator channel.') }}
+{{ tabs([('general', 'General'), ('channels', 'Creator channels')], active_tab) }}
 
-{% block main %}
-<h1>Temporary VC creator channels</h1>
-<p>You can configure channels that make VCs when joined, and move people in. These channels are fully managed by Akabot afterwards.</p>
-
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<h2>Add channel</h2>
-
-<form action="/settings/temporary_vcs" method="post">
-    <label for="channel">Channel</label>
-    <select name="channel" id="channel">
-        {% for channel in channels %}
-        <option value="{{channel.id}}">{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-
-    <button type="submit">Add</button>
-</form>
-
-<h2>Existing channel</h2>
-
-{% for temporary_vc in temporary_vcs %}
-<div class="data-card">
-    <ul>
-        <li>Channel: {{temporary_vc.name}}</li>
-    </ul>
-    <a href="/settings/temporary_vcs?delete={{temporary_vc.id}}">Delete</a>
-</div>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <h2>How temporary VCs work</h2>
+    <p>When a member joins one of the creator channels, Akabot creates a temporary voice channel and moves them into it.</p>
+    <p>Members with permission can rename or manage their channel. The channel is deleted automatically when it becomes empty.</p>
+    <p>You currently have <strong>{{ temporary_vcs|length }}</strong> creator channel{% if temporary_vcs|length != 1 %}s{% endif %} configured.</p>
+    <div class="form-actions">
+        <a class="btn" href="?tab=channels">Manage creator channels</a>
+    </div>
+</section>
 {% else %}
-<p>No temporary VC creators</p>
-{% endfor %}
+<section class="settings-panel">
+    <h2>Add creator channel</h2>
+    <form action="?tab=channels" method="post">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="_section" value="channels">
+        <input type="hidden" name="action" value="create">
+        <label for="channel">Voice channel</label>
+        <select name="channel" id="channel">
+            {% for channel in channels %}
+            <option value="{{channel.id}}">{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <div class="form-actions"><button type="submit">Add channel</button></div>
+    </form>
+</section>
 
+{% call table(['Creator channel', 'Actions']) %}
+{% for temporary_vc in temporary_vcs %}
+{% set form_id = 'temp-vc-' ~ temporary_vc.id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if channel.id == temporary_vc.id %}selected{% endif %}>{{channel.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{temporary_vc.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{temporary_vc.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(2, 'No temporary VC creator channels configured.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}

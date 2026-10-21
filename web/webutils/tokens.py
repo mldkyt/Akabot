@@ -1,6 +1,6 @@
 import datetime
 
-from flask import make_response, redirect, request, session
+from flask import redirect, render_template, request, session
 from sqlalchemy import select
 
 from database import engine, web_tokens
@@ -27,9 +27,7 @@ def authorize(route: str):
         return redirect(route, 303)
 
     if "token" not in session:
-        response = make_response("Unauthorized")
-        response.status_code = 401
-        return response
+        return render_template("unauthorized.html"), 401
 
     token_data = get_token_data(session["token"])
     if token_data is None:
@@ -37,9 +35,7 @@ def authorize(route: str):
         if "user" in session:
             del session["user"]
 
-        response = make_response("Unauthorized")
-        response.status_code = 401
-        return response
+        return render_template("unauthorized.html"), 401
 
     session["user"] = {
         "name": token_data["user_name"],

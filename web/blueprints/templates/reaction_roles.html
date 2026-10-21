@@ -1,4 +1,7 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Reaction Roles', 'Create messages where members can pick up roles by clicking buttons.') }}
+{{ tabs([('messages', 'Messages'), ('create', 'Create message')], active_tab) }}
 
 {% macro option_row(role_list, selected_rid='', emoji='', label='', style='primary') %}
 <div class="option-row">
@@ -45,16 +48,7 @@
 </div>
 {% endmacro %}
 
-{% block main %}
-<h1>Reaction Roles</h1>
-
-<p>Create messages where members can pick up roles by clicking buttons. Supported types: normal, add only, remove only, and single choice.</p>
-
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+{% set type_labels = {'n': 'Normal', 'a': 'Add only', 'r': 'Remove only', 's': 'Single choice'} %}
 
 {% if not bot_ok %}
 <div class="flash flash--warning">
@@ -68,149 +62,134 @@
     <form method="post" action="/settings/reaction_roles">
         <input type="hidden" name="action" value="dismiss">
         <input type="hidden" name="dismiss" value="{{task.id}}">
-        <button type="submit">Dismiss</button>
+        <button type="submit" class="btn btn-sm">Dismiss</button>
     </form>
 </div>
 {% endfor %}
 
-<h2>Create new reaction role</h2>
-
-<form class="rr-form" method="post" action="/settings/reaction_roles">
-    <input type="hidden" name="action" value="create">
-
-    <label for="channel">Channel</label>
-    <select name="channel" id="channel">
-        {% for channel in text_channels %}
-        <option value="{{channel.id}}">{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-
-    <label>Type</label>
-    {{ type_select('n') }}
-    <br>
-
-    <label for="content">Message content</label>
-    <br />
-    <textarea name="content" id="content"></textarea>
-    <br>
-
-    <label>Options</label>
-    <div class="options">
-        {{ option_row(roles) }}
-    </div>
-
-    <button type="button" class="add-option">Add option</button>
-    <br><br>
-
-    {{ emoji_picker(emojis) }}
-
-    <button type="submit">Create</button>
-</form>
-
-<h2>Edit existing roles</h2>
-
+{% if active_tab == 'messages' %}
+{% call table(['Channel', 'Type', 'Status', 'Options', 'Actions']) %}
 {% for rr in reaction_roles %}
-<div class="data-card">
-    <p><strong>#{{rr.channel_name}}</strong> - {% if rr.mid %}message {{rr.mid}}{% else %}pending{% endif %}</p>
+{% set delete_form_id = 'delete-rr-' ~ rr.id %}
+<tr>
+    <td>#{{rr.channel_name}}</td>
+    <td>{{ type_labels.get(rr.type, rr.type) }}</td>
+    <td>
+        {% if rr.mid %}
+        <span class="badge badge--ok">Message {{rr.mid}}</span>
+        {% else %}
+        <span class="badge">Pending</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="option-chips">
+            {% for option in rr.options %}
+            <span class="option-chip">
+                {% if option.emoji_url %}<img src="{{option.emoji_url}}" alt="">{% endif %}
+                {% if option.emoji and not option.emoji_url %}{{option.emoji}}{% endif %}
+                @{{option.role_name}}
+            </span>
+            {% endfor %}
+        </div>
+    </td>
+    <td class="cell-actions">
+        <form id="{{ delete_form_id }}" method="post" action="?tab=messages">
+            <input type="hidden" name="_tab" value="messages">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{rr.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm" data-expand-row="rr-detail-{{rr.id}}" data-collapsed-label="Edit" aria-expanded="false">Edit</button>
+            {{ delete_confirm(delete_form_id, 'Delete') }}
+        </div>
+    </td>
+</tr>
+<tr class="detail-row" id="rr-detail-{{rr.id}}" hidden>
+    <td colspan="5">
+        <div class="detail-panel">
+            <form class="rr-form" method="post" action="?tab=messages">
+                <input type="hidden" name="_tab" value="messages">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="id" value="{{rr.id}}">
 
-    <form class="rr-form" method="post" action="/settings/reaction_roles">
-        <input type="hidden" name="action" value="edit">
-        <input type="hidden" name="id" value="{{rr.id}}">
+                <div class="form-grid">
+                    <div>
+                        <label>Type</label>
+                        {{ type_select(rr.type) }}
+                    </div>
+                    <div>
+                        <label>Message content</label>
+                        <textarea name="content">{{rr.content}}</textarea>
+                    </div>
+                </div>
 
-        <label>Type</label>
-        {{ type_select(rr.type) }}
-        <br>
+                <label>Options</label>
+                <div class="options">
+                    {% for option in rr.options %}
+                    {{ option_row(roles, option.rid, option.emoji, option.label, option.style) }}
+                    {% else %}
+                    {{ option_row(roles) }}
+                    {% endfor %}
+                </div>
 
-        <label>Message content</label>
-        <br />
-        <textarea name="content">{{rr.content}}</textarea>
-        <br>
+                <div class="form-actions">
+                    <button type="button" class="add-option">Add option</button>
+                </div>
+
+                {{ emoji_picker(emojis) }}
+
+                <div class="form-actions">
+                    <button type="submit">Save reaction role</button>
+                </div>
+            </form>
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(5, 'No reaction roles set up.') }}
+{% endfor %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <form class="rr-form" method="post" action="?tab=create">
+        <input type="hidden" name="_tab" value="messages">
+        <input type="hidden" name="action" value="create">
+
+        <div class="form-grid">
+            <div>
+                <label for="channel">Channel</label>
+                <select name="channel" id="channel">
+                    {% for channel in text_channels %}
+                    <option value="{{channel.id}}">{{channel.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Type</label>
+                {{ type_select('n') }}
+            </div>
+        </div>
+
+        <label for="content">Message content</label>
+        <textarea name="content" id="content"></textarea>
 
         <label>Options</label>
         <div class="options">
-            {% for option in rr.options %}
-            {{ option_row(roles, option.rid, option.emoji, option.label, option.style) }}
-            {% endfor %}
+            {{ option_row(roles) }}
         </div>
 
-        <button type="button" class="add-option">Add option</button>
-
-        <div class="current-options">
-            {% for option in rr.options %}
-            <span>
-                {% if option.emoji_url %}<img src="{{option.emoji_url}}" alt="">{% endif %}
-                {% if option.emoji and not option.emoji_url %}{{option.emoji}}{% endif %}
-                {{option.role_name}} ({{option.style}}){% if option.label %} - {{option.label}}{% endif %}
-            </span>
-            {% endfor %}
+        <div class="form-actions">
+            <button type="button" class="add-option">Add option</button>
         </div>
 
         {{ emoji_picker(emojis) }}
 
-        <button type="submit">Save</button>
+        <div class="form-actions">
+            <button type="submit">Create reaction role</button>
+        </div>
     </form>
-
-    <form method="post" action="/settings/reaction_roles">
-        <input type="hidden" name="action" value="delete">
-        <input type="hidden" name="delete" value="{{rr.id}}">
-        <button type="submit" class="btn-danger">Delete message</button>
-    </form>
-</div>
-{% else %}
-<p>No reaction roles set up</p>
-{% endfor %}
-
-<style>
-.option-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-}
-.option-row select,
-.option-row input[type="text"] {
-    margin-bottom: 0;
-    max-width: 220px;
-}
-.option-row input.emoji-input {
-    max-width: 160px;
-}
-.emoji-picker {
-    margin: 8px 0;
-    padding: 8px;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-}
-.emoji-picker span {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: var(--text-dim);
-}
-.emoji-insert {
-    padding: 4px 8px;
-    font-size: 12px;
-    margin: 2px;
-}
-.emoji-insert img {
-    width: 18px;
-    height: 18px;
-    vertical-align: middle;
-    margin-right: 4px;
-}
-.current-options span {
-    display: inline-block;
-    margin: 4px 8px 4px 0;
-}
-.current-options img {
-    width: 18px;
-    height: 18px;
-    vertical-align: middle;
-}
-</style>
+</section>
+{% endif %}
 
 <script>
 $(function () {

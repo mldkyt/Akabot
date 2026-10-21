@@ -1,121 +1,152 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Leveling', 'Make chatting more fun with XP, level rewards and event multipliers.') }}
+{{ tabs([('general', 'General'), ('rewards', 'Rewards'), ('multipliers', 'Multipliers')], active_tab) }}
 
-{% block main %}
-<h1>Leveling</h1>
-<p>Make chatting more fun using leveling. Set rewards for active chatters, and set event multipliers here.</p>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <div class="check-row">
+            <input type="checkbox" name="level_up_message" id="level_up_message" {% if level_up_message %}checked{% endif %}>
+            <label for="level_up_message">Enable level up message</label>
+        </div>
 
-<h2>Settings</h2>
+        <label for="level_up_message_text">Level up message text</label>
+        <input type="text" name="level_up_message_text" id="level_up_message_text" value="{{level_up_message_text}}">
 
-<form action="/settings/leveling" method="post">
-    <input type="checkbox" name="level_up_message" id="level_up_message" {% if level_up_message %}checked{% endif %}>
-    <label for="level_up_message">Enable level up message</label>
-    <br>
+        <div class="form-grid">
+            <div>
+                <label for="xp_per_message">XP per message</label>
+                <input type="number" name="xp_per_message" id="xp_per_message" value="{{xp_per_message}}">
+            </div>
+            <div>
+                <label for="xp_per_level">XP per level</label>
+                <input type="number" name="xp_per_level" id="xp_per_level" value="{{xp_per_level}}">
+            </div>
+        </div>
 
-    <label for="level_up_message_text">Level up message text</label>
-    <input type="text" name="level_up_message_text" id="level_up_message_text" value="{{level_up_message_text}}">
-    <br>
+        <div class="form-actions">
+            <button type="submit">Save general settings</button>
+        </div>
+    </form>
+</section>
+{% elif active_tab == 'rewards' %}
+<section class="settings-panel">
+    <h2>Add role reward</h2>
+    <form action="?tab=rewards" method="post">
+        <input type="hidden" name="_tab" value="rewards">
+        <input type="hidden" name="_section" value="rewards">
+        <input type="hidden" name="action" value="create">
+        <div class="form-grid">
+            <div>
+                <label for="reward_role">Role to add</label>
+                <select name="reward_role" id="reward_role">
+                    {% for role in roles %}
+                    <option value="{{role.id}}">{{role.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="required_level">Required level</label>
+                <input type="number" name="required_level" id="required_level">
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit">Add reward</button></div>
+    </form>
+</section>
 
-    <label for="xp_per_message">XP per message</label>
-    <input type="number" name="xp_per_message" id="xp_per_message" value="{{xp_per_message}}">
-    <br>
-
-    <label for="xp_per_level">XP per level</label>
-    <input type="number" name="xp_per_level" id="xp_per_level" value="{{xp_per_level}}">
-    <br>
-
-    <button type="submit">Save</button>
-</form>
-
-<h2>Rewards</h2>
-
-<p>Here you can configure rewards for level targets.</p>
-
-<form action="/settings/leveling" method="post">
-    <label for="reward_role">Role to add</label>
-    <select name="reward_role" id="reward_role">
-        {% for role in roles %}
-        <option value="{{role.id}}">{{role.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <label for="required_level">Required level</label>
-    <input type="number" name="required_level" id="required_level">
-    <br>
-    <button type="submit">Add</button>
-</form>
-
-<hr>
-
+{% call table(['Role', 'Required level', 'Actions']) %}
 {% for reward in reward_roles %}
-<div class="data-card">
-    <form action="/settings/leveling/edit/reward/{{reward.index}}" method="post">
-        <label for="reward_role">Role to add</label>
-        <select name="reward_role" id="reward_role">
+{% set form_id = 'reward-' ~ reward.id %}
+<tr>
+    <td>
+        <select name="reward_role" form="{{ form_id }}">
             {% for role in roles %}
             <option value="{{role.id}}" {% if reward.rid == role.id %}selected{% endif %}>{{role.name}}</option>
             {% endfor %}
         </select>
-        <br>
-        <label for="required_level">Required level</label>
-        <input type="number" name="required_level" id="required_level" value="{{reward.level}}">
-        <br>
-        <button type="submit">Save</button>
-    </form>
-    <a href="/settings/leveling?delete_reward={{reward.id}}">Delete</a>
-</div>
+    </td>
+    <td><input type="number" name="required_level" form="{{ form_id }}" value="{{reward.level}}"></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=rewards">
+            <input type="hidden" name="_tab" value="rewards">
+            <input type="hidden" name="_section" value="rewards">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{reward.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=rewards">
+            <input type="hidden" name="_tab" value="rewards">
+            <input type="hidden" name="_section" value="rewards">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{reward.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
 {% else %}
-<p>No rewards set up</p>
+{{ empty_row(3, 'No rewards set up.') }}
 {% endfor %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <h2>Add multiplier</h2>
+    <form action="?tab=multipliers" method="post">
+        <input type="hidden" name="_tab" value="multipliers">
+        <input type="hidden" name="_section" value="multipliers">
+        <input type="hidden" name="action" value="create">
+        <div class="form-grid">
+            <div>
+                <label for="start">Start date</label>
+                <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5">
+            </div>
+            <div>
+                <label for="end">End date</label>
+                <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5">
+            </div>
+            <div>
+                <label for="multiplier">Multiplier</label>
+                <input type="number" name="multiplier" id="multiplier">
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit">Add multiplier</button></div>
+    </form>
+</section>
 
-<h2>Multipliers</h2>
-
-<p>Here you can configure multipliers for date ranges.</p>
-
-<form action="/settings/leveling" method="post">
-    <label for="start">Start date</label>
-    <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5">
-    <br>
-
-    <label for="end">End date</label>
-    <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5">
-    <br>
-
-    <label for="multiplier">Multiplier</label>
-    <input type="number" name="multiplier" id="multiplier">
-    <br>
-
-    <button type="submit">Add</button>
-</form>
-
-<hr>
-
+{% call table(['Start', 'End', 'Multiplier', 'Actions']) %}
 {% for multiplier in multipliers %}
-<div class="data-card">
-    <form action="/settings/leveling/edit/multiplier/{{multiplier.index}}" method="post">
-        <label for="start">Start date</label>
-        <input type="text" id="start" name="start" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.start}}">
-        <br>
-
-        <label for="end">End date</label>
-        <input type="text" id="end" name="end" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.end}}">
-        <br>
-
-        <label for="multiplier">Multiplier</label>
-        <input type="number" name="multiplier" id="multiplier" value="{{multiplier.multiplier}}">
-        <br>
-
-        <button type="submit">Edit multiplier</button>
-    </form>
-    <a href="/settings/leveling?delete_multiplier={{multiplier.id}}">Delete</a>
-</div>
+{% set form_id = 'multiplier-' ~ multiplier.id %}
+<tr>
+    <td><input type="text" id="start{{multiplier.id}}" name="start" form="{{ form_id }}" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.start}}"></td>
+    <td><input type="text" id="end{{multiplier.id}}" name="end" form="{{ form_id }}" placeholder="MM-DD" minlength="5" maxlength="5" value="{{multiplier.end}}"></td>
+    <td><input type="number" name="multiplier" form="{{ form_id }}" value="{{multiplier.multiplier}}"></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=multipliers">
+            <input type="hidden" name="_tab" value="multipliers">
+            <input type="hidden" name="_section" value="multipliers">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{multiplier.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=multipliers">
+            <input type="hidden" name="_tab" value="multipliers">
+            <input type="hidden" name="_section" value="multipliers">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{multiplier.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
 {% else %}
-<p>No multipliers set up</p>
+{{ empty_row(4, 'No multipliers set up.') }}
 {% endfor %}
-
+{% endcall %}
+{% endif %}
 {% endblock %}

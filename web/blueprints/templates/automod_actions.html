@@ -1,86 +1,104 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Automod Actions', 'Configure additional actions when a Discord automod rule is triggered.') }}
+{{ tabs([('create', 'Create action'), ('actions', 'Existing actions')], active_tab) }}
 
-{% block main %}
-<h1>Automod Actions</h1>
-<p>Here you can configure additional actions to perform when an Automod Rule gets triggered within Discord. </p>
+{% if active_tab == 'create' %}
+<section class="settings-panel">
+    {% if automod_sync_error %}
+    <div class="flash flash--warning"><p>Last automod sync failed: {{ automod_sync_error }}</p></div>
+    {% endif %}
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+    <form action="?tab=create" method="post">
+        <input type="hidden" name="_tab" value="actions">
+        <input type="hidden" name="action" value="create">
 
-<h2>New action</h2>
+        <div class="form-grid">
+            <div>
+                <label for="rule">Automod rule</label>
+                <select id="rule" name="rule" required>
+                    {% for automod_rule in automod_rules %}
+                    <option value="{{automod_rule.id}}">{{automod_rule.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="type">Action type</label>
+                <select id="type" name="type" required>
+                    <option value="ban">Ban</option>
+                    <option value="kick">Kick</option>
+                    <option value="dm">DM</option>
+                    <option value="mute">Mute</option>
+                </select>
+            </div>
+        </div>
 
-<form action="/settings/automod_actions" method="post">
-    <label for="rule">Automod Rule</label>
-    <select id="rule" name="rule" required>
-        {% for automod_rule in automod_rules %}
-        <option value="{{automod_rule.id}}">{{automod_rule.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <label for="type">Automod Action Type</label>
-    <select id="type" name="type" required>
-        <option value="ban">Ban</option>
-        <option value="kick">Kick</option>
-        <option value="dm">DM</option>
-        <option value="mute">Mute</option>
-    </select>
-    <br>
-    <label for="time">Mute Time (type must be mute)</label>
-    <input id="time" name="time" placeholder="1w" type="text">
-    <br>
-    <label for="message">DM Message (type must be DM)</label>
-    <br>
-    <textarea id="message" name="message" placeholder="Bad behaviour"></textarea>
-    <br>
-    <label for="reason">Reason (for audit logs)</label>
-    <br>
-    <textarea id="reason" name="reason" placeholder="Automod actions action"></textarea>
+        <div class="form-grid">
+            <div>
+                <label for="time">Mute time (type must be mute)</label>
+                <input id="time" name="time" placeholder="1w" type="text">
+            </div>
+            <div>
+                <label for="reason">Reason (for audit logs)</label>
+                <textarea id="reason" name="reason" placeholder="Automod action"></textarea>
+            </div>
+        </div>
 
-    <br>
-    <button type="submit">Create automod action</button>
-</form>
+        <label for="message">DM message (type must be DM)</label>
+        <textarea id="message" name="message" placeholder="Bad behaviour"></textarea>
 
-<h2>Existing actions</h2>
+        <div class="form-actions">
+            <button type="submit">Create automod action</button>
+        </div>
+    </form>
+</section>
+{% else %}
+{% if automod_sync_error %}
+<div class="flash flash--warning"><p>Last automod sync failed: {{ automod_sync_error }}</p></div>
+{% endif %}
 
+{% call table(['Rule', 'Type', 'Duration', 'DM message', 'Reason', 'Actions']) %}
 {% for action in automod_actions %}
-<div class="data-card">
-    <form action="/settings/automod_actions/edit/{{action.id}}" method="post">
-        <label for="rule">Rule name</label>
-        <select id="rule" name="rule" required>
+{% set form_id = 'automod-' ~ action.id %}
+<tr>
+    <td>
+        <select name="rule" form="{{ form_id }}">
             {% for automod_rule in automod_rules %}
             <option value="{{automod_rule.id}}" {% if automod_rule.id == action.rule %}selected{% endif %}>{{automod_rule.name}}</option>
             {% endfor %}
         </select>
-        <br>
-        <label for="type">Automod Action Type</label>
-        <select id="type" name="type" required>
+    </td>
+    <td>
+        <select name="type" form="{{ form_id }}">
             <option value="ban" {% if action.action == "ban" %}selected{% endif %}>Ban</option>
             <option value="kick" {% if action.action == "kick" %}selected{% endif %}>Kick</option>
             <option value="dm" {% if action.action == "dm" %}selected{% endif %}>DM</option>
             <option value="mute" {% if action.action == "mute" %}selected{% endif %}>Mute</option>
         </select>
-        <br>
-        <label for="time">Mute Time (type must be mute)</label>
-        <input id="time" name="time" placeholder="1w" type="text" value="{{action.time}}">
-        <br>
-        <label for="message">DM Message (type must be DM)</label>
-        <br>
-        <textarea id="message" name="message" placeholder="Bad behaviour">{{action.message}}</textarea>
-        <br>
-        <label for="reason">Reason (for audit logs)</label>
-        <br>
-        <textarea id="reason" name="reason" placeholder="Automod actions action">{{action.reason}}</textarea>
-
-        <br>
-        <button type="submit">Update automod action</button>
-    </form>
-    <a href="/settings/automod_actions/delete/{{action.id}}">Delete</a>
-</div>
+    </td>
+    <td><input type="text" name="time" form="{{ form_id }}" placeholder="1w" value="{{ action.time|default('') }}"></td>
+    <td><textarea name="message" form="{{ form_id }}" placeholder="DM message">{{ action.message|default('') }}</textarea></td>
+    <td><textarea name="reason" form="{{ form_id }}" placeholder="Audit log reason">{{ action.reason|default('') }}</textarea></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=actions">
+            <input type="hidden" name="_tab" value="actions">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{ action.id }}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=actions">
+            <input type="hidden" name="_tab" value="actions">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{ action.id }}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
 {% else %}
-<p>No automod actions set up.</p>
+{{ empty_row(6, 'No automod actions set up.') }}
 {% endfor %}
-
+{% endcall %}
+{% endif %}
 {% endblock %}

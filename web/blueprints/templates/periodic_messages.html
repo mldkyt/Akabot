@@ -1,63 +1,89 @@
-{% extends 'page.html' %} {% block main %}
-<h1>Periodic Messages</h1>
+{% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Periodic Messages', 'Automatically send a message to a channel on a repeating schedule.') }}
+{{ tabs([('manage', 'Messages'), ('create', 'Add message')], active_tab) }}
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
+{% if active_tab == 'manage' %}
+{% call table(['Channel', 'Period', 'Every', 'Message', 'Actions']) %}
+{% for periodic_message in periodic_messages %}
+{% set form_id = 'periodic-' ~ periodic_message.channel_id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if text_channel.id == periodic_message.channel_id %}selected{% endif %}>{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <select name="period" form="{{ form_id }}">
+            <option value="daily" {% if periodic_message.period == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="weekly" {% if periodic_message.period == 'weekly' %}selected{% endif %}>Weekly</option>
+            <option value="monthly" {% if periodic_message.period == 'monthly' %}selected{% endif %}>Monthly</option>
+            <option value="yearly" {% if periodic_message.period == 'yearly' %}selected{% endif %}>Yearly</option>
+        </select>
+    </td>
+    <td><input type="number" name="period_num" form="{{ form_id }}" min="1" value="{{periodic_message.period_num}}" style="max-width: 90px;"></td>
+    <td><textarea name="content" form="{{ form_id }}" style="min-width: 300px;">{{periodic_message.content}}</textarea></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=manage">
+            <input type="hidden" name="_tab" value="manage">
+            <input type="hidden" name="_section" value="manage">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{periodic_message.channel_id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=manage">
+            <input type="hidden" name="_tab" value="manage">
+            <input type="hidden" name="_section" value="manage">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{periodic_message.channel_id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(5, 'No periodic messages configured.') }}
 {% endfor %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <form action="?tab=create" method="post">
+        <input type="hidden" name="_tab" value="manage">
+        <input type="hidden" name="_section" value="create">
+        <input type="hidden" name="action" value="create">
 
-<form action="/settings/periodic_messages" method="post">
-    <label for="channel">Channel</label>
-    <select name="channel" id="channel">
-        {% for text_channel in text_channels %}
-        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br />
-    <label for="period">Period</label>
-    <select name="period" id="period">
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-    </select>
-    <br />
-    <label for="period_num">Period number (e.g. number of days when daily)</label>
-    <input type="number" name="period_num" id="period_num" min="1" value="1" />
-    <br />
-    <label for="content">Message content</label>
-    <br />
-    <textarea rows="10" cols="50" id="content" name="content"></textarea>
-    <br />
-    <button type="submit">Add channel</button>
-</form>
+        <div class="form-grid">
+            <div>
+                <label for="channel">Channel</label>
+                <select name="channel" id="channel">
+                    {% for text_channel in text_channels %}
+                    <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="period">Period</label>
+                <select name="period" id="period">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+            <div>
+                <label for="period_num">Number of periods between messages</label>
+                <input type="number" name="period_num" id="period_num" min="1" value="1">
+            </div>
+        </div>
 
-{% for i in periodic_messages %}
-<h2>Channel: #{{i.name}}</h2>
-<form action="/settings/periodic_messages" method="post">
-    <input type="hidden" name="channel" value="{{i.channel_id}}" />
-    <input type="hidden" name="id" value="{{i.id}}" />
-    <span>Period:</span>
-    <select name="period">
-        <option value="daily" {% if i.period == "daily" %}selected{% endif %}>Daily</option>
-        <option value="weekly" {% if i.period == "weekly" %}selected{% endif %}>Weekly</option>
-        <option value="monthly" {% if i.period == "monthly" %}selected{% endif %}>Monthly</option>
-        <option value="yearly" {% if i.period == "yearly" %}selected{% endif %}>Yearly</option>
-    </select>
-    <br />
-    <label for="period_num">Period number (e.g. number of days when daily)</label>
-    <input type="number" name="period_num" value="{{i.period_num}}" min="1" />
-    <br />
-    <label for="content">Message content</label>
-    <br />
-    <textarea rows="10" cols="50" name="content">{{i.content}}</textarea>
-    <br />
-    <button type="submit">Update message</button>
-</form>
+        <label for="content">Message content</label>
+        <textarea rows="10" id="content" name="content"></textarea>
 
-<form action="/settings/periodic_messages" method="post">
-    <input type="hidden" name="delete" value="{{i.channel_id}}" />
-    <button type="submit">Delete message</button>
-</form>
-{% endfor %} {% endblock %}
+        <div class="form-actions"><button type="submit">Add periodic message</button></div>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

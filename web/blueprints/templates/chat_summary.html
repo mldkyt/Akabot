@@ -1,74 +1,93 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Chat Summary', 'See who chats the most with per-day, per-month and per-year summaries.') }}
+{{ tabs([('general', 'General'), ('channels', 'Channels')], active_tab) }}
 
-{% block main %}
-<h1>Chat Summary</h1>
-<p>Get a count of messages (summary) of who chatted the most. Per-day, per-month and per-year chat summaries!</p>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
+        <div class="form-grid">
+            <div>
+                <label for="row_count">Row count</label>
+                <input type="number" name="row_count" id="row_count" value="{{row_count}}">
+            </div>
+            <div>
+                <label for="row_count_extra">Extended summaries row count</label>
+                <input type="number" name="row_count_extra" id="row_count_extra" value="{{row_count_extra}}">
+            </div>
+        </div>
 
-<h2>Settings</h2>
+        <div class="check-row">
+            <input type="checkbox" name="unique_mode" id="unique_mode" {% if unique_mode %}checked{% endif %}>
+            <label for="unique_mode">Unique mode</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="extra" id="extra" {% if extra %}checked{% endif %}>
+            <label for="extra">Extended summaries</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" name="history" id="history" {% if history %}checked{% endif %}>
+            <label for="history">Store history (Show more button)</label>
+        </div>
 
-<form action="/settings/chat_summary" method="post">
-    
-    <!-- Row count -->
-    <label for="row_count">Row count</label> 
-    <br>
-    <input type="number" name="row_count" id="row_count" value="{{row_count}}">
-    <br>
-
-    <!-- Count unique only -->
-    <input type="checkbox" name="unique_mode" id="unique_mode" {% if unique_mode %}checked{% endif %}>
-    <label for="unique_mode">Unique mode</label>
-    <br>
-
-    <!-- Extended summaries -->
-    <input type="checkbox" name="extra" id="extra" {% if extra %}checked{% endif %}>
-    <label for="extra">Extended summaries</label>   
-    <br>
-
-    <!-- History -->
-    <input type="checkbox" name="history" id="history" {% if history %}checked{% endif %}>
-    <label for="history">Store history (Show more button)</label>
-    <br>
-
-    <!-- Extended row count -->
-    <label for="row_count_extra">Extended summaries row count</label>
-    <br>
-    <input type="number" name="row_count_extra" id="row_count_extra" value="{{row_count_extra}}">
-    <br>
-
-    <button type="submit">Save settings</button>
-</form>
-
-<h2>New chat summary setting</h2>
-
-<form action="/settings/chat_summary" method="post">
-    <label for="channel">Channel</label>
-    <br>
-    <select id="channel" name="channel" required>
-        {% for channel in channels %}
-        <option value="{{channel.id}}">{{channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-    <button type="submit">Add chat summary</button>
-</form>
-
-<h2>Existing chat summaries</h2>
-
-{% for chat_summary in chat_summaries %}
-<div class="data-card">
-    <ul>
-        <li>Channel: {{chat_summary.channel}}</li>
-    </ul>
-    <a href="/settings/chat_summary?delete={{chat_summary.id}}">Delete</a>
-</div>
+        <div class="form-actions">
+            <button type="submit">Save settings</button>
+        </div>
+    </form>
+</section>
 {% else %}
-<p>No chat summaries set up.</p>
-{% endfor %}
+<section class="settings-panel">
+    <h2>Add chat summary channel</h2>
+    <form action="?tab=channels" method="post">
+        <input type="hidden" name="_tab" value="channels">
+        <input type="hidden" name="_section" value="channels">
+        <input type="hidden" name="action" value="create">
+        <label for="channel">Channel</label>
+        <select id="channel" name="channel" required>
+            {% for channel in channels %}
+            <option value="{{channel.id}}">{{channel.name}}</option>
+            {% endfor %}
+        </select>
+        <div class="form-actions"><button type="submit">Add channel</button></div>
+    </form>
+</section>
 
+{% call table(['Channel', 'Actions']) %}
+{% for chat_summary in chat_summaries %}
+{% set form_id = 'summary-' ~ chat_summary.id %}
+<tr>
+    <td>
+        <select name="channel" form="{{ form_id }}">
+            {% for channel in channels %}
+            <option value="{{channel.id}}" {% if channel.id == chat_summary.id %}selected{% endif %}>{{channel.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="old_channel" value="{{chat_summary.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{chat_summary.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(2, 'No chat summaries set up.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}

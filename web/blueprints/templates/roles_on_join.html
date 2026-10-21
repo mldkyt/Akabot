@@ -1,40 +1,68 @@
 {% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Roles on Join', 'Automatically give members roles when they join the server.') }}
+{{ tabs([('general', 'General'), ('roles', 'Roles')], active_tab) }}
 
-{% block main %}
-<h1>Roles on Join</h1>
-<p>Here you can add and remove roles that get applied when a member joins the server.</p>
-
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<h2>Add role</h2>
-
-<form action="/settings/roles_on_join" method="post">
-    <label for="role">Role</label>
-    <select name="role" id="role">
-        {% for role in roles %}
-        <option value="{{role.id}}">{{role.name}}</option>
-        {% endfor %}
-    </select>
-    <br>
-
-    <button type="submit">Add</button>
-</form>
-
-<h2>Existing roles</h2>
-
-{% for role in roles_on_join %}
-<div class="data-card">
-    <ul>
-        <li>Role: {{role.name}}</li>
-    </ul>
-    <a href="/settings/roles_on_join?delete={{role.id}}">Delete</a>
-</div>
+{% if active_tab == 'general' %}
+<section class="settings-panel">
+    <h2>How roles on join work</h2>
+    <p>Roles on this list are added automatically when a member joins the server. They are only applied once and are never removed automatically.</p>
+    <p>Make sure Akabot's role is positioned above the roles you want to give.</p>
+    <p>You currently have <strong>{{ roles_on_join|length }}</strong> join role{% if roles_on_join|length != 1 %}s{% endif %} configured.</p>
+    <div class="form-actions">
+        <a class="btn" href="?tab=roles">Manage join roles</a>
+    </div>
+</section>
 {% else %}
-<p>No roles on join</p>
-{% endfor %}
+<section class="settings-panel">
+    <h2>Add a role on join</h2>
+    <form action="?tab=roles" method="post">
+        <input type="hidden" name="_tab" value="roles">
+        <input type="hidden" name="_section" value="roles">
+        <input type="hidden" name="action" value="create">
+        <label for="role">Role</label>
+        <select name="role" id="role">
+            {% for role in roles %}
+            <option value="{{role.id}}">@{{role.name}}</option>
+            {% endfor %}
+        </select>
+        <div class="form-actions"><button type="submit">Add role</button></div>
+    </form>
+</section>
 
+{% call table(['Role', 'Actions']) %}
+{% for join_role in roles_on_join %}
+{% set form_id = 'join-role-' ~ join_role.id %}
+<tr>
+    <td>
+        <select name="role" form="{{ form_id }}">
+            {% for role in roles %}
+            <option value="{{role.id}}" {% if role.id == join_role.id %}selected{% endif %}>@{{role.name}}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=roles">
+            <input type="hidden" name="_tab" value="roles">
+            <input type="hidden" name="_section" value="roles">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{join_role.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=roles">
+            <input type="hidden" name="_tab" value="roles">
+            <input type="hidden" name="_section" value="roles">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{join_role.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(2, 'No roles on join configured.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}

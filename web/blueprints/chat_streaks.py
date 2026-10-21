@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session
 
 from database import engine
 from utils.chat_streaks import (
@@ -53,7 +53,9 @@ def chat_streaks_index():
     auth = get_token_data(session["token"])
     assert auth is not None
 
-    save_settings(auth)
+    if request.method == "POST":
+        save_settings(auth)
+        return redirect("/settings/chat_streaks", 303)
 
     with engine.begin() as c:
         minimum_enabled = server_streak_minimum_enabled.get(c, auth["guild"])
