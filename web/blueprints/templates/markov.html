@@ -1,69 +1,95 @@
-{% extends 'page.html' %} {% block main %}
-<h1>Markov Chains</h1>
+{% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Markov Chains', 'Generate messages from the way your server talks.') }}
+{{ tabs([('channels', 'Channels'), ('add', 'Add channel')], active_tab) }}
 
-{% for flash in get_flashed_messages() %}
-<div class="flash">
-    <p>{{flash}}</p>
-</div>
-{% endfor %}
-
-<form action="/settings/markov" method="post">
-    <label for="channel">Channel</label>
-    <select name="channel" id="channel">
-        {% for text_channel in text_channels %}
-        <option value="{{text_channel.id}}">{{text_channel.name}}</option>
-        {% endfor %}
-    </select>
-    <br />
-    <label for="mode">Mode</label>
-    <select id="mode" name="mode">
-        <option value="periodic">Periodic</option>
-        <option value="messages">After x messages</option>
-        <option value="command">Using /markov</option>
-    </select>
-    <br />
-    <label for="num_periods">Every</label>
-    <input type="number" name="num_periods" id="num_periods" min="1" value="1" />
-    <select name="period" id="period">
-        <option value="minutely">minutes</option>
-        <option value="hourly">hours</option>
-        <option value="daily">days</option>
-    </select>
-    <br />
-    <label for="messages">Messages count</label>
-    <input type="number" id="messages" name="messages_num" value="10">
-    <br />
-    <button type="submit">Save</button>
-</form>
-
+{% if active_tab == 'channels' %}
+{% call table(['Channel', 'Mode', 'Every', 'Messages', 'Actions']) %}
 {% for channel in enabled_channels %}
-<h2>Channel: #{{channel.name}}</h2>
-<form action="/settings/markov" method="post">
-    <input type="hidden" name="channel" value="{{channel.id}}" />
-    <label for="mode{{channel.id}}">Mode</label>
-    <select id="mode{{channel.id}}" name="mode">
-        <option value="periodic" {% if channel.mode == 'periodic' %}selected{% endif %}>Periodic</option>
-        <option value="messages" {% if channel.mode == 'messages' %}selected{% endif %}>After x messages</option>
-        <option value="command" {% if channel.mode == 'command' %}selected{% endif %}>Using /markov</option>
-    </select>
-    <br />
-    <label for="num_periods{{channel.id}}">Every</label>
-    <input type="number" name="num_periods" id="num_periods{{channel.id}}" min="1" value="{{channel.period_num}}" />
-    <select name="period" id="period{{channel.id}}">
-        <option value="minutely" {% if channel.period == 'minutely' %}selected{% endif %}>minutes</option>
-        <option value="hourly" {% if channel.period == 'hourly' %}selected{% endif %}>hours</option>
-        <option value="daily" {% if channel.period == 'daily' %}selected{% endif %}>days</option>
-    </select>
-    <br />
-    <label for="messages{{channel.id}}">Messages count</label>
-    <input type="number" id="messages{{channel.id}}" name="messages_num" value="{{channel.messages_num}}">
-    <br />
-    <button type="submit">Update</button>
-</form>
-<form action="/settings/markov" method="post">
-    <input type="hidden" name="delete" value="{{channel.id}}" />
-    <button type="submit">Disable</button>
-</form>
+{% set form_id = 'markov-' ~ channel.id %}
+<tr>
+    <td>#{{channel.name}}</td>
+    <td>
+        <select name="mode" form="{{ form_id }}">
+            <option value="periodic" {% if channel.mode == 'periodic' %}selected{% endif %}>Periodic</option>
+            <option value="messages" {% if channel.mode == 'messages' %}selected{% endif %}>After x messages</option>
+            <option value="command" {% if channel.mode == 'command' %}selected{% endif %}>Using /markov</option>
+        </select>
+    </td>
+    <td>
+        <div class="btn-group">
+            <input type="number" name="num_periods" form="{{ form_id }}" min="1" value="{{channel.period_num}}" style="max-width: 90px;">
+            <select name="period" form="{{ form_id }}" style="max-width: 130px;">
+                <option value="minutely" {% if channel.period == 'minutely' %}selected{% endif %}>minutes</option>
+                <option value="hourly" {% if channel.period == 'hourly' %}selected{% endif %}>hours</option>
+                <option value="daily" {% if channel.period == 'daily' %}selected{% endif %}>days</option>
+            </select>
+        </div>
+    </td>
+    <td><input type="number" name="messages_num" form="{{ form_id }}" value="{{channel.messages_num}}" style="max-width: 90px;"></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="channel" value="{{channel.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=channels">
+            <input type="hidden" name="_tab" value="channels">
+            <input type="hidden" name="_section" value="channels">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="channel" value="{{channel.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id, 'Disable') }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(5, 'No markov channels enabled.') }}
 {% endfor %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <form action="?tab=add" method="post">
+        <input type="hidden" name="_tab" value="add">
+        <input type="hidden" name="_section" value="add">
+        <label for="channel">Channel</label>
+        <select name="channel" id="channel">
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}">{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
 
+        <div class="form-grid">
+            <div>
+                <label for="mode">Mode</label>
+                <select id="mode" name="mode">
+                    <option value="periodic">Periodic</option>
+                    <option value="messages">After x messages</option>
+                    <option value="command">Using /markov</option>
+                </select>
+            </div>
+            <div>
+                <label for="num_periods">Every</label>
+                <div class="btn-group">
+                    <input type="number" name="num_periods" id="num_periods" min="1" value="1" style="max-width: 110px;">
+                    <select name="period" id="period" style="max-width: 140px;">
+                        <option value="minutely">minutes</option>
+                        <option value="hourly">hours</option>
+                        <option value="daily">days</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label for="messages">Messages count</label>
+                <input type="number" id="messages" name="messages_num" value="10">
+            </div>
+        </div>
+
+        <div class="form-actions"><button type="submit">Add channel</button></div>
+    </form>
+</section>
+{% endif %}
 {% endblock %}

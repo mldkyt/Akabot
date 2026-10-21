@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select, update
 
 from database import engine, markov, synced_channels
@@ -19,56 +19,103 @@ def markov_index():
 
     with engine.begin() as c:
         if request.method == "POST":
-            if request.form.get("channel") and request.form.get("period") \
-                    and request.form.get("mode") and request.form["mode"] in ["periodic", "messages", "command"] \
-                    and request.form.get("messages_num") and request.form["messages_num"].isnumeric():
+            section = request.form.get("_section", "add")
+            if section == "add":
+                channel = request.form.get("channel")
+                period = request.form.get("period")
+                mode = request.form.get("mode")
+                messages_num = request.form.get("messages_num")
+                num_periods = request.form.get("num_periods", "")
 
-                if not request.form.get("num_periods", "").isnumeric():
-                    return quick_response("The period number must be a number", 400)
+                if (
+                    channel
+                    and period
+                    and mode in ["periodic", "messages", "command"]
+                    and messages_num
+                    and messages_num.isnumeric()
+                    and num_periods.isnumeric()
+                    and int(messages_num) >= 1
+                ):
+                    existing = c.execute(
+                        select(markov).where(markov.c.channel_id == channel)
+                    ).fetchone()
 
-                if int(request.form["messages_num"]) <= 1:
-                    return quick_response("The minimum messages number must be at least 1", 400)
-
-                # Check if the channel already has settings
-                row = c.execute(
-                    select(markov).where(markov.c.channel_id == request.form["channel"])
-                ).fetchone()
-
-                if row is not None and row.guild_id != auth["guild"]:
-                    return quick_response("That channel belongs to another guild", 400)
-
-                if not row:
-                    c.execute(
-                        insert(markov).values(
-                            channel_id=request.form["channel"],
-                            guild_id=auth["guild"],
-                            period=request.form["period"],
-                            period_num=int(request.form["num_periods"]),
-                            mode=request.form["mode"],
-                            messages_num=int(request.form["messages_num"]),
+                    if existing is not None and existing.guild_id != auth["guild"]:
+                        flash("That channel belongs to another guild")
+                    elif existing is None:
+                        c.execute(
+                            insert(markov).values(
+                                channel_id=channel,
+                                guild_id=auth["guild"],
+                                period=period,
+                                period_num=int(num_periods),
+                                mode=mode,
+                                messages_num=int(messages_num),
+                            )
                         )
-                    )
+                        flash("Added markov channel")
+                    else:
+                        c.execute(
+                            update(markov)
+                            .values(
+                                period=period,
+                                period_num=int(num_periods),
+                                mode=mode,
+                                messages_num=int(messages_num),
+                            )
+                            .where(
+                                (markov.c.channel_id == channel)
+                                & (markov.c.guild_id == auth["guild"])
+                            )
+                        )
+                        flash("Edited markov channel")
                 else:
+                    flash("Invalid markov settings")
+
+                return redirect("/settings/markov?tab=add", 303)
+
+            action = request.form.get("action", "update")
+            channel = request.form.get("channel", "")
+            if action == "update" and channel:
+                mode = request.form.get("mode")
+                messages_num = request.form.get("messages_num", "")
+                num_periods = request.form.get("num_periods", "")
+                if (
+                    mode in ["periodic", "messages", "command"]
+                    and messages_num.isnumeric()
+                    and num_periods.isnumeric()
+                    and int(messages_num) >= 1
+                ):
                     c.execute(
                         update(markov)
                         .values(
-                            period=request.form["period"],
-                            period_num=int(request.form["num_periods"]),
-                            mode=request.form["mode"],
-                            messages_num=int(request.form["messages_num"]),
+                            period=request.form.get("period"),
+                            period_num=int(num_periods),
+                            mode=mode,
+                            messages_num=int(messages_num),
                         )
                         .where(
-                            (markov.c.channel_id == request.form["channel"])
+                            (markov.c.channel_id == channel)
                             & (markov.c.guild_id == auth["guild"])
                         )
                     )
-            elif request.form.get("delete"):
+                    flash("Edited markov channel")
+                else:
+                    flash("Invalid markov settings")
+            elif action == "delete" and channel:
                 c.execute(
                     delete(markov).where(
-                        (markov.c.channel_id == request.form["delete"])
+                        (markov.c.channel_id == channel)
                         & (markov.c.guild_id == auth["guild"])
                     )
                 )
+                flash("Disabled markov channel")
+
+            return redirect("/settings/markov?tab=channels", 303)
+
+        active_tab = request.args.get("tab", "channels")
+        if active_tab not in {"channels", "add"}:
+            active_tab = "channels"
 
         text_channels = [
             {"id": i[0], "name": i[1]}
@@ -103,4 +150,5 @@ def markov_index():
         "markov.html",
         text_channels=text_channels,
         enabled_channels=enabled_channels,
+        active_tab=active_tab,
     )
