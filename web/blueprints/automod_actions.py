@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, session, flash, redirect
-from sqlalchemy import Connection, delete, insert, select
+from sqlalchemy import Connection, delete, insert, select, update
 
 from database import automod_actions, engine, synced_automod_rules
 from utils.automod_actions import setting_automod_sync_error
@@ -12,7 +12,8 @@ automod_actions_bp = Blueprint("automod_actions", __name__, template_folder='tem
 
 def parse_automod_action(c: Connection, index: int, row: tuple) -> dict:
     output = {
-        "id": index,
+        "id": row[0],
+        "index": index,
         "rule": row[1],
         "action": row[2]
     }
@@ -61,7 +62,7 @@ def parse_automod_actions(guild_id: int) -> list[dict]:
     return automod_action_list
 
 
-def handle_create_automod_action(is_edit: bool = False) -> bool:
+def handle_create_automod_action(is_edit: bool = False, action_id: int | None = None) -> bool:
     auth = get_token_data(session["token"])
     assert auth is not None
 
@@ -101,15 +102,28 @@ def handle_create_automod_action(is_edit: bool = False) -> bool:
         content = request.form["message"]
 
     with engine.begin() as c:
-        c.execute(
-            insert(automod_actions).values(
-                gid=str(auth["guild"]),
-                rule_id=request.form["rule"],
-                action=request.form["type"],
-                duration=duration,
-                content=content,
+        values = {
+            "rule_id": request.form["rule"],
+            "action": request.form["type"],
+            "duration": duration,
+            "content": content,
+        }
+        if is_edit and action_id is not None:
+            c.execute(
+                update(automod_actions)
+                .where(
+                    (automod_actions.c.id == action_id)
+                    & (automod_actions.c.gid == str(auth["guild"]))
+                )
+                .values(**values)
             )
-        )
+        else:
+            c.execute(
+                insert(automod_actions).values(
+                    gid=str(auth["guild"]),
+                    **values,
+                )
+            )
 
     if is_edit:
         flash("Edited successfully")
@@ -137,10 +151,39 @@ def automod_actions_index():
         return authorization
 
     if request.method == "POST":
-        handle_create_automod_action()
+        action = request.form.get("action", "create")
+        if action == "update":
+            action_id = request.form.get("id", "")
+            if action_id.isnumeric():
+                handle_create_automod_action(is_edit=True, action_id=int(action_id))
+            else:
+                flash("Invalid action id")
+        elif action == "delete":
+            action_id = request.form.get("id", "")
+            if action_id.isnumeric():
+                auth = get_token_data(session["token"])
+                assert auth is not None
+                with engine.begin() as c:
+                    c.execute(
+                        delete(automod_actions).where(
+                            (automod_actions.c.id == int(action_id))
+                            & (automod_actions.c.gid == auth["guild"])
+                        )
+                    )
+                flash("Deleted automod action")
+            else:
+                flash("Invalid action id")
+        else:
+            handle_create_automod_action()
+        return redirect(
+            f"/settings/automod_actions?tab={request.form.get('_tab', 'actions')}", 303
+        )
 
     auth = get_token_data(session["token"])
     assert auth is not None
+    active_tab = request.args.get("tab", "actions")
+    if active_tab not in {"create", "actions"}:
+        active_tab = "actions"
     automod_actions = parse_automod_actions(auth['guild'])
     automod_rules = get_automod_rules(auth['guild'])
 
@@ -152,81 +195,5 @@ def automod_actions_index():
         automod_actions=automod_actions,
         automod_rules=automod_rules,
         automod_sync_error=automod_sync_error,
+        active_tab=active_tab,
     )
-
-
-@automod_actions_bp.route("/settings/automod_actions/delete/<index>")
-def automod_actions_delete(index: str):
-    authorization = authorize("/settings/automod_actions")
-    if authorization is not None:
-        return authorization
-
-    if not index.isnumeric():
-        return redirect("/settings/automod_actions", 302)
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        rows = c.execute(
-            select(
-                automod_actions.c.id,
-                automod_actions.c.rule_id,
-                automod_actions.c.action,
-                automod_actions.c.duration,
-                automod_actions.c.content,
-            )
-            .where(automod_actions.c.gid == auth["guild"])
-            .order_by(automod_actions.c.id)
-        ).fetchall()
-        if len(rows) <= int(index):
-            flash("Can't delete item outside of range")
-            return redirect("/settings/automod_actions", 302)
-
-        parsed = parse_automod_action(c, int(index), rows[int(index)])
-        delete_id = rows[int(index)][0]
-
-    if "confirm" in request.args and request.args["confirm"] == "yes":
-        with engine.begin() as c:
-            c.execute(
-                delete(automod_actions).where(
-                    (automod_actions.c.gid == auth["guild"])
-                    & (automod_actions.c.id == delete_id)
-                )
-            )
-            return redirect("/settings/automod_actions", 302)
-
-    return render_template("automod_actions_delete.html", action=parsed)
-
-
-@automod_actions_bp.route("/settings/automod_actions/edit/<index>", methods=["POST"])
-def automod_actions_edit(index: str):
-    authorization = authorize("/settings/automod_actions")
-    if authorization is not None:
-        return authorization
-
-    if not index.isnumeric():
-        return redirect("/settings/automod_actions", 302)
-
-    auth = get_token_data(session["token"])
-    assert auth is not None
-
-    with engine.begin() as c:
-        rows = c.execute(
-            select(automod_actions.c.id)
-            .where(automod_actions.c.gid == auth["guild"])
-            .order_by(automod_actions.c.id)
-        ).fetchall()
-        if len(rows) <= int(index):
-            flash("Can't edit item outside of range")
-            return redirect("/settings/automod_actions", 302)
-
-        c.execute(
-            delete(automod_actions).where(
-                (automod_actions.c.gid == auth["guild"])
-                & (automod_actions.c.id == rows[int(index)][0])
-            )
-        )
-
-    handle_create_automod_action(is_edit=True)
-    return redirect("/settings/automod_actions", 302)
