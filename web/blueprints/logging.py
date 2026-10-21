@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, render_template, request, session
+from flask import Blueprint, flash, redirect, render_template, request, session
 from sqlalchemy import delete, insert, select
 
 from database import engine, logging_channels, synced_channels
@@ -50,6 +50,11 @@ def logging_index():
 
     if request.method == "POST":
         handle_saving_settings(auth)
+        return redirect(f"/settings/logging?tab={request.form.get('_tab', 'channels')}", 303)
+
+    active_tab = request.args.get("tab", "channels")
+    if active_tab not in {"channels", "add"}:
+        active_tab = "channels"
 
     settings = []
     with engine.begin() as c:
@@ -101,4 +106,5 @@ def logging_index():
         channels=channels,
         logging_channels=logging_channels_data,
         settings=settings,
+        active_tab=active_tab,
     )
