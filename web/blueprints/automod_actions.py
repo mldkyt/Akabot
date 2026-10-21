@@ -10,7 +10,7 @@ from web.webutils.tokens import authorize, get_token_data
 automod_actions_bp = Blueprint("automod_actions", __name__, template_folder='templates')
 
 
-def parse_automod_action(c: Connection, index: int, row: tuple) -> dict:
+def parse_automod_action(c: Connection, guild_id: int, index: int, row: tuple) -> dict:
     output = {
         "id": row[0],
         "index": index,
@@ -20,7 +20,10 @@ def parse_automod_action(c: Connection, index: int, row: tuple) -> dict:
 
     extra = c.execute(
         select(synced_automod_rules.c.aname)
-        .where(synced_automod_rules.c.aid == row[1])
+        .where(
+            (synced_automod_rules.c.aid == row[1])
+            & (synced_automod_rules.c.gid == str(guild_id))
+        )
     ).fetchone()
     if extra is not None:
         output["name"] = extra[0]
@@ -55,7 +58,7 @@ def parse_automod_actions(guild_id: int) -> list[dict]:
             .order_by(automod_actions.c.id)
         ).fetchall()
         for index in range(len(rows)):
-            output = parse_automod_action(c, index, rows[index])
+            output = parse_automod_action(c, guild_id, index, rows[index])
 
             automod_action_list.append(output)
 
@@ -184,7 +187,7 @@ def automod_actions_index():
     active_tab = request.args.get("tab", "actions")
     if active_tab not in {"create", "actions"}:
         active_tab = "actions"
-    automod_actions = parse_automod_actions(auth['guild'])
+    automod_action_list = parse_automod_actions(auth['guild'])
     automod_rules = get_automod_rules(auth['guild'])
 
     with engine.begin() as c:
@@ -192,7 +195,7 @@ def automod_actions_index():
 
     return render_template(
         "automod_actions.html",
-        automod_actions=automod_actions,
+        automod_actions=automod_action_list,
         automod_rules=automod_rules,
         automod_sync_error=automod_sync_error,
         active_tab=active_tab,

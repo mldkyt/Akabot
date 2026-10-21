@@ -25,6 +25,11 @@ MAX_OPTIONS = 20
 ALLOWED_STYLES = ("primary", "secondary", "success", "danger")
 
 
+def get_limit(c, guild_id: str, default: int) -> int:
+    """Return the reaction role message limit for a guild."""
+    return default
+
+
 def get_text_channel(c, guild_id: str, channel_id: str):
     return c.execute(
         select(synced_channels.c.cid).where(
