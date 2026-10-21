@@ -1,5 +1,3 @@
-import os
-
 from discord import (
     ApplicationContext,
     Cog,
@@ -10,21 +8,7 @@ from discord import (
 from discord.ui import InputText, Modal
 
 from logger import akabot_logger
-from utils.feedback import ForgejoFeedback, GitHubFeedback, DiscordFeedback
-
-FEEDBACK_TYPE = os.getenv("FEEDBACK_TYPE", "none")
-
-feedback_handler = None
-
-if FEEDBACK_TYPE == 'forgejo':
-    feedback_handler = ForgejoFeedback()
-elif FEEDBACK_TYPE == 'github':
-    feedback_handler = GitHubFeedback()
-elif FEEDBACK_TYPE == 'discord':
-    feedback_handler = DiscordFeedback()
-
-if feedback_handler is not None and not feedback_handler.validate_auth():
-    feedback_handler = None
+from utils.feedback import feedback_handler
 
 
 class BugReportModal(Modal):

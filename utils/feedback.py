@@ -1,9 +1,10 @@
 import os
 
 import requests
+from discord import Bot, Embed
 
 from database import engine
-from utils.tasks import create_task
+from utils.tasks import create_task, register_task
 
 
 class Feedback:
@@ -121,3 +122,38 @@ class DiscordFeedback(Feedback):
             })
 
         return True, ""
+
+FEEDBACK_TYPE = os.getenv("FEEDBACK_TYPE", "none")
+
+feedback_handler = None
+
+if FEEDBACK_TYPE == 'forgejo':
+    feedback_handler = ForgejoFeedback()
+elif FEEDBACK_TYPE == 'github':
+    feedback_handler = GitHubFeedback()
+elif FEEDBACK_TYPE == 'discord':
+    feedback_handler = DiscordFeedback()
+
+if feedback_handler is not None and not feedback_handler.validate_auth():
+    feedback_handler = None
+
+
+@register_task("feedbackSubmit")
+async def feedback_submit(bot: Bot, data: dict):
+    if not isinstance(feedback_handler, DiscordFeedback):
+        return
+
+    guild = bot.get_guild(int(feedback_handler.guild))
+    if guild is None:
+        raise ValueError("guild")
+
+    channel = bot.get_channel(int(feedback_handler.channel))
+    if channel is None:
+        raise ValueError("channel")
+
+    await channel.send(
+        embed=Embed(
+            title=data["title"],
+            description=data["body"]
+        )
+    )
