@@ -1,71 +1,93 @@
 {% extends 'page.html' %}
-
-{% block main %}
-<h1>You have {{unread}} unread mail</h1>
-
-<p>Here you can read all past and current mails.</p>
-
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Mail', 'Read announcements from Akabot and manage mail posts.') }}
 {% if admin %}
+{{ tabs([('inbox', 'Inbox'), ('compose', 'Compose')], active_tab) }}
+{% endif %}
 
-    <h2>Admin</h2>
+{% if active_tab == 'inbox' %}
+<section class="settings-panel">
+    <h2>Inbox</h2>
+    <p>You have <strong>{{ unread }}</strong> unread message{% if unread != 1 %}s{% endif %}.</p>
 
-    <h3>Create new mail</h3>
-
-    <form action="/settings/mail/add" method="post">
-        <label for="author">Author: </label>
-        <input id="author" name="author" type="text">
-        <br>
-        <label for="post">Post (Markdown is supported)</label>
-        <br>
-        <textarea id="post" name="post"></textarea>
-        <br>
-        <button type="submit">Create mail post</button>
+    {% if unread > 0 %}
+    <form method="post" action="?tab=inbox">
+        <input type="hidden" name="_tab" value="inbox">
+        <input type="hidden" name="action" value="mark_read">
+        <div class="form-actions"><button type="submit">Mark all as read</button></div>
     </form>
+    {% endif %}
 
-    {% for mail in all %}
-    <div class="data-card">
-        <form action="/settings/mail/edit/{{mail.id}}" method="post">
-
-            <label for="author_{{mail.id}}">Author: </label>
-            <input id="author_{{mail.id}}" name="author" type="text" value="{{mail.author}}">
-            <br>
-            <label for="post_{{mail.id}}">Post (Markdown is supported)</label>
-            <br>
-            <textarea id="post_{{mail.id}}" name="post">{{mail.text}}</textarea>
-            <br>
-            <button type="submit">Edit mail post</button>
-        </form>
-        <p><small>Posted on {{mail.created_at}}</small></p>
-        <a href="/settings/mail/delete/{{mail.id}}">Delete mail GLOBALLY</a>
-    </div>
-    {% endfor %}
-
-{% else %}
     {% for message in unread_messages %}
     <div class="data-card data-card--unread">
         <p>{{message.text|safe}}</p>
         <p><small>Posted by {{message.author}} on {{message.created_at}}</small></p>
     </div>
     {% else %}
-    <p>No unread messages</p>
+    <div class="empty-state">No unread messages.</div>
     {% endfor %}
+</section>
 
-    {% if unread > 0 %}
-    <a href="?read=1">Mark all mail as read</a>
-    {% endif %}
-
-    <hr>
-
+<section class="settings-panel">
     <h2>Past messages</h2>
-
     {% for message in past_messages %}
     <div class="data-card">
         <p>{{message.text|safe}}</p>
         <p><small>Posted by {{message.author}} on {{message.created_at}}</small></p>
     </div>
     {% else %}
-    <p>No past messages</p>
+    <div class="empty-state">No past messages.</div>
     {% endfor %}
-{% endif %}
+</section>
+{% else %}
+<section class="settings-panel">
+    <h2>Create new mail</h2>
+    <form method="post" action="?tab=compose">
+        <input type="hidden" name="_tab" value="compose">
+        <input type="hidden" name="action" value="create">
+        <div class="form-grid">
+            <div>
+                <label for="author">Author</label>
+                <input id="author" name="author" type="text">
+            </div>
+            <div>
+                <label for="created_at">Posted</label>
+                <input id="created_at" type="text" value="Now" disabled>
+            </div>
+        </div>
+        <label for="post">Post (Markdown is supported)</label>
+        <textarea id="post" name="post"></textarea>
+        <div class="form-actions"><button type="submit">Create mail post</button></div>
+    </form>
+</section>
 
+{% call table(['Author', 'Post', 'Posted', 'Actions']) %}
+{% for message in all %}
+{% set form_id = 'mail-' ~ message.id %}
+<tr>
+    <td><input type="text" name="author" form="{{ form_id }}" value="{{message.author}}"></td>
+    <td><textarea name="post" form="{{ form_id }}" style="min-width: 360px;">{{message.text}}</textarea></td>
+    <td class="muted">{{message.created_at}}</td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=compose">
+            <input type="hidden" name="_tab" value="compose">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{message.id}}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=compose">
+            <input type="hidden" name="_tab" value="compose">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{message.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(4, 'No mail posts yet.') }}
+{% endfor %}
+{% endcall %}
+{% endif %}
 {% endblock %}
