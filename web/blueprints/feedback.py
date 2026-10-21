@@ -17,6 +17,9 @@ feedback_handler = None
 if FEEDBACK_TYPE == 'forgejo':
     feedback_handler = ForgejoFeedback()
 
+if feedback_handler is not None and not feedback_handler.validate_auth():
+    feedback_handler = None
+
 def handle_feedback_post(auth):
     if feedback_handler is None:
         return None

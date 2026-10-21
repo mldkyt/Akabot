@@ -1,4 +1,5 @@
 import os
+from operator import and_
 
 import requests
 
@@ -6,6 +7,9 @@ import requests
 class Feedback:
     def __init__(self):
         pass
+
+    def validate_auth(self) -> bool:
+        return False
 
     def create_issue(self, auth_data, title: str, body: str) -> tuple[bool, str]:
         pass
@@ -17,6 +21,16 @@ class ForgejoFeedback(Feedback):
         self.token = os.getenv("FORGEJO_TOKEN")
         self.owner = os.getenv("FORGEJO_OWNER")
         self.project = os.getenv("FORGEJO_PROJECT")
+
+    def validate_auth(self) -> bool:
+        return self.instance is not None and \
+            len(self.instance) > 0 and \
+            self.token is not None and \
+            len(self.token) > 0 and \
+            self.owner is not None and \
+            len(self.owner) > 0 and \
+            self.project is not None and \
+            len(self.project) > 0
 
     def create_issue(self, auth_data, title: str, body: str) -> tuple[bool, str]:
         if not 4 <= len(title) <= 50:
