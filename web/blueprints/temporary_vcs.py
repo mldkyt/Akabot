@@ -1,44 +1,10 @@
 from flask import Blueprint, flash, redirect, render_template, request, session
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 
 from database import engine, synced_channels, temporary_vc_creator_channels
-from web.webutils.discord_sync import validate_voice_channel_id
 from web.webutils.tokens import authorize, get_token_data
 
 temporary_vcs_bp = Blueprint("temporary_vcs", __name__, template_folder="templates")
-
-
-def handle_add(auth):
-    with engine.begin() as c:
-        if "channel" in request.form and validate_voice_channel_id(
-                request.form["channel"]
-        ):
-            existing = c.execute(
-                select(temporary_vc_creator_channels.c.cid).where(
-                    (temporary_vc_creator_channels.c.gid == auth["guild"])
-                    & (temporary_vc_creator_channels.c.cid == request.form["channel"])
-                )
-            ).fetchone()
-            if existing is not None:
-                flash("Already present")
-                return
-
-            c.execute(
-                insert(temporary_vc_creator_channels).values(
-                    gid=auth["guild"], cid=request.form["channel"]
-                )
-            )
-            flash("Added temporary VC creator channel")
-
-
-def handle_delete(auth):
-    with engine.begin() as c:
-        c.execute(
-            delete(temporary_vc_creator_channels).where(
-                (temporary_vc_creator_channels.c.gid == auth["guild"])
-                & (temporary_vc_creator_channels.c.cid == request.args["delete"])
-            )
-        )
 
 
 @temporary_vcs_bp.route("/settings/temporary_vcs", methods=["GET", "POST"])
@@ -51,11 +17,66 @@ def temporary_vcs_index():
     assert auth is not None
 
     if request.method == "POST":
-        handle_add(auth)
+        section = request.form.get("_section", "channels")
+        action = request.form.get("action", "create")
+        channel = request.form.get("channel", "")
+        old_channel = request.form.get("id", "")
 
-    if "delete" in request.args:
-        handle_delete(auth)
-        return redirect("/settings/temporary_vcs", 302)
+        if section == "channels":
+            with engine.begin() as c:
+                valid = c.execute(
+                    select(synced_channels.c.cid).where(
+                        (synced_channels.c.gid == auth["guild"])
+                        & (synced_channels.c.cid == channel)
+                        & (synced_channels.c.ctype == "voice")
+                    )
+                ).fetchone()
+
+                if action == "delete":
+                    if old_channel:
+                        c.execute(
+                            delete(temporary_vc_creator_channels).where(
+                                (temporary_vc_creator_channels.c.gid == auth["guild"])
+                                & (temporary_vc_creator_channels.c.cid == old_channel)
+                            )
+                        )
+                        flash("Deleted temporary VC creator channel")
+                elif valid is None:
+                    flash("Invalid voice channel selected")
+                else:
+                    existing = c.execute(
+                        select(temporary_vc_creator_channels.c.cid).where(
+                            (temporary_vc_creator_channels.c.gid == auth["guild"])
+                            & (temporary_vc_creator_channels.c.cid == channel)
+                        )
+                    ).fetchone()
+                    if existing is not None and channel != old_channel:
+                        flash("Already present")
+                    elif action == "update" and old_channel:
+                        c.execute(
+                            update(temporary_vc_creator_channels)
+                            .where(
+                                (temporary_vc_creator_channels.c.gid == auth["guild"])
+                                & (temporary_vc_creator_channels.c.cid == old_channel)
+                            )
+                            .values(cid=channel)
+                        )
+                        flash("Saved temporary VC creator channel")
+                    else:
+                        c.execute(
+                            insert(temporary_vc_creator_channels).values(
+                                gid=auth["guild"], cid=channel
+                            )
+                        )
+                        flash("Added temporary VC creator channel")
+
+        return redirect(
+            f"/settings/temporary_vcs?tab={request.form.get('_tab', 'channels')}", 303
+        )
+
+    active_tab = request.args.get("tab", "general")
+    if active_tab not in {"general", "channels"}:
+        active_tab = "general"
 
     with engine.begin() as c:
         temporary_vcs_ids = [
@@ -71,11 +92,11 @@ def temporary_vcs_index():
         for i in range(len(temporary_vcs_ids)):
             name = c.execute(
                 select(synced_channels.c.cname).where(
-                    synced_channels.c.cid == temporary_vcs_ids[i]
+                    (synced_channels.c.cid == temporary_vcs_ids[i])
+                    & (synced_channels.c.gid == auth["guild"])
                 )
             ).fetchone()
             if name is None:
-                flash(f"Failed to find channel {temporary_vcs_ids[i]}")
                 continue
 
             temporary_vcs.append(
@@ -93,5 +114,8 @@ def temporary_vcs_index():
         ]
 
     return render_template(
-        "temporary_vcs.html", temporary_vcs=temporary_vcs, channels=channels
+        "temporary_vcs.html",
+        temporary_vcs=temporary_vcs,
+        channels=channels,
+        active_tab=active_tab,
     )
