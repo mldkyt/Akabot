@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, session, request, flash, redirect
 from sqlalchemy import insert, delete, select
 
 from database import engine, web_feedback_bans
-from utils.feedback import ForgejoFeedback, GitHubFeedback
+from utils.feedback import ForgejoFeedback, GitHubFeedback, DiscordFeedback
 from web.webutils.quick_response import quick_response
 from web.webutils.tokens import authorize, get_token_data
 
@@ -18,6 +18,8 @@ if FEEDBACK_TYPE == 'forgejo':
     feedback_handler = ForgejoFeedback()
 elif FEEDBACK_TYPE == 'github':
     feedback_handler = GitHubFeedback()
+elif FEEDBACK_TYPE == 'discord':
+    feedback_handler = DiscordFeedback()
 
 if feedback_handler is not None and not feedback_handler.validate_auth():
     feedback_handler = None
