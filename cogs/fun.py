@@ -1,9 +1,9 @@
-from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCommandGroup, Member, Color, User, \
+from discord import Cog, Bot, ApplicationContext, Embed, SlashCommandGroup, Member, Color, User, \
     IntegrationType
 
 from database import engine
-from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
-    setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command, tick_counter, ActionBack
+from utils.fun import nb_embed, ensure_consent, ConsentView, get_consent, \
+    setting_allow_rp_commands, tick_counter, ActionBack
 from utils.message_appends import apply_appends
 
 
@@ -12,48 +12,6 @@ class Fun(Cog):
         super().__init__()
 
         self.bot = bot
-
-    @slash_command()
-    async def yaoi(self, ctx: ApplicationContext):
-        if ctx.guild is not None:
-            with engine.begin() as c:
-                disable_yaoi = setting_disable_yaoi_command.get(c, ctx.guild.id)
-                if disable_yaoi == "true":
-                    await ctx.respond("The yaoi command is disabled in this server", ephemeral=True)
-                    return
-
-        yaoi_post = await yaoi_cache.get_yaoibot_post()
-        if yaoi_post is None:
-            await ctx.respond("Yaoi is unavailable.", ephemeral=True)
-            return
-
-        embed = Embed(
-            title="Yaoi!",
-            image=yaoi_post["files"][0]["url"]
-        )
-
-        await ctx.respond(embed=embed, ephemeral=True)
-
-    @slash_command()
-    async def yuri(self, ctx: ApplicationContext):
-        if ctx.guild is not None:
-            with engine.begin() as c:
-                disable_yuri = setting_disable_yuri_command.get(c, ctx.guild.id)
-                if disable_yuri == "true":
-                    await ctx.respond("The yuri command is disabled in this server", ephemeral=True)
-                    return
-
-        yuri_post = await yuri_cache.get_yuribot_post()
-        if yuri_post is None:
-            await ctx.respond("Yuri is unavailable.", ephemeral=True)
-            return
-
-        embed = Embed(
-            title="Yuri!",
-            image=yuri_post["files"][0]["url"]
-        )
-
-        await ctx.respond(embed=embed, ephemeral=True)
 
     rp_group = SlashCommandGroup(name="rp",
                                  integration_types=[IntegrationType.user_install, IntegrationType.guild_install])
