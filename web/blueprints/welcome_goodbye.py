@@ -69,7 +69,7 @@ def handle_save(auth, section):
 
             if (
                 request.form.get("welcome_second", "").isnumeric()
-                and 0 < int(request.form["welcome_second"]) < 60
+                and 0 < int(request.form["welcome_second"]) < 1800
             ):
                 welcome_grace_period_second.set(
                     c, auth["guild"], request.form["welcome_second"]
