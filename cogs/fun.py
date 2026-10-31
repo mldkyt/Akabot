@@ -13,48 +13,6 @@ class Fun(Cog):
 
         self.bot = bot
 
-    @slash_command()
-    async def yaoi(self, ctx: ApplicationContext):
-        if ctx.guild is not None:
-            with engine.begin() as c:
-                disable_yaoi = setting_disable_yaoi_command.get(c, ctx.guild.id)
-                if disable_yaoi == "true":
-                    await ctx.respond("The yaoi command is disabled in this server", ephemeral=True)
-                    return
-
-        yaoi_post = await yaoi_cache.get_yaoibot_post()
-        if yaoi_post is None:
-            await ctx.respond("Yaoi is unavailable.", ephemeral=True)
-            return
-
-        embed = Embed(
-            title="Yaoi!",
-            image=yaoi_post["files"][0]["url"]
-        )
-
-        await ctx.respond(embed=embed, ephemeral=True)
-
-    @slash_command()
-    async def yuri(self, ctx: ApplicationContext):
-        if ctx.guild is not None:
-            with engine.begin() as c:
-                disable_yuri = setting_disable_yuri_command.get(c, ctx.guild.id)
-                if disable_yuri == "true":
-                    await ctx.respond("The yuri command is disabled in this server", ephemeral=True)
-                    return
-
-        yuri_post = await yuri_cache.get_yuribot_post()
-        if yuri_post is None:
-            await ctx.respond("Yuri is unavailable.", ephemeral=True)
-            return
-
-        embed = Embed(
-            title="Yuri!",
-            image=yuri_post["files"][0]["url"]
-        )
-
-        await ctx.respond(embed=embed, ephemeral=True)
-
     rp_group = SlashCommandGroup(name="rp",
                                  integration_types=[IntegrationType.user_install, IntegrationType.guild_install])
 
