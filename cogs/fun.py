@@ -1,9 +1,9 @@
-from discord import Cog, Bot, slash_command, ApplicationContext, Embed, SlashCommandGroup, Member, Color, User, \
+from discord import Cog, Bot, ApplicationContext, Embed, SlashCommandGroup, Member, Color, User, \
     IntegrationType
 
 from database import engine
-from utils.fun import yaoi_cache, yuri_cache, nb_embed, ensure_consent, ConsentView, get_consent, \
-    setting_allow_rp_commands, setting_disable_yaoi_command, setting_disable_yuri_command, tick_counter, ActionBack
+from utils.fun import nb_embed, ensure_consent, ConsentView, get_consent, \
+    setting_allow_rp_commands, tick_counter, ActionBack
 from utils.message_appends import apply_appends
 
 
