@@ -1,5 +1,15 @@
 {% extends 'web_page.html' %}
 
+{% macro comparison_mark(value) -%}
+    {%- if value == 'yes' -%}
+    <span class="comparison_mark comparison_mark--yes" role="img" aria-label="Included">✓</span>
+    {%- elif value == 'limited' -%}
+    <span class="comparison_badge">Limited</span>
+    {%- else -%}
+    <span class="comparison_mark comparison_mark--no" role="img" aria-label="Not included">—</span>
+    {%- endif -%}
+{%- endmacro %}
+
 {% block content %}
 
 <div class="hero">
@@ -46,6 +56,167 @@
             <p>Check out the full feature list for everything Akabot offers.</p>
         </div>
     </a>
+</div>
+
+<div class="comparison_section">
+    <h2>How Akabot compares</h2>
+    <p class="comparison_intro">Selected core features included on each bot's free plan.</p>
+
+    <div class="comparison_scroll">
+        <table class="comparison_table" aria-label="Free-plan feature comparison">
+            <thead>
+                <tr>
+                    <th scope="col">Feature</th>
+                    <th scope="col" class="comparison_akabot">Akabot</th>
+                    <th scope="col">MEE6 Free</th>
+                    <th scope="col">Carl-bot</th>
+                    <th scope="col">Dyno</th>
+                    <th scope="col">ProBot</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">Moderation commands</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">AutoMod / anti-raid</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('limited') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Logging</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Welcome &amp; goodbye</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Reaction roles</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('limited') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Leveling</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Temporary voice channels</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Suggestions</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Giveaways</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('limited') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Statistic channels</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Chat summaries &amp; streaks</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Counting channels</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Web dashboard</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('yes') }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Open source</th>
+                    <td class="comparison_akabot">{{ comparison_mark('yes') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                    <td>{{ comparison_mark('no') }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="comparison_legend">
+        <span class="comparison_legend_item"><span class="comparison_mark comparison_mark--yes" role="img" aria-label="Included">✓</span> Included</span>
+        <span class="comparison_legend_item"><span class="comparison_mark comparison_mark--no" role="img" aria-label="Not included">—</span> Not included</span>
+        <span class="comparison_legend_item"><span class="comparison_badge">Limited</span> Included with limits or only partly available</span>
+    </p>
+    <p class="comparison_note">Selected core features only. Free-plan details checked against public bot documentation in November 2026; plans and limits can change. MEE6's free plan currently covers Search, Achievements, Starboard, and one timer; most management features require Premium.</p>
+</div>
+
+<div class="extras_section">
+    <h2>Akabot exclusives</h2>
+    <p class="extras_intro">Among the bots compared above, these features are only available in Akabot.</p>
+
+    <div class="extras_grid">
+        <div class="extra_card">
+            <h3>Chat Summaries</h3>
+            <p>Get a daily recap of message counts and top chatters, with no AI required.</p>
+        </div>
+        <div class="extra_card">
+            <h3>Chat Streaks</h3>
+            <p>Track consecutive days of activity and reward members for showing up consistently.</p>
+        </div>
+        <div class="extra_card">
+            <h3>Counting Channels</h3>
+            <p>Add a dedicated counting channel for a simple, ongoing community game.</p>
+        </div>
+    </div>
 </div>
 
 <div class="btn_group">
