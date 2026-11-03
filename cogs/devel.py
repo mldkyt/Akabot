@@ -213,10 +213,36 @@ class Devel(Cog):
     @guild_only()
     async def test_guild_join(self, ctx: ApplicationContext):
         """Test the on_guild_join event"""
-        with engine.begin() as c:
-            c.execute(
-                insert(invite_redeem_codes).values(gid=str(ctx.guild.id), expiry=datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=30))
-            )
+        # with engine.begin() as c:
+        #     c.execute(
+        #         insert(invite_redeem_codes).values(gid=str(ctx.guild.id), expiry=datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=30))
+        #     )
+
+        # Attempt to find general, else fallback to first channel with send permission
+        channel: TextChannel | None = None
+
+        for c in ctx.guild.text_channels:
+            perms = c.permissions_for(ctx.guild.me)
+            if c.name.lower() == "general" and perms.send_messages and perms.view_channel:
+                channel = c
+                break
+        else:
+            for c in ctx.guild.text_channels:
+                perms = c.permissions_for(ctx.guild.me)
+                if perms.send_messages and perms.view_channel:
+                    channel = c
+                    break
+
+        if channel is None:
+            return
+
+        # Send welcome message
+        await channel.send("# Welcome to Akabot!\n\n"
+                           "Thank you for inviting me to your server! I am a multipurpose bot with many features.\n\n"
+                           "## Set me up!\n\n"
+                           "Use the `/settings` command from Akabot to get a unique link to open the dashboard for your server. From there, you can configure Akabot to your liking, including setting up economy, leveling, and more.\n\n"
+                           "## Redeem your reward\n\n"
+                           "You can redeem 1000 AkaCoins for inviting me using the `/economy redeem_invite` command.")
 
         await ctx.respond("OK", ephemeral=True)
 
