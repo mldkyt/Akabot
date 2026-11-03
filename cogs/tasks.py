@@ -5,6 +5,7 @@ from discord import Bot, Cog
 from discord.ext.tasks import loop
 
 import utils.reaction_roles  # noqa: F401  registers task handlers
+import utils.starboard  # noqa: F401  registers task handlers
 from database import engine
 from logger import akabot_logger
 from utils.tasks import (
