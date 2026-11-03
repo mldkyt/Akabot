@@ -1,5 +1,3 @@
-import re
-
 from discord import (
     Bot,
     ButtonStyle,
@@ -14,11 +12,10 @@ from sqlalchemy import Connection, delete, select, update
 
 from database import engine, reaction_roles, reaction_roles_options
 from logger import akabot_logger
+from utils.emoji import parse_emoji
 from utils.message_appends import apply_appends
 from utils.server_settings import KV
 from utils.tasks import register_task
-
-CUSTOM_EMOJI_RE = re.compile(r"<(a)?:([^:]+):(\d+)>")
 
 BUTTON_STYLES = {
     "primary": ButtonStyle.primary,
@@ -31,19 +28,6 @@ setting_reaction_roles_bot_ok = KV(
     name="Reaction Roles: Bot can manage roles",
     default="true",
 )
-
-
-def parse_emoji(emoji: str | None):
-    if not emoji:
-        return None
-
-    match = CUSTOM_EMOJI_RE.fullmatch(emoji.strip())
-    if match is not None:
-        return PartialEmoji(
-            name=match.group(2), id=int(match.group(3)), animated=bool(match.group(1))
-        )
-
-    return emoji
 
 
 def get_options(c: Connection, rr_id: int) -> list[dict]:

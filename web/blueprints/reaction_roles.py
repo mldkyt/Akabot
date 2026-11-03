@@ -13,7 +13,8 @@ from database import (
     synced_roles,
     tasks,
 )
-from utils.reaction_roles import CUSTOM_EMOJI_RE, setting_reaction_roles_bot_ok
+from utils.emoji import CUSTOM_EMOJI_RE
+from utils.reaction_roles import setting_reaction_roles_bot_ok
 from utils.tasks import create_task
 from web.webutils.tokens import authorize, get_token_data
 

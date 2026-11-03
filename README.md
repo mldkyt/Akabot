@@ -48,6 +48,8 @@ Features:
 - **Timezones**: Set your server's timezone so daily features like chat streaks and chat summaries follow your local
   day.
 - **Reaction Roles**: Let members self-assign roles by reacting to or clicking buttons on a message.
+- **Starboards**: Highlight popular messages in one or more channels based on reactions, with configurable emojis and
+  minimum counts.
 - **Anti Raid**: Detect and automatically act on raids, with toggles for message floods, duplicate messages, mention
   spam, invite spam, excessive caps, emoji and sticker spam, join bursts and scam links.
 - **Suggestions**: Turn a channel into a suggestion box with up/down voting and threads.

@@ -1,0 +1,218 @@
+{% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Starboards', 'Highlight the best messages from your server in one or more starboard channels.') }}
+{{ tabs([('starboards', 'Starboards'), ('create', 'Create starboard')], active_tab) }}
+
+{% macro emoji_row(emoji='') %}
+<div class="option-row">
+    <input type="text" class="emoji-input" name="emoji" value="{{emoji}}" placeholder="Emoji (unicode or custom)">
+    <button type="button" class="remove-emoji">Remove</button>
+</div>
+{% endmacro %}
+
+{% macro emoji_picker(emojis) %}
+<div class="emoji-picker">
+    <span>Insert custom emoji:</span>
+    {% for emoji in emojis %}
+    <button type="button" class="emoji-insert"
+        data-emoji="{% if emoji.animated %}<a:{{emoji.name}}:{{emoji.id}}>{% else %}<:{{emoji.name}}:{{emoji.id}}>{% endif %}">
+        <img src="https://cdn.discordapp.com/emojis/{{emoji.id}}.png" alt="{{emoji.name}}">{{emoji.name}}
+    </button>
+    {% else %}
+    <span>No custom emojis added on this server</span>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% if not bot_ok %}
+<div class="flash flash--warning">
+    <p>Akabot is missing permissions to post or remove starboard messages. Grant View Channel, Send Messages, Embed Links, Read Message History, and Manage Messages.</p>
+</div>
+{% endif %}
+
+{% for task in failed_tasks %}
+<div class="flash flash--warning">
+    <p>{{task.type}} failed: {{task.error}}</p>
+    <form method="post" action="/settings/starboards">
+        <input type="hidden" name="action" value="dismiss">
+        <input type="hidden" name="dismiss" value="{{task.id}}">
+        <button type="submit" class="btn btn-sm">Dismiss</button>
+    </form>
+</div>
+{% endfor %}
+
+{% if active_tab == 'starboards' %}
+{% call table(['Channel', 'Emojis', 'Minimum', 'Posted', 'Actions']) %}
+{% for starboard in starboards %}
+{% set delete_form_id = 'delete-starboard-' ~ starboard.id %}
+<tr>
+    <td>#{{starboard.channel_name}}</td>
+    <td>
+        <div class="option-chips">
+            {% for emoji in starboard.emojis %}
+            <span class="option-chip">
+                {% if emoji.url %}<img src="{{emoji.url}}" alt="{{emoji.name}}">{{emoji.name}}{% else %}{{emoji.raw}}{% endif %}
+            </span>
+            {% endfor %}
+        </div>
+    </td>
+    <td class="muted">{{starboard.min_count}}</td>
+    <td class="muted">{{starboard.posted}}</td>
+    <td class="cell-actions">
+        <form id="{{ delete_form_id }}" method="post" action="?tab=starboards">
+            <input type="hidden" name="_tab" value="starboards">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{starboard.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm" data-expand-row="starboard-detail-{{starboard.id}}" data-collapsed-label="Edit" aria-expanded="false">Edit</button>
+            {{ delete_confirm(delete_form_id, 'Delete') }}
+        </div>
+    </td>
+</tr>
+<tr class="detail-row" id="starboard-detail-{{starboard.id}}" hidden>
+    <td colspan="5">
+        <div class="detail-panel">
+            <form class="starboard-form" method="post" action="?tab=starboards">
+                <input type="hidden" name="_tab" value="starboards">
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="id" value="{{starboard.id}}">
+
+                <div class="form-grid">
+                    <div>
+                        <label>Channel</label>
+                        <select name="channel">
+                            {% for channel in text_channels %}
+                            <option value="{{channel.id}}" {% if channel.id == starboard.channel_id %}selected{% endif %}>{{channel.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Minimum reactions</label>
+                        <input type="number" name="min_count" min="{{min_min_count}}" max="{{max_min_count}}" value="{{starboard.min_count}}">
+                    </div>
+                </div>
+
+                <label>Emojis</label>
+                <div class="starboard-emojis">
+                    {% for emoji in starboard.emojis %}
+                    {{ emoji_row(emoji.raw) }}
+                    {% else %}
+                    {{ emoji_row() }}
+                    {% endfor %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="add-emoji">Add emoji</button>
+                </div>
+
+                {{ emoji_picker(custom_emojis) }}
+
+                <div class="form-actions">
+                    <button type="submit">Save starboard</button>
+                </div>
+            </form>
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(5, 'No starboards set up.') }}
+{% endfor %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <form class="starboard-form" method="post" action="?tab=create">
+        <input type="hidden" name="_tab" value="starboards">
+        <input type="hidden" name="action" value="create">
+
+        <div class="form-grid">
+            <div>
+                <label for="channel">Channel</label>
+                <select name="channel" id="channel">
+                    {% for channel in text_channels %}
+                    <option value="{{channel.id}}">{{channel.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="min_count">Minimum reactions</label>
+                <input type="number" name="min_count" id="min_count" min="{{min_min_count}}" max="{{max_min_count}}" value="3">
+            </div>
+        </div>
+
+        <label>Emojis</label>
+        <div class="starboard-emojis">
+            {{ emoji_row() }}
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="add-emoji">Add emoji</button>
+        </div>
+
+        {{ emoji_picker(custom_emojis) }}
+
+        <div class="form-actions">
+            <button type="submit">Create starboard</button>
+        </div>
+    </form>
+</section>
+{% endif %}
+
+<script>
+$(function () {
+    var MAX_EMOJIS = {{ max_emojis }};
+
+    $('.starboard-form').each(function () {
+        var $form = $(this);
+        var $emojis = $form.find('.starboard-emojis');
+
+        function update() {
+            var rows = $emojis.children('.option-row');
+            var count = rows.length;
+
+            rows.each(function () {
+                $(this).find('.remove-emoji').prop('disabled', count <= 1);
+            });
+
+            $form.find('.add-emoji').prop('disabled', count >= MAX_EMOJIS);
+        }
+
+        $form.on('click', '.add-emoji', function () {
+            if ($emojis.children('.option-row').length >= MAX_EMOJIS) {
+                return;
+            }
+
+            var $row = $emojis.children('.option-row').first().clone();
+            $row.find('input[type="text"]').val('');
+            $emojis.append($row);
+            update();
+        });
+
+        $form.on('click', '.remove-emoji', function () {
+            if ($emojis.children('.option-row').length <= 1) {
+                return;
+            }
+
+            $(this).closest('.option-row').remove();
+            update();
+        });
+
+        update();
+    });
+
+    var $focused = null;
+
+    $(document).on('focus', '.emoji-input', function () {
+        $focused = $(this);
+    });
+
+    $(document).on('click', '.emoji-insert', function () {
+        if (!$focused || !$focused.length) {
+            $focused = $('.emoji-input').first();
+        }
+
+        $focused.val($(this).data('emoji')).focus();
+    });
+});
+</script>
+{% endblock %}
