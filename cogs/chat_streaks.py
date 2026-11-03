@@ -141,7 +141,7 @@ class ChatStreaks(Cog):
                             apply_appends(
                                 msg.author.id,
                                 f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
-                                f"\n\n-# Chat Streaks Powered by Akabot",
+                                f"\n-# Chat Streaks Powered by Akabot",
                             ),
                             view=(
                                 ChatStreakExpireView(str(msg.author.id), unex_streak)
@@ -171,7 +171,7 @@ class ChatStreaks(Cog):
                             apply_appends(
                                 msg.author.id,
                                 f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/chat_streaks alerts`."
-                                f"\n\n-# Chat Streaks Powered by Akabot",
+                                f"\n-# Chat Streaks Powered by Akabot",
                             ),
                             view=EnableDMNotificationsView() if not dm_notifications_enabled else None,
                         )
@@ -226,12 +226,12 @@ class ChatStreaks(Cog):
                     page += f"{i + 1}. <@{v[0]}> with {days.days} days of consecutive messages\n"
 
                     if (i + 1) % 10 == 0:
-                        page += "\n\n-# Chat Streaks Powered by Akabot"
+                        page += "\n-# Chat Streaks Powered by Akabot"
                         pages.append(page)
                         page = ""
 
                 if len(page) > 0:
-                    page += "\n\n-# Chat Streaks Powered by Akabot"
+                    page += "\n-# Chat Streaks Powered by Akabot"
                     pages.append(page)
 
                 paginator = Paginator(pages)

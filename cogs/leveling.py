@@ -56,7 +56,7 @@ class Leveling(discord.Cog):
                         level_up_message = level_up_message.replace("{name}", message.author.display_name)
                         level_up_message = level_up_message.replace("{username}", message.author.name)
 
-                        level_up_message += "\n\n-# Leveling Powered by Akabot"
+                        level_up_message += "\n-# Leveling Powered by Akabot"
 
                         (level_up_message, reply_in_same_channel) = await handle_send_reply(
                             message, apply_appends(message.author.id, level_up_message)
@@ -82,7 +82,7 @@ class Leveling(discord.Cog):
                         ctx.user.id,
                         f"You're on level {level}. {to_next_level}/{xp_per_level} ({(to_next_level / xp_per_level) * 100:.2f}%) XP for next level\n"
                         f"The current multiplier is {get_multiplier(c, ctx.user)}x."
-                        f"\n\n-# Leveling Powered by Akabot",
+                        f"\n-# Leveling Powered by Akabot",
                     ),
                     ephemeral=True,
                 )

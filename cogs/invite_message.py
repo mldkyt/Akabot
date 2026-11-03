@@ -29,11 +29,11 @@ class InviteMessage(Cog):
                 return
 
             # Send welcome message
-            await channel.send("# Welcome to Akabot!\n\n"
+            await channel.send("# Welcome to Akabot!\n"
                                "Thank you for inviting me to your server! I am a multipurpose bot with many features.\n\n"
-                               "## Set me up!\n\n"
+                               "## Set me up!\n"
                                "Use the `/settings` command from Akabot to get a unique link to open the dashboard for your server. From there, you can configure Akabot to your liking, including setting up economy, leveling, and more.\n\n"
-                               "## Redeem your reward\n\n"
+                               "## Redeem your reward\n"
                                "You can redeem 1000 AkaCoins for inviting me using the `/economy redeem_invite` command.")
         except Exception:
             akabot_logger.exception("Error when trying to send a welcome message")
