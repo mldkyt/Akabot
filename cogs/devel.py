@@ -12,7 +12,7 @@ from database import (
     monthly_chat_summary_channels,
     monthly_chat_summary_members,
     yearly_chat_summary_channels,
-    yearly_chat_summary_members,
+    yearly_chat_summary_members, invite_redeem_codes,
 )
 from logger import akabot_logger
 from utils.ads import get_ad
@@ -209,6 +209,16 @@ class Devel(Cog):
 
         await ctx.respond("OK", ephemeral=True)
 
+    @devel_group.command()
+    @guild_only()
+    async def test_guild_join(self, ctx: ApplicationContext):
+        """Test the on_guild_join event"""
+        with engine.begin() as c:
+            c.execute(
+                insert(invite_redeem_codes).values(gid=str(ctx.guild.id), expiry=datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=30))
+            )
+
+        await ctx.respond("OK", ephemeral=True)
 
 def setup(bot: Bot):
     if os.getenv("DEVEL", "0") != "1":

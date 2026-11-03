@@ -613,3 +613,24 @@ synced_emojis = Table(
     Column("name", VARCHAR, nullable=False),
     Column("animated", Boolean, nullable=False, server_default="0"),
 )
+
+# Invite codes
+invite_redeem_codes = Table(
+    "invite_redeem_codes",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("expiry", DateTime(timezone=True), nullable=False)
+)
+
+invite_redeem_time_lock = Table(
+    "invite_redeem_time_lock",
+    md_obj,
+    Column("uid", VARCHAR, primary_key=True),
+    Column("expiry", DateTime(timezone=True), nullable=False)
+)
+
+invite_redeem_guild_lock = Table(
+    "invite_redeem_guild_lock",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True)
+)
