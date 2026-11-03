@@ -1,6 +1,10 @@
-from discord import Cog, Bot, SlashCommandGroup, ApplicationContext, IntegrationType, option, User
+import datetime
 
-from utils.economy import work, get_money, transfer, rob, pay, gamble
+from discord import Cog, Bot, SlashCommandGroup, ApplicationContext, IntegrationType, option, User, Guild
+from sqlalchemy import delete, func, select, insert
+
+from database import engine, invite_redeem_codes, invite_redeem_guild_lock, invite_redeem_time_lock
+from utils.economy import work, get_money, transfer, rob, pay, gamble, update_money
 from utils.message_appends import apply_appends
 
 
@@ -64,6 +68,73 @@ class Economy(Cog):
         ok, error = await gamble(ctx, amount)
         if not ok:
             await ctx.respond(apply_appends(ctx.user.id, error), ephemeral=True)
+
+    @Cog.listener()
+    async def on_guild_join(self, guild: Guild):
+        with engine.begin() as c:
+            c.execute(
+                insert(invite_redeem_codes).values(gid=str(guild.id), expiry=datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=30))
+            )
+
+    @economy_commands.command()
+    async def redeem_invite(self, ctx: ApplicationContext):
+        """If you invite the bot into a server, redeem 1000 AkaCoins!"""
+        if not ctx.user.guild_permissions.manage_guild:
+            await ctx.respond("This only is available to people who can invite the bot into servers (Manage Server permission)", ephemeral=True)
+            return
+
+        with engine.begin() as c:
+            c.execute(
+                delete(invite_redeem_codes)
+                .where(invite_redeem_codes.c.expiry < func.now())
+            )
+            c.execute(
+                delete(invite_redeem_time_lock)
+                .where(invite_redeem_time_lock.c.expiry < func.now())
+            )
+
+            invite_code = c.execute(
+                select(invite_redeem_codes.c.gid)
+                .where(invite_redeem_codes.c.gid == str(ctx.guild.id))
+            ).fetchone()
+
+            redeem_lock = c.execute(
+                select(invite_redeem_time_lock)
+                .where(invite_redeem_time_lock.c.uid == str(ctx.user.id))
+            ).fetchone()
+
+            guild_lock = c.execute(
+                select(invite_redeem_guild_lock)
+                .where(invite_redeem_guild_lock.c.gid == str(ctx.guild.id))
+            ).fetchone()
+
+        if not invite_code:
+            await ctx.respond("You have not invited the bot into a server yet, or your invite has expired. Please invite the bot into a server and try again.", ephemeral=True)
+            return
+
+        if redeem_lock:
+            await ctx.respond("You have already redeemed your invite reward. You can only redeem once per user.", ephemeral=True)
+            return
+
+        if guild_lock:
+            await ctx.respond("This server has already redeemed the invite reward. You can only redeem once per server.", ephemeral=True)
+            return
+
+        with engine.begin() as c:
+            c.execute(
+                insert(invite_redeem_time_lock).values(uid=str(ctx.user.id), expiry=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=7))
+            )
+            c.execute(
+                insert(invite_redeem_guild_lock).values(gid=str(ctx.guild.id))
+            )
+            c.execute(
+                delete(invite_redeem_codes)
+                .where(invite_redeem_codes.c.gid == str(ctx.guild.id))
+            )
+
+        update_money(ctx.user.id, "wallet", 1000)
+
+        await ctx.respond("You have successfully redeemed your 1000 AkaCoins for inviting the bot!", ephemeral=True)
 
 
 def setup(bot: Bot):

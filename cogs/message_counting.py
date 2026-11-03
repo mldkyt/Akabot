@@ -116,10 +116,12 @@ class MessageCounting(Cog):
                 i += 1
 
                 if i % 5 == 0:
+                    current_page += "\n\n-# Message Counting Powered by Akabot"
                     pages.append(current_page)
                     current_page = ""
 
             if len(current_page) > 0:
+                current_page += "\n\n-# Message Counting Powered by Akabot"
                 pages.append(current_page)
 
             pager = Paginator(pages)
