@@ -122,15 +122,9 @@ class ChatStreaks(Cog):
 
             with engine.begin() as c:
                 if server_streak_minimum_enabled.get(c, msg.guild.id) == "true":
-                    same_member_check = (
-                        server_streak_same_member_check.get(c, msg.guild.id) == "true"
-                    )
-                    message_count = count_message(
-                        c, msg.author, msg.channel.id, same_member_check
-                    )
-                    if message_count < int(
-                        server_streak_minimum.get(c, msg.guild.id)
-                    ):
+                    same_member_check = server_streak_same_member_check.get(c, msg.guild.id) == "true"
+                    message_count = count_message(c, msg.author, msg.channel.id, same_member_check)
+                    if message_count < int(server_streak_minimum.get(c, msg.guild.id)):
                         return
 
                 unex_streak = get_unexpired_streak(c, msg.author)
@@ -146,15 +140,13 @@ class ChatStreaks(Cog):
                             msg,
                             apply_appends(
                                 msg.author.id,
-                                f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did.",
+                                f"**Awww :( your chat streak expired.** It was {unex_streak} days before it did."
+                                f"\n\n-# Chat Streaks Powered by Akabot",
                             ),
                             view=(
                                 ChatStreakExpireView(str(msg.author.id), unex_streak)
                                 if (p > 10 and raw_streak - unex_streak <= 2)
-                                or user_setting_receive_notifications.get(
-                                    c, msg.author.id
-                                )
-                                == "true"
+                                or user_setting_receive_notifications.get(c, msg.author.id) == "true"
                                 else None
                             ),
                         )
@@ -178,18 +170,13 @@ class ChatStreaks(Cog):
                             msg,
                             apply_appends(
                                 msg.author.id,
-                                f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/chat_streaks alerts`.",
+                                f"**{next_streak} days of consecutive messages!** Keep it up!\n-# Disable using `/chat_streaks alerts`."
+                                f"\n\n-# Chat Streaks Powered by Akabot",
                             ),
-                            view=(
-                                EnableDMNotificationsView()
-                                if not dm_notifications_enabled
-                                else None
-                            ),
+                            view=EnableDMNotificationsView() if not dm_notifications_enabled else None,
                         )
                         if the_reply is not None and reply_in_same_channel:
-                            await the_reply.delete(
-                                delay=int(server_message_delay.get(c, msg.guild.id))
-                            )
+                            await the_reply.delete(delay=int(server_message_delay.get(c, msg.guild.id)))
         except Exception as e:
             akabot_logger.exception(f"Failed to process chat streak message {msg.id}: {e}")
 
@@ -239,10 +226,12 @@ class ChatStreaks(Cog):
                     page += f"{i + 1}. <@{v[0]}> with {days.days} days of consecutive messages\n"
 
                     if (i + 1) % 10 == 0:
+                        page += "\n\n-# Chat Streaks Powered by Akabot"
                         pages.append(page)
                         page = ""
 
                 if len(page) > 0:
+                    page += "\n\n-# Chat Streaks Powered by Akabot"
                     pages.append(page)
 
                 paginator = Paginator(pages)

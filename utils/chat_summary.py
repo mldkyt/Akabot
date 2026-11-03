@@ -429,6 +429,8 @@ async def summarize(c: Connection, g: Guild):
             if j >= rows - 1:
                 break
 
+        msg += "\n-# Chat Summary Powered by Akabot"
+
         ad = get_ad()
         if history_enabled and len(members_messages) > rows:
             ad = SummaryHistoryView(ad_view=ad)

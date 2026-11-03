@@ -47,37 +47,23 @@ class Leveling(discord.Cog):
                     if old_level != new_level:
                         await apply_leveling_rewards(c, message.author)
 
-                        level_up_message = setting_level_up_message_text.get(
-                            c, message.guild.id
-                        )
+                        level_up_message = setting_level_up_message_text.get(c, message.guild.id)
 
-                        level_up_message = level_up_message.replace(
-                            "{old}", str(old_level)
-                        )
-                        level_up_message = level_up_message.replace(
-                            "{new}", str(new_level)
-                        )
-                        level_up_message = level_up_message.replace(
-                            "{mention}", message.author.mention
-                        )
-                        level_up_message = level_up_message.replace(
-                            "{server}", message.guild.name
-                        )
-                        level_up_message = level_up_message.replace(
-                            "{name}", message.author.display_name
-                        )
-                        level_up_message = level_up_message.replace(
-                            "{username}", message.author.name
-                        )
+                        level_up_message = level_up_message.replace("{old}", str(old_level))
+                        level_up_message = level_up_message.replace("{new}", str(new_level))
+                        level_up_message = level_up_message.replace("{mention}", message.author.mention)
+                        level_up_message = level_up_message.replace("{server}", message.guild.name)
+                        level_up_message = level_up_message.replace("{name}", message.author.display_name)
+                        level_up_message = level_up_message.replace("{username}", message.author.name)
 
-                        (
-                            level_up_message,
-                            reply_in_same_channel,
-                        ) = await handle_send_reply(
+                        level_up_message += "\n\n-# Leveling Powered by Akabot"
+
+                        (level_up_message, reply_in_same_channel) = await handle_send_reply(
                             message, apply_appends(message.author.id, level_up_message)
                         )
                         if level_up_message is not None and reply_in_same_channel:
                             await level_up_message.delete(delay=5)
+
         except Exception as e:
             akabot_logger.exception(f"Failed to process level up for message {message.id}: {e}")
 
@@ -95,7 +81,8 @@ class Leveling(discord.Cog):
                     apply_appends(
                         ctx.user.id,
                         f"You're on level {level}. {to_next_level}/{xp_per_level} ({(to_next_level / xp_per_level) * 100:.2f}%) XP for next level\n"
-                        f"The current multiplier is {get_multiplier(c, ctx.user)}x.",
+                        f"The current multiplier is {get_multiplier(c, ctx.user)}x."
+                        f"\n\n-# Leveling Powered by Akabot",
                     ),
                     ephemeral=True,
                 )
