@@ -614,6 +614,57 @@ synced_emojis = Table(
     Column("animated", Boolean, nullable=False, server_default="0"),
 )
 
+# Starboards
+
+starboards = Table(
+    "starboards",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False, index=True),
+    Column("cid", VARCHAR, nullable=False),
+    Column("min_count", Integer, nullable=False, server_default="3"),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("gid", "cid"),
+)
+
+starboard_emojis = Table(
+    "starboard_emojis",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "starboard_id",
+        Integer,
+        ForeignKey("starboards.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    Column("position", Integer, nullable=False, server_default="0"),
+    Column("emoji", VARCHAR, nullable=False),
+    UniqueConstraint("starboard_id", "emoji"),
+)
+
+starboard_messages = Table(
+    "starboard_messages",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "starboard_id",
+        Integer,
+        ForeignKey("starboards.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    Column("gid", VARCHAR, nullable=False, index=True),
+    Column("cid", VARCHAR, nullable=False),
+    Column("mid", VARCHAR, nullable=False, index=True),
+    Column("starboard_cid", VARCHAR, nullable=False),
+    Column("starboard_mid", VARCHAR, nullable=False, index=True),
+    Column("author_id", VARCHAR, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("starboard_id", "mid"),
+    UniqueConstraint("starboard_mid"),
+)
+
 # Invite codes
 invite_redeem_codes = Table(
     "invite_redeem_codes",
