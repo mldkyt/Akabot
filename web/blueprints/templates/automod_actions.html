@@ -29,6 +29,7 @@
                     <option value="kick">Kick</option>
                     <option value="dm">DM</option>
                     <option value="mute">Mute</option>
+                    <option value="warn">Warn</option>
                 </select>
             </div>
         </div>
@@ -39,13 +40,14 @@
                 <input id="time" name="time" placeholder="1w" type="text">
             </div>
             <div>
-                <label for="reason">Reason (for audit logs)</label>
+                <label for="reason">Reason (for mute, kick and ban audit logs)</label>
                 <textarea id="reason" name="reason" placeholder="Automod action"></textarea>
             </div>
         </div>
 
-        <label for="message">DM message (type must be DM)</label>
+        <label for="message">DM / warn message (type must be DM or Warn)</label>
         <textarea id="message" name="message" placeholder="Bad behaviour"></textarea>
+        <small>For warnings, this is used as the warning reason and sent to the member.</small>
 
         <div class="form-actions">
             <button type="submit">Create automod action</button>
@@ -57,7 +59,7 @@
 <div class="flash flash--warning"><p>Last automod sync failed: {{ automod_sync_error }}</p></div>
 {% endif %}
 
-{% call table(['Rule', 'Type', 'Duration', 'DM message', 'Reason', 'Actions']) %}
+{% call table(['Rule', 'Type', 'Duration', 'DM / warn message', 'Reason', 'Actions']) %}
 {% for action in automod_actions %}
 {% set form_id = 'automod-' ~ action.id %}
 <tr>
@@ -74,10 +76,11 @@
             <option value="kick" {% if action.action == "kick" %}selected{% endif %}>Kick</option>
             <option value="dm" {% if action.action == "dm" %}selected{% endif %}>DM</option>
             <option value="mute" {% if action.action == "mute" %}selected{% endif %}>Mute</option>
+            <option value="warn" {% if action.action == "warn" %}selected{% endif %}>Warn</option>
         </select>
     </td>
     <td><input type="text" name="time" form="{{ form_id }}" placeholder="1w" value="{{ action.time|default('') }}"></td>
-    <td><textarea name="message" form="{{ form_id }}" placeholder="DM message">{{ action.message|default('') }}</textarea></td>
+    <td><textarea name="message" form="{{ form_id }}" placeholder="DM / warn message">{{ action.message|default('') }}</textarea></td>
     <td><textarea name="reason" form="{{ form_id }}" placeholder="Audit log reason">{{ action.reason|default('') }}</textarea></td>
     <td class="cell-actions">
         <form id="{{ form_id }}" method="post" action="?tab=actions">
