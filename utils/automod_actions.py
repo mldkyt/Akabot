@@ -15,6 +15,7 @@ from sqlalchemy import Connection, select
 from database import automod_actions, engine
 from logger import akabot_logger
 from utils.logs import send_message_to_log_channel
+from utils.moderation import add_warning
 from utils.server_settings import KV
 
 
@@ -118,6 +119,14 @@ async def handle_automod_action(
 
         if payload.member.can_send(Message):
             await payload.member.send(content=message)
+    elif action == "warn":
+        assert payload.member is not None
+
+        await add_warning(payload.member, reason=content or "Automod action")
+
+        message = content or "You have received a warning from the server."
+
+        await payload.member.send(content=message)
     else:
         akabot_logger.warning(
             f"Tried to perform action for {payload.rule_id}, but {action} is an invalid action!"
