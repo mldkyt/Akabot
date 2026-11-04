@@ -95,6 +95,18 @@ moderator_roles = Table(
     UniqueConstraint("gid", "rid"),
 )
 
+moderator_warnings = Table(
+    "moderator_warnings",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("uid", VARCHAR, nullable=False),
+    Column("case_id", Integer, nullable=False),
+    Column("message", VARCHAR, server_default=""),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("gid", "case_id")
+)
+
 roles_on_join = Table(
     "roles_on_join",
     md_obj,

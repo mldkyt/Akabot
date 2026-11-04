@@ -18,9 +18,9 @@ from discord import (
 
 from database import engine
 from logger import akabot_logger
-from utils.moderation_commands import (
+from utils.moderation import (
     is_user_moderator,
-    perform_basic_checks,
+    perform_basic_checks, add_warning, remove_warning, list_warnings,
 )
 
 
@@ -30,17 +30,8 @@ class ModerationCommands(Cog):
         self.bot = bot
 
     @guild_only()
-    @option(
-        name="user",
-        description="Member to kick from the server",
-        type=Member,
-        required=True,
-    )
-    @option(
-        name="reason",
-        description="Reason to write into the server log and audit log",
-        type=str,
-    )
+    @option(name="user", description="Member to kick from the server", type=Member, required=True)
+    @option(name="reason", description="Reason to write into the server log and audit log", type=str)
     @slash_command()
     async def kick(self, ctx: ApplicationContext, user: Member, reason: str = ""):
         """Kick a member from the server"""
@@ -79,17 +70,8 @@ class ModerationCommands(Cog):
                 await ctx.respond("Error kicking the user", ephemeral=True)
 
     @guild_only()
-    @option(
-        name="user",
-        description="Member to ban from the server",
-        type=Member,
-        required=True,
-    )
-    @option(
-        name="reason",
-        description="Reason to write into the server log and audit log",
-        type=str,
-    )
+    @option(name="user", description="Member to ban from the server", type=Member, required=True)
+    @option(name="reason", description="Reason to write into the server log and audit log", type=str)
     @slash_command()
     async def ban(self, ctx: ApplicationContext, user: Member, reason: str = ""):
         """Ban a user from the server"""
@@ -128,43 +110,14 @@ class ModerationCommands(Cog):
                 await ctx.respond("Error banning the user", ephemeral=True)
 
     @guild_only()
-    @option(
-        name="user",
-        description="Member to time out",
-        type=Member,
-        required=True,
-    )
-    @option(
-        name="reason",
-        description="Reason to write into the server log and audit log",
-        type=str,
-    )
-    @option(
-        name="days",
-        type=int,
-        description="Days of timeout; will be added up with other parameters",
-        required=True,
-    )
-    @option(
-        name="hours",
-        type=int,
-        description="Hours of timeout; will be added up with other parameters",
-    )
-    @option(
-        name="minutes",
-        type=int,
-        description="Minutes of timeout; will be added up with other parameters",
-    )
+    @option(name="user", description="Member to time out", type=Member, required=True)
+    @option(name="reason", description="Reason to write into the server log and audit log", type=str)
+    @option(name="days", type=int, description="Days of timeout; will be added up with other parameters", required=True)
+    @option(name="hours", type=int, description="Hours of timeout; will be added up with other parameters")
+    @option(name="minutes", type=int, description="Minutes of timeout; will be added up with other parameters")
     @slash_command()
-    async def timeout(
-        self,
-        ctx: ApplicationContext,
-        user: Member,
-        days: int,
-        hours: int = 0,
-        minutes: int = 0,
-        reason: str = "",
-    ):
+    async def timeout(self, ctx: ApplicationContext, user: Member, days: int, hours: int = 0, minutes: int = 0,
+                      reason: str = ""):
         """Mute a user on the server"""
         if not isinstance(ctx.user, Member):
             return
@@ -211,24 +164,10 @@ class ModerationCommands(Cog):
                 await ctx.respond("Error muting the user", ephemeral=True)
 
     @guild_only()
-    @option(
-        name="user",
-        description="Member to unmute",
-        type=Member,
-        required=True,
-    )
-    @option(
-        name="reason",
-        description="Reason to write into the server log and audit log",
-        type=str,
-    )
+    @option(name="user", description="Member to unmute", type=Member, required=True)
+    @option(name="reason", description="Reason to write into the server log and audit log", type=str)
     @slash_command()
-    async def remove_timeout(
-        self,
-        ctx: ApplicationContext,
-        user: Member,
-        reason: str = "",
-    ):
+    async def remove_timeout(self, ctx: ApplicationContext, user: Member, reason: str = ""):
         """Unmute a user on the server"""
         if not isinstance(ctx.user, Member):
             return
@@ -270,23 +209,79 @@ class ModerationCommands(Cog):
                 )
                 await ctx.respond("Error muting the user", ephemeral=True)
 
+    @guild_only()
+    @option(name="user", description="Member to warn", type=Member, required=True)
+    @option(name="reason", description="Reason of warning to give", type=str, required=True)
+    @slash_command()
+    async def warn(self, ctx: ApplicationContext, user: Member, reason: str):
+        """Warn a member."""
+        if not isinstance(ctx.user, Member):
+            return
+        if not isinstance(ctx.guild, Guild):
+            return
+
+        with engine.begin() as c:
+            ok, err = await perform_basic_checks(c, ctx, user, "warn")
+            if not ok:
+                await ctx.respond(err, ephemeral=True)
+                return
+
+        case_id = await add_warning(user, reason)
+
+        await ctx.respond(f"Warning `{case_id}` added to {user.mention}.", ephemeral=True)
+
+    @guild_only()
+    @option(name="user", desciption="Member to remove warning from", type=Member, required=True)
+    @option(name="case_id", description="Case ID of warning to remove", type=int, required=True)
+    @slash_command()
+    async def remove_warning(self, ctx: ApplicationContext, user: Member, case_id: int):
+        """Remove a warning from a member."""
+        if not isinstance(ctx.user, Member):
+            return
+        if not isinstance(ctx.guild, Guild):
+            return
+
+        with engine.begin() as c:
+            ok, err = await perform_basic_checks(c, ctx, user, "remove warning")
+            if not ok:
+                await ctx.respond(err, ephemeral=True)
+                return
+
+            await remove_warning(user, case_id)
+
+        await ctx.respond(f"Warning `{case_id}` removed from {user.mention}.", ephemeral=True)
+
+    @guild_only()
+    @option(name="user", description="Member to list warnings for", type=Member, required=True)
+    @slash_command()
+    async def list_warnings(self, ctx: ApplicationContext, user: Member):
+        """List warnings of a member."""
+        if not isinstance(ctx.user, Member):
+            return
+        if not isinstance(ctx.guild, Guild):
+            return
+
+        with engine.begin() as c:
+            ok, err = await perform_basic_checks(c, ctx, user, "list warnings")
+            if not ok:
+                await ctx.respond(err, ephemeral=True)
+                return
+
+        warnings = await list_warnings(user)
+
+        if len(warnings) == 0:
+            await ctx.respond(f"{user.mention} has no warnings.", ephemeral=True)
+            return
+
+        warning_list = "\n".join([f"Case `{a["case_id"]}`: {a["message"]}" for a in warnings])
+        await ctx.respond(f"Warnings for {user.mention}:\n{warning_list}", ephemeral=True)
+
+
     purge_commands = SlashCommandGroup(name="purge", description="Purge commands")
 
     @guild_only()
-    @option(
-        name="count",
-        description="Amount of messages to search for",
-        type=int,
-        min=1,
-        max=100,
-        required=True,
-    )
-    @option(
-        name="author",
-        description="Only delete messages by this user",
-        type=Member,
-        required=True,
-    )
+    @option(name="count", description="Amount of messages to search for", type=int, min=1, max=100, required=True)
+    @option(name="author", description="Only delete messages by this user", type=Member, required=True)
     @purge_commands.command(name="by")
     async def purge_by(self, ctx: ApplicationContext, count: int, author: Member):
         """Mass delete messages by the specified author"""
@@ -345,14 +340,7 @@ class ModerationCommands(Cog):
             )
 
     @guild_only()
-    @option(
-        name="count",
-        description="Amount of messages to search for",
-        type=int,
-        min=1,
-        max=100,
-        required=True,
-    )
+    @option(name="count", description="Amount of messages to search for", type=int, min=1, max=100, required=True)
     @purge_commands.command(name="media")
     async def purge_media(self, ctx: ApplicationContext, count: int):
         """Mass delete media in the current channel"""
@@ -411,20 +399,8 @@ class ModerationCommands(Cog):
             )
 
     @guild_only()
-    @option(
-        name="count",
-        description="Amount of messages to search for",
-        type=int,
-        min=1,
-        max=100,
-        required=True,
-    )
-    @option(
-        name="author",
-        description="Only delete messages by this user",
-        type=Member,
-        required=True,
-    )
+    @option(name="count", description="Amount of messages to search for", type=int, min=1, max=100, required=True)
+    @option(name="author", description="Only delete messages by this user", type=Member, required=True)
     @purge_commands.command(name="media_by")
     async def purge_media_by(self, ctx: ApplicationContext, count: int, author: Member):
         """Mass delete media by an author in this channel"""
@@ -486,14 +462,7 @@ class ModerationCommands(Cog):
             )
 
     @guild_only()
-    @option(
-        name="count",
-        description="Amount of messages to search for",
-        type=int,
-        min=1,
-        max=100,
-        required=True,
-    )
+    @option(name="count", description="Amount of messages to search for", type=int, min=1, max=100, required=True)
     @purge_commands.command(name="all")
     async def purge_all(self, ctx: ApplicationContext, count: int):
         """Delete message in the current channel"""
