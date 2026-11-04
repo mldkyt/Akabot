@@ -1,7 +1,7 @@
 {% extends 'page.html' %}
 {% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
-{{ page_header('Moderation', 'Configure which roles can use moderation commands in your server.') }}
-{{ tabs([('general', 'General'), ('roles', 'Moderator roles')], active_tab) }}
+{{ page_header('Moderation', 'Configure moderator roles and automatic warning actions.') }}
+{{ tabs([('general', 'General'), ('roles', 'Moderator roles'), ('warning_actions', 'Warning actions')], active_tab) }}
 
 {% if active_tab == 'general' %}
 <section class="settings-panel">
@@ -13,7 +13,21 @@
         <a class="btn" href="?tab=roles">Manage moderator roles</a>
     </div>
 </section>
-{% else %}
+
+<section class="settings-panel">
+    <h2>Warning settings</h2>
+    <form action="?tab=general" method="post">
+        <input type="hidden" name="_tab" value="general">
+        <input type="hidden" name="_section" value="general">
+
+        <label for="warnings_expiry">Warning expiry (days)</label>
+        <input type="number" name="warnings_expiry" id="warnings_expiry" min="0" max="3650" value="{{ warnings_expiry }}">
+        <small>Warnings older than this are removed automatically. Set to 0 to keep warnings forever.</small>
+
+        <div class="form-actions"><button type="submit">Save warning settings</button></div>
+    </form>
+</section>
+{% elif active_tab == 'roles' %}
 <section class="settings-panel">
     <h2>Add moderator role</h2>
     <form action="?tab=roles" method="post">
@@ -62,6 +76,73 @@
 </tr>
 {% else %}
 {{ empty_row(2, 'No moderator roles configured.') }}
+{% endfor %}
+{% endcall %}
+{% else %}
+<section class="settings-panel">
+    <h2>Add warning action</h2>
+    <p>Warning actions run automatically when a member reaches exactly the configured number of active warnings.</p>
+    <form action="?tab=warning_actions" method="post">
+        <input type="hidden" name="_tab" value="warning_actions">
+        <input type="hidden" name="_section" value="warning_actions">
+        <input type="hidden" name="action" value="create">
+
+        <div class="form-grid">
+            <div>
+                <label for="action_type">Action</label>
+                <select name="type" id="action_type">
+                    <option value="kick">Kick</option>
+                    <option value="ban">Ban</option>
+                    <option value="timeout">Timeout</option>
+                </select>
+            </div>
+            <div>
+                <label for="warning_count">Warning count</label>
+                <input type="number" name="warning_count" id="warning_count" min="1" max="1000" value="1">
+            </div>
+        </div>
+
+        <label for="parameter">Timeout duration (days, only used for timeout)</label>
+        <input type="number" name="parameter" id="parameter" min="1" max="28" placeholder="1">
+
+        <div class="form-actions"><button type="submit">Add warning action</button></div>
+    </form>
+</section>
+
+{% call table(['Action', 'Warning count', 'Timeout days', 'Actions']) %}
+{% for warning_action in warning_actions %}
+{% set form_id = 'warning-action-' ~ warning_action.id %}
+<tr>
+    <td>
+        <select name="type" form="{{ form_id }}">
+            <option value="kick" {% if warning_action.action == 'kick' %}selected{% endif %}>Kick</option>
+            <option value="ban" {% if warning_action.action == 'ban' %}selected{% endif %}>Ban</option>
+            <option value="timeout" {% if warning_action.action == 'timeout' %}selected{% endif %}>Timeout</option>
+        </select>
+    </td>
+    <td><input type="number" name="warning_count" form="{{ form_id }}" min="1" max="1000" value="{{ warning_action.warning_count }}"></td>
+    <td><input type="number" name="parameter" form="{{ form_id }}" min="1" max="28" placeholder="1" value="{{ warning_action.parameter or '' }}"></td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=warning_actions">
+            <input type="hidden" name="_tab" value="warning_actions">
+            <input type="hidden" name="_section" value="warning_actions">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{ warning_action.id }}">
+        </form>
+        <form id="delete-{{ form_id }}" method="post" action="?tab=warning_actions">
+            <input type="hidden" name="_tab" value="warning_actions">
+            <input type="hidden" name="_section" value="warning_actions">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{ warning_action.id }}">
+        </form>
+        <div class="btn-group">
+            <button type="submit" form="{{ form_id }}" class="btn btn-sm">Save</button>
+            {{ delete_confirm('delete-' ~ form_id) }}
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(4, 'No warning actions configured.') }}
 {% endfor %}
 {% endcall %}
 {% endif %}

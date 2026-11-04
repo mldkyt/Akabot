@@ -36,7 +36,7 @@ def parse_automod_action(c: Connection, guild_id: int, index: int, row: tuple) -
     elif row[2] in ["kick", "ban"]:
         if row[4] is not None:
             output["reason"] = row[4]
-    elif row[2] in ["dm"]:
+    elif row[2] in ["dm", "warn"]:
         if row[4] is not None:
             output["message"] = row[4]
 
@@ -77,7 +77,7 @@ def handle_create_automod_action(is_edit: bool = False, action_id: int | None = 
         flash("Invalid automod action rule")
         return False
 
-    if request.form["type"] not in ["dm", "kick", "ban", "mute"]:
+    if request.form["type"] not in ["dm", "kick", "ban", "mute", "warn"]:
         flash("Invalid automod action type")
         return False
 
@@ -86,7 +86,8 @@ def handle_create_automod_action(is_edit: bool = False, action_id: int | None = 
         flash("Invalid or missing time (mute type)")
         return False
 
-    if request.form["type"] == "dm" and ("message" not in request.form or len(request.form["message"].strip()) < 4):
+    if request.form["type"] in ["dm", "warn"] and (
+            "message" not in request.form or len(request.form["message"].strip()) < 4):
         flash("The message is missing or too short")
         return False
 
@@ -101,7 +102,7 @@ def handle_create_automod_action(is_edit: bool = False, action_id: int | None = 
         content = reason
     elif request.form["type"] in ["kick", "ban"]:
         content = reason
-    elif request.form["type"] == "dm":
+    elif request.form["type"] in ["dm", "warn"]:
         content = request.form["message"]
 
     with engine.begin() as c:
