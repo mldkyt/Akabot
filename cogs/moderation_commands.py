@@ -15,12 +15,14 @@ from discord import (
     option,
     slash_command,
 )
+from discord.ext.tasks import loop
 
 from database import engine
 from logger import akabot_logger
 from utils.moderation import (
     is_user_moderator,
     perform_basic_checks, add_warning, remove_warning, list_warnings,
+    remove_expired_warnings,
 )
 
 
@@ -28,6 +30,18 @@ class ModerationCommands(Cog):
     def __init__(self, bot: Bot) -> None:
         super().__init__()
         self.bot = bot
+
+    @Cog.listener()
+    async def on_ready(self):
+        if not self.cleanup_expired_warnings.is_running():
+            self.cleanup_expired_warnings.start()
+
+    @loop(hours=24)
+    async def cleanup_expired_warnings(self):
+        try:
+            await remove_expired_warnings()
+        except Exception:
+            akabot_logger.exception("Failed to remove expired warnings")
 
     @guild_only()
     @option(name="user", description="Member to kick from the server", type=Member, required=True)

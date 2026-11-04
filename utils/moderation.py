@@ -69,6 +69,7 @@ async def remove_warning(member: Member, case_id: int):
     with engine.begin() as c:
         c.execute(
             moderator_warnings.delete().where(
+                (moderator_warnings.c.gid == str(member.guild.id)) &
                 (moderator_warnings.c.uid == str(member.id)) &
                 (moderator_warnings.c.case_id == case_id)
             )
@@ -76,19 +77,30 @@ async def remove_warning(member: Member, case_id: int):
 
 
 async def remove_expired_warnings():
-    with engine.begin() as c:
-        expiry_days = int(settings_moderator_warnings_expiry.get(c, "0"))
-        if expiry_days <= 0:
-            return
+    now = datetime.datetime.now(datetime.UTC)
 
-        expiry_date = datetime.datetime.now(datetime.UTC) - datetime.timedelta(
-            days=expiry_days
-        )
-        c.execute(
-            delete(moderator_warnings).where(
-                moderator_warnings.c.created_at < expiry_date
+    with engine.begin() as c:
+        guild_ids = [
+            row[0]
+            for row in c.execute(
+                select(moderator_warnings.c.gid).distinct()
+            ).fetchall()
+        ]
+
+        for guild_id in guild_ids:
+            expiry_days = int(
+                settings_moderator_warnings_expiry.get(c, guild_id) or 0
             )
-        )
+            if expiry_days <= 0:
+                continue
+
+            expiry_date = now - datetime.timedelta(days=expiry_days)
+            c.execute(
+                delete(moderator_warnings).where(
+                    (moderator_warnings.c.gid == guild_id) &
+                    (moderator_warnings.c.created_at < expiry_date)
+                )
+            )
 
 
 async def list_warnings(member: Member) -> list[dict]:
@@ -98,7 +110,10 @@ async def list_warnings(member: Member) -> list[dict]:
                 moderator_warnings.c.case_id,
                 moderator_warnings.c.message,
                 moderator_warnings.c.created_at
-            ).where(moderator_warnings.c.uid == str(member.id))
+            ).where(
+                (moderator_warnings.c.gid == str(member.guild.id)) &
+                (moderator_warnings.c.uid == str(member.id))
+            )
         ).fetchall()
 
     return [

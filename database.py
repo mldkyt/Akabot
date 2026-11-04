@@ -110,11 +110,12 @@ moderator_warnings = Table(
 moderator_warning_actions = Table(
     "moderator_warning_actions",
     md_obj,
-    Column("id", VARCHAR, primary_key=True, autoincrement=True),
+    Column("id", Integer, primary_key=True, autoincrement=True),
     Column("gid", VARCHAR, nullable=False),
     Column("action", VARCHAR, nullable=False),
     Column("warning_count", Integer, nullable=False),
-    Column("parameter", VARCHAR, nullable=True)
+    Column("parameter", VARCHAR, nullable=True),
+    UniqueConstraint("gid", "action", "warning_count"),
 )
 
 roles_on_join = Table(
