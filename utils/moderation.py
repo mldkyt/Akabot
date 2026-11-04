@@ -1,9 +1,10 @@
 import datetime
 
-from discord import ApplicationContext, Member
+from discord import ApplicationContext, Member, Guild
 from sqlalchemy import Connection, select, insert, delete, func
 
-from database import moderator_roles, moderator_warnings, engine
+from database import moderator_roles, moderator_warnings, engine, moderator_warning_actions
+from logger import akabot_logger
 from utils.server_settings import KV
 
 settings_moderator_warnings_expiry = KV(
@@ -59,6 +60,8 @@ async def add_warning(user: Member, reason: str) -> int:
             )
         )
 
+        await _perform_warning_actions(user.guild, user, case_id)
+
     return case_id
 
 
@@ -106,3 +109,80 @@ async def list_warnings(member: Member) -> list[dict]:
         }
         for i in warnings
     ]
+
+async def add_warning_action(guild: Guild, action: str, warning_count: int, parameter: str | None = None):
+    with engine.begin() as c:
+        c.execute(
+            insert(moderator_warning_actions).values(
+                gid=str(guild.id),
+                action=action,
+                warning_count=warning_count,
+                parameter=parameter
+            )
+        )
+
+async def remove_warning_action(guild: Guild, action: str, warning_count: int):
+    with engine.begin() as c:
+        c.execute(
+            delete(moderator_warning_actions).where(
+                (moderator_warning_actions.c.gid == str(guild.id)) &
+                (moderator_warning_actions.c.action == action) &
+                (moderator_warning_actions.c.warning_count == warning_count)
+            )
+        )
+
+async def list_warning_actions(guild: Guild) -> list[dict]:
+    with engine.begin() as c:
+        actions = c.execute(
+            select(
+                moderator_warning_actions.c.action,
+                moderator_warning_actions.c.warning_count
+            ).where(moderator_warning_actions.c.gid == str(guild.id))
+        ).fetchall()
+
+    return [
+        {
+            "action": i[0],
+            "warning_count": i[1]
+        }
+        for i in actions
+    ]
+
+async def _perform_warning_actions(guild: Guild, member: Member, case_id: int):
+    with engine.begin() as c:
+        actions = c.execute(
+            select(
+                moderator_warning_actions.c.action,
+                moderator_warning_actions.c.warning_count,
+                moderator_warning_actions.c.parameter
+            ).where(moderator_warning_actions.c.gid == str(guild.id))
+        ).fetchall()
+
+        warnings = c.execute(
+            select(func.count()).where(
+                (moderator_warnings.c.gid == str(guild.id)) &
+                (moderator_warnings.c.uid == str(member.id))
+            )
+        ).fetchone()[0]
+
+        for action, warning_count, parameter in actions:
+            if warnings == warning_count:
+                if action == "kick":
+                    if not member.guild.me.guild_permissions.kick_members:
+                        akabot_logger.warning(f"Cannot kick {member} in {guild}, missing permissions")
+                        continue
+
+                    await member.kick(reason=f"Reached {warning_count} warnings (case {case_id})")
+                elif action == "ban":
+                    if not member.guild.me.guild_permissions.ban_members:
+                        akabot_logger.warning(f"Cannot ban {member} in {guild}, missing permissions")
+                        continue
+
+                    await member.ban(reason=f"Reached {warning_count} warnings (case {case_id})")
+                elif action == "timeout":
+                    if not member.guild.me.guild_permissions.moderate_members:
+                        akabot_logger.warning(f"Cannot timeout {member} in {guild}, missing permissions")
+                        continue
+
+                    days = int(parameter) if parameter else 1
+                    await member.timeout(datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=days), reason=f"Reached {warning_count} warnings (case {case_id})")
