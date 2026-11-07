@@ -34,6 +34,7 @@ from web.blueprints.sticky_messages import sticky_messages_bp
 from web.blueprints.suggestions import suggestions_bp
 from web.blueprints.tags import tags_bp
 from web.blueprints.temporary_vcs import temporary_vcs_bp
+from web.blueprints.tickets import tickets_bp
 from web.blueprints.verification import verification_bp
 from web.blueprints.voting import voting_bp
 from web.blueprints.welcome_goodbye import welcome_goodbye_bp
@@ -88,6 +89,7 @@ PAGE_USAGE = {
     "/settings/tags": ("Tags", 3),
     "/settings/markov": ("Markov channels", 1),
     "/settings/reaction_roles": ("Reaction role messages", 3),
+    "/settings/tickets": ("Ticket messages", 3),
 }
 
 
@@ -119,6 +121,7 @@ app.register_blueprint(markov_bp)
 app.register_blueprint(tags_bp)
 app.register_blueprint(anti_raid_bp)
 app.register_blueprint(message_counting_bp)
+app.register_blueprint(tickets_bp)
 
 if os.getenv("TOPGG_WEBHOOK_SECRET") is not None:
     app.register_blueprint(voting_bp)
