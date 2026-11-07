@@ -708,3 +708,15 @@ invite_redeem_guild_lock = Table(
     md_obj,
     Column("gid", VARCHAR, primary_key=True)
 )
+
+# Tickets
+
+tickets = Table(
+    "tickets",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, nullable=False),
+    Column("last_activity", DateTime, nullable=False),
+    Column("archived_at", DateTime),
+)
