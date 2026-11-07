@@ -708,3 +708,35 @@ invite_redeem_guild_lock = Table(
     md_obj,
     Column("gid", VARCHAR, primary_key=True)
 )
+
+# Tickets
+
+tickets = Table(
+    "tickets",
+    md_obj,
+    Column("gid", VARCHAR, primary_key=True),
+    Column("cid", VARCHAR, primary_key=True),
+    Column("uid", VARCHAR, nullable=False),
+    Column("last_activity", DateTime, nullable=False),
+    Column("archived_at", DateTime),
+)
+
+ticket_messages = Table(
+    "ticket_messages",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False, index=True),
+    Column("cid", VARCHAR, nullable=False),
+    Column("mid", VARCHAR),
+    Column("prefix", VARCHAR(8), nullable=False),
+    Column("category_id", VARCHAR, nullable=False),
+    Column("initial_message", VARCHAR, nullable=False),
+    Column("message", VARCHAR, nullable=False),
+    Column(
+        "button_label",
+        VARCHAR,
+        nullable=False,
+        server_default="Create Ticket",
+    ),
+    UniqueConstraint("gid", "prefix"),
+)

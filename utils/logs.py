@@ -60,6 +60,7 @@ logging_settings: list[tuple[str, str]] = [
     ("automod_ban", "Automod Actions ban"),
     ("automod_mute", "Automod Actions mute"),
     ("anti_raid", "Anti Raid"),
+    ("tickets", "ticket events"),
 ]
 
 

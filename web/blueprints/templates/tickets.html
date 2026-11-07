@@ -1,0 +1,143 @@
+{% extends 'page.html' %}
+{% from '_components.html' import page_header, tabs, table, empty_row, delete_confirm %}{% block main %}
+{{ page_header('Tickets', 'Configure ticket panels and automatic archive/hide times.') }}
+{{ tabs([('messages', 'Messages'), ('settings', 'Settings')], active_tab) }}
+
+{% for task in failed_tasks %}
+<div class="flash flash--warning">
+    <p>{{task.type}} failed: {{task.error}}</p>
+    <form method="post" action="/settings/tickets">
+        <input type="hidden" name="_tab" value="messages">
+        <input type="hidden" name="action" value="dismiss">
+        <input type="hidden" name="dismiss" value="{{task.id}}">
+        <button type="submit" class="btn btn-sm">Dismiss</button>
+    </form>
+</div>
+{% endfor %}
+
+{% macro panel_fields(panel) %}
+<div class="form-grid">
+    <div>
+        <label>Channel</label>
+        <select name="channel" required>
+            {% for text_channel in text_channels %}
+            <option value="{{text_channel.id}}" {% if panel and text_channel.id == panel.channel_id %}selected{% endif %}>{{text_channel.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label>Prefix</label>
+        <input type="text" name="prefix" maxlength="8" pattern="[a-z]{1,8}" title="1 to 8 lowercase letters" required value="{{panel.prefix if panel else ''}}">
+    </div>
+    <div>
+        <label>Category</label>
+        <select name="category" required>
+            {% for category in categories %}
+            <option value="{{category.id}}" {% if panel and category.id == panel.category_id %}selected{% endif %}>{{category.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label>Button label</label>
+        <input type="text" name="button_label" maxlength="{{max_button_label}}" required value="{{panel.button_label if panel else 'Create Ticket'}}">
+    </div>
+</div>
+
+<label>Initial message</label>
+<textarea name="initial_message" rows="4" maxlength="{{max_message_length}}" required>{{panel.initial_message if panel else ''}}</textarea>
+
+<label>Panel message</label>
+<textarea name="message" rows="4" maxlength="{{max_message_length}}" required>{{panel.message if panel else ''}}</textarea>
+{% endmacro %}
+
+{% if active_tab == 'messages' %}
+{% call table(['Channel', 'Prefix', 'Category', 'Button', 'Panel message', 'Actions']) %}
+{% for panel in panels %}
+{% set form_id = 'ticket-panel-' ~ panel.id %}
+<tr>
+    <td>#{{panel.channel_name}}</td>
+    <td><span class="badge badge--accent">{{panel.prefix}}</span></td>
+    <td>{{panel.category_name}}</td>
+    <td>{{panel.button_label}}</td>
+    <td>
+        {% if panel.mid %}
+        <span class="badge badge--ok">Posted</span>
+        {% else %}
+        <span class="badge">Pending</span>
+        {% endif %}
+        {{panel.message[:60]}}{% if panel.message|length > 60 %}…{% endif %}
+    </td>
+    <td class="cell-actions">
+        <form id="{{ form_id }}" method="post" action="?tab=messages">
+            <input type="hidden" name="_tab" value="messages">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{panel.id}}">
+        </form>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm" data-expand-row="ticket-detail-{{panel.id}}" data-collapsed-label="Edit" aria-expanded="false">Edit</button>
+            {{ delete_confirm(form_id, 'Delete') }}
+        </div>
+    </td>
+</tr>
+<tr class="detail-row" id="ticket-detail-{{panel.id}}" hidden>
+    <td colspan="6">
+        <div class="detail-panel">
+            <form method="post" action="?tab=messages">
+                <input type="hidden" name="_tab" value="messages">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="id" value="{{panel.id}}">
+                {{ panel_fields(panel) }}
+                <div class="form-actions">
+                    <button type="submit">Save ticket message</button>
+                </div>
+            </form>
+        </div>
+    </td>
+</tr>
+{% else %}
+{{ empty_row(6, 'No ticket messages configured.') }}
+{% endfor %}
+{% endcall %}
+
+<section class="settings-panel">
+    <h2>Add ticket message</h2>
+    {% if not categories %}
+    <div class="flash flash--warning">
+        <p>No categories have been synced yet. Create a category in Discord and it will appear here shortly.</p>
+    </div>
+    {% endif %}
+    <form method="post" action="?tab=messages">
+        <input type="hidden" name="_tab" value="messages">
+        <input type="hidden" name="action" value="create">
+        {{ panel_fields(None) }}
+        <div class="form-actions">
+            <button type="submit">Add ticket message</button>
+        </div>
+    </form>
+</section>
+{% else %}
+<section class="settings-panel">
+    <form method="post" action="?tab=settings">
+        <input type="hidden" name="_tab" value="settings">
+        <input type="hidden" name="action" value="settings">
+
+        <div class="form-grid">
+            <div>
+                <label for="archive_time">Archive after (hours)</label>
+                <input type="number" min="0" step="1" id="archive_time" name="archive_time" value="{{archive_time}}" required>
+            </div>
+            <div>
+                <label for="hide_time">Hide after archive (hours)</label>
+                <input type="number" min="0" step="1" id="hide_time" name="hide_time" value="{{hide_time}}" required>
+            </div>
+        </div>
+
+        <p>Set either value to 0 to disable it.</p>
+
+        <div class="form-actions">
+            <button type="submit">Save settings</button>
+        </div>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

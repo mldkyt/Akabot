@@ -120,6 +120,57 @@ async def sync_voice_channels(c: Connection, guild: Guild):
             )
 
 
+async def sync_categories(c: Connection, guild: Guild):
+    db_categories = [
+        int(i[0])
+        for i in c.execute(
+            select(synced_channels.c.cid).where(
+                (synced_channels.c.gid == str(guild.id))
+                & (synced_channels.c.ctype == "category")
+            )
+        ).fetchall()
+    ]
+    guild_categories = [i.id for i in guild.categories]
+
+    to_remove = [i for i in db_categories if i not in guild_categories]
+
+    for category in to_remove:
+        c.execute(
+            delete(synced_channels).where(
+                (synced_channels.c.gid == str(guild.id))
+                & (synced_channels.c.cid == str(category))
+            )
+        )
+
+    for category in guild.categories:
+        if (
+            c.execute(
+                select(synced_channels).where(
+                    (synced_channels.c.gid == str(guild.id))
+                    & (synced_channels.c.cid == str(category.id))
+                )
+            ).fetchone()
+            is None
+        ):
+            c.execute(
+                insert(synced_channels).values(
+                    gid=str(guild.id),
+                    cid=str(category.id),
+                    cname=category.name,
+                    ctype="category",
+                )
+            )
+        else:
+            c.execute(
+                update(synced_channels)
+                .where(
+                    (synced_channels.c.gid == str(guild.id))
+                    & (synced_channels.c.cid == str(category.id))
+                )
+                .values(cname=category.name, ctype="category")
+            )
+
+
 async def sync_roles(c: Connection, guild: Guild):
     db_roles = [
         int(i[0])
@@ -265,6 +316,7 @@ async def sync_guild(guild: Guild):
         with engine.begin() as c:
             await sync_text_channels(c, guild)
             await sync_voice_channels(c, guild)
+            await sync_categories(c, guild)
             await sync_roles(c, guild)
             await sync_emojis(c, guild)
             update_bot_permission(c, guild)

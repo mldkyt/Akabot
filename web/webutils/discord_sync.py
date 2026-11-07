@@ -19,6 +19,14 @@ def validate_voice_channel_id(channel_id: str):
         ).fetchone() is not None
 
 
+def validate_category_id(category_id: str):
+    with engine.begin() as c:
+        return c.execute(
+            select(synced_channels)
+            .where((synced_channels.c.cid == category_id) & (synced_channels.c.ctype == "category"))
+        ).fetchone() is not None
+
+
 def validate_role_id(role_id: str):
     with engine.begin() as c:
         return c.execute(
