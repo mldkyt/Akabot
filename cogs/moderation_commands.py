@@ -7,9 +7,11 @@ from discord import (
     Guild,
     Member,
     Message,
+    Role,
     SlashCommandGroup,
     TextChannel,
     Thread,
+    User,
     VoiceChannel,
     guild_only,
     option,
@@ -125,13 +127,13 @@ class ModerationCommands(Cog):
                 await ctx.respond("Error banning the user", ephemeral=True)
 
     @guild_only()
-    @option(name="user", description="Member to temporarily ban from the server", type=Member, required=True)
+    @option(name="user", description="User to temporarily ban from the server", type=User, required=True)
     @option(name="reason", description="Reason to write into the server log and audit log", type=str)
     @option(name="days", type=int, description="Days of ban; will be added up with other parameters", required=True)
     @option(name="hours", type=int, description="Hours of ban; will be added up with other parameters")
     @option(name="minutes", type=int, description="Minutes of ban; will be added up with other parameters")
     @slash_command()
-    async def tempban(self, ctx: ApplicationContext, user: Member, days: int, hours: int = 0, minutes: int = 0, reason: str = ""):
+    async def tempban(self, ctx: ApplicationContext, user: User, days: int, hours: int = 0, minutes: int = 0, reason: str = ""):
         """Temporarily ban a user from the server"""
         if not isinstance(ctx.user, Member):
             return
@@ -139,8 +141,8 @@ class ModerationCommands(Cog):
             return
 
         timedelta = datetime.timedelta(days=days, hours=hours, minutes=minutes)
-        if datetime.datetime.now() > datetime.datetime.now() + timedelta:
-            await ctx.respond("The time must not be in the past", ephemeral=True)
+        if timedelta <= datetime.timedelta(0):
+            await ctx.respond("The duration must be greater than zero", ephemeral=True)
             return
 
         with engine.begin() as c:
@@ -156,34 +158,52 @@ class ModerationCommands(Cog):
                 )
                 return
 
-            try:
-                await ctx.guild.ban(user, reason=reason)
-                if reason.strip() == "":
-                    await ctx.respond(f"User {user.mention} was banned", ephemeral=True)
-                else:
-                    await ctx.respond(
-                        f"User {user.mention} was banned for {reason}", ephemeral=True
-                    )
-            except Exception:
-                akabot_logger.exception(
-                    f"Failed to ban user {user} in guild {ctx.guild.id}"
-                )
-                await ctx.respond("Error banning the user", ephemeral=True)
-                return
+        try:
+            await ctx.guild.ban(user, reason=reason)
+        except Exception:
+            akabot_logger.exception(
+                f"Failed to ban user {user} in guild {ctx.guild.id}"
+            )
+            await ctx.respond("Error banning the user", ephemeral=True)
+            return
 
+        try:
             # Add unban to temp actions
             await add_temporary_action(ctx.guild.id, "unban", user.id, timedelta)
+        except Exception:
+            akabot_logger.exception(
+                f"Failed to schedule unban for user {user} in guild {ctx.guild.id}"
+            )
+            try:
+                await ctx.guild.unban(
+                    user, reason="Failed to schedule temporary ban removal"
+                )
+            except Exception:
+                akabot_logger.exception(
+                    f"Failed to unban user {user} after scheduling failure in guild {ctx.guild.id}"
+                )
+            await ctx.respond(
+                "Error scheduling the unban; the user was unbanned again", ephemeral=True
+            )
+            return
+
+        if reason.strip() == "":
+            await ctx.respond(f"User {user.mention} was banned", ephemeral=True)
+        else:
+            await ctx.respond(
+                f"User {user.mention} was banned for {reason}", ephemeral=True
+            )
 
 
     @guild_only()
     @option(name="user", description="Member to give a role to temporarily", type=Member, required=True)
-    @option(name="role", description="Role to give to the user temporarily", type=str, required=True)
+    @option(name="role", description="Role to give to the user temporarily", type=Role, required=True)
     @option(name="reason", description="Reason to write into the server log and audit log", type=str)
     @option(name="days", type=int, description="Days of role; will be added up with other parameters", required=True)
     @option(name="hours", type=int, description="Hours of role; will be added up with other parameters")
     @option(name="minutes", type=int, description="Minutes of role; will be added up with other parameters")
     @slash_command()
-    async def temprole(self, ctx: ApplicationContext, user: Member, role: str, days: int, hours: int = 0, minutes: int = 0,
+    async def temprole(self, ctx: ApplicationContext, user: Member, role: Role, days: int, hours: int = 0, minutes: int = 0,
                         reason: str = ""):
             """Give a role to a user temporarily"""
             if not isinstance(ctx.user, Member):
@@ -192,8 +212,8 @@ class ModerationCommands(Cog):
                 return
 
             timedelta = datetime.timedelta(days=days, hours=hours, minutes=minutes)
-            if datetime.datetime.now() > datetime.datetime.now() + timedelta:
-                await ctx.respond("The time must not be in the past", ephemeral=True)
+            if timedelta <= datetime.timedelta(0):
+                await ctx.respond("The duration must be greater than zero", ephemeral=True)
                 return
 
             with engine.begin() as c:
@@ -209,37 +229,55 @@ class ModerationCommands(Cog):
                     )
                     return
 
-                role_obj = ctx.guild.get_role(int(role))
-
-                if role_obj is None:
-                    await ctx.respond(f"Role {role} not found", ephemeral=True)
-                    return
+                role_obj = role
 
                 if role_obj >= ctx.guild.me.top_role:
                     await ctx.respond(f"Role {role_obj.mention} is higher than the bot's top role", ephemeral=True)
                     return
 
-                try:
-                    await user.add_roles(role_obj, reason=reason)
-                    if reason.strip() == "":
-                        await ctx.respond(
-                            f"User {user.mention} was given role {role_obj.mention}",
-                            ephemeral=True,
-                        )
-                    else:
-                        await ctx.respond(
-                            f"User {user.mention} was given role {role_obj.mention} for {reason}",
-                            ephemeral=True,
-                        )
-                except Exception:
-                    akabot_logger.exception(
-                        f"Failed to give role {role_obj} to user {user} in guild {ctx.guild.id}"
-                    )
-                    await ctx.respond("Error giving the role to the user", ephemeral=True)
+                if ctx.user.id != ctx.guild.owner_id and role_obj >= ctx.user.top_role:
+                    await ctx.respond(f"Role {role_obj.mention} is higher than your top role", ephemeral=True)
                     return
 
+            try:
+                await user.add_roles(role_obj, reason=reason)
+            except Exception:
+                akabot_logger.exception(
+                    f"Failed to give role {role_obj} to user {user} in guild {ctx.guild.id}"
+                )
+                await ctx.respond("Error giving the role to the user", ephemeral=True)
+                return
+
+            try:
                 # Add remove_role to temp actions
                 await add_temporary_action(ctx.guild.id, "remove_role", user.id, timedelta, str(role_obj.id))
+            except Exception:
+                akabot_logger.exception(
+                    f"Failed to schedule removal of role {role_obj} from user {user} in guild {ctx.guild.id}"
+                )
+                try:
+                    await user.remove_roles(
+                        role_obj, reason="Failed to schedule temporary role removal"
+                    )
+                except Exception:
+                    akabot_logger.exception(
+                        f"Failed to remove role {role_obj} from user {user} after scheduling failure in guild {ctx.guild.id}"
+                    )
+                await ctx.respond(
+                    "Error scheduling the role removal; the role was removed again", ephemeral=True
+                )
+                return
+
+            if reason.strip() == "":
+                await ctx.respond(
+                    f"User {user.mention} was given role {role_obj.mention}",
+                    ephemeral=True,
+                )
+            else:
+                await ctx.respond(
+                    f"User {user.mention} was given role {role_obj.mention} for {reason}",
+                    ephemeral=True,
+                )
 
     @guild_only()
     @option(name="user", description="Member to time out", type=Member, required=True)
@@ -257,8 +295,8 @@ class ModerationCommands(Cog):
             return
 
         timedelta = datetime.timedelta(days=days, hours=hours, minutes=minutes)
-        if datetime.datetime.now() > datetime.datetime.now() + timedelta:
-            await ctx.respond("The time must not be in the past", ephemeral=True)
+        if timedelta <= datetime.timedelta(0):
+            await ctx.respond("The duration must be greater than zero", ephemeral=True)
             return
 
         if timedelta > datetime.timedelta(days=28):

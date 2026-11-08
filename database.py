@@ -8,6 +8,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     MetaData,
     StaticPool,
@@ -752,4 +753,6 @@ temporary_actions = Table(
     Column("action", VARCHAR, nullable=False),
     Column("runs_at", DateTime(timezone=True), nullable=False),
     Column("arg", VARCHAR, nullable=True),
+    Column("attempts", Integer, nullable=False, server_default="0"),
+    Index("ix_temporary_actions_runs_at", "runs_at"),
 )
