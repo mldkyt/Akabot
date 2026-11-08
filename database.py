@@ -740,3 +740,16 @@ ticket_messages = Table(
     ),
     UniqueConstraint("gid", "prefix"),
 )
+
+# Temporary Actions
+
+temporary_actions = Table(
+    "temporary_actions",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("uid", VARCHAR, nullable=False),
+    Column("action", VARCHAR, nullable=False),
+    Column("runs_at", DateTime(timezone=True), nullable=False),
+    Column("arg", VARCHAR, nullable=True),
+)
