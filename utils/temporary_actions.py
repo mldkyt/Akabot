@@ -68,8 +68,8 @@ async def add_temporary_action(gid: int, action: str, uid: int, duration: dateti
     with engine.begin() as c:
         c.execute(
             temporary_actions.insert().values(
-                gid=gid,
-                uid=uid,
+                gid=str(gid),
+                uid=str(uid),
                 action=action,
                 arg=arg,
                 runs_at=datetime.datetime.now() + duration
