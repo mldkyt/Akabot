@@ -21,11 +21,10 @@ class TemporaryActions(Cog):
 
             try:
                 await handle_task(self.bot, action, gid, uid, arg)
-                await mark_task_handled(gid, uid)
             except Exception as e:
-                akabot_logger.exception(f"Failed to handle temporary action {action} for gid {gid} and uid {uid}: {e}")
-
-
+                akabot_logger.exception(f"Failed to handle temporary action {action} for guild {gid} and user {uid}")
+            finally:
+                await mark_task_handled(gid, uid)
 
 def setup(bot: Bot):
     bot.add_cog(TemporaryActions(bot))

@@ -1,7 +1,10 @@
+import datetime
+
 from discord import Bot
 from sqlalchemy import select, func, delete
 
 from database import engine, temporary_actions
+
 
 async def get_tasks_to_run():
     with engine.begin() as c:
@@ -19,6 +22,7 @@ async def mark_task_handled(gid, uid):
             .where((temporary_actions.c.gid == gid) & (temporary_actions.c.uid == uid))
         )
 
+
 async def _handle_unban(bot: Bot, gid, uid):
     guild = bot.get_guild(int(gid))
     if guild is None:
@@ -28,6 +32,7 @@ async def _handle_unban(bot: Bot, gid, uid):
         return
 
     await guild.unban(uid)
+
 
 async def _handle_remove_role(bot: Bot, gid, uid, role_id):
     guild = bot.get_guild(int(gid))
@@ -57,3 +62,16 @@ async def handle_task(bot: Bot, action, gid, uid, arg):
 
     else:
         raise ValueError("action")
+
+
+async def add_temporary_action(gid: int, action: str, uid: int, duration: datetime.timedelta, arg: str | None=None):
+    with engine.begin() as c:
+        c.execute(
+            temporary_actions.insert().values(
+                gid=gid,
+                uid=uid,
+                action=action,
+                arg=arg,
+                runs_at=datetime.datetime.now() + duration
+            )
+        )
