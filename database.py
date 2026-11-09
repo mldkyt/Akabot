@@ -8,6 +8,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     MetaData,
     StaticPool,
@@ -739,4 +740,19 @@ ticket_messages = Table(
         server_default="Create Ticket",
     ),
     UniqueConstraint("gid", "prefix"),
+)
+
+# Temporary Actions
+
+temporary_actions = Table(
+    "temporary_actions",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("gid", VARCHAR, nullable=False),
+    Column("uid", VARCHAR, nullable=False),
+    Column("action", VARCHAR, nullable=False),
+    Column("runs_at", DateTime(timezone=True), nullable=False),
+    Column("arg", VARCHAR, nullable=True),
+    Column("attempts", Integer, nullable=False, server_default="0"),
+    Index("ix_temporary_actions_runs_at", "runs_at"),
 )

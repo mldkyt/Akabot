@@ -30,7 +30,7 @@ async def perform_basic_checks(
         return False, "You must be moderator in order to use this command"
 
     # Check if user's role is under ours
-    if user.top_role > ctx.user.top_role:
+    if isinstance(user, Member) and user.top_role > ctx.user.top_role:
         return False, f"This user has a higher rank than you, can't {k}"
 
     return True, ""
