@@ -756,3 +756,14 @@ temporary_actions = Table(
     Column("attempts", Integer, nullable=False, server_default="0"),
     Index("ix_temporary_actions_runs_at", "runs_at"),
 )
+
+# Reminders
+
+reminders = Table(
+    "reminders",
+    md_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("uid", VARCHAR, nullable=False),
+    Column("content", VARCHAR, nullable=False),
+    Column("remind_at", DateTime(timezone=True), nullable=False),
+)
