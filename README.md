@@ -8,6 +8,7 @@ Akabot is a featureful open-source bot and a full rewrite!
 
 Features:
 
+- **Web UI**: Everything is configurable from a web UI
 - **Counting**: Counting channels add a bit of fun into your
   server with channels purely for counting.
 - **Leveling**: Adds levels, level-up rewards and more fun into
@@ -28,12 +29,6 @@ Features:
   perform extra actions when an AutoMod rule is triggered.
 - **Chat Summary**: Chat Summary shows a summary of who
   sent how many messages at the end of the day.
-- **Server Settings**: Server settings help you adjust
-  the Akabot settings for your server. There are 2 types of settings: normal settings and list settings. Available
-  settings for each module of Akabot can be read under the respective page. Use the sidebar.
-- **User Settings**: User settings help you adjust the
-  Akabot settings for yourself. There are 2 types of settings: normal settings and list settings. Available settings for
-  each module of Akabot can be read under the respective page. Use the sidebar.
 - **Roles On Join**: Add roles to members who join the
   server
 - **Chat Revive**: Dead channels? With the help of Chat
